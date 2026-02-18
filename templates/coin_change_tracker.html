@@ -1438,7 +1438,56 @@ pm2 status                                                # 查看所有进程�
             </div>
         </div>
 
-
+        <!-- BTC 当日涨跌幅状态框 -->
+        <div class="mb-6">
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold flex items-center">
+                        <i class="fab fa-bitcoin text-orange-500 mr-2"></i>
+                        BTC 当日涨跌幅状态
+                    </h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- BTC 涨跌幅 -->
+                    <div id="btcChangeCard" class="p-4 rounded-lg border-2 transition-all duration-300">
+                        <div class="text-sm text-gray-600 mb-1">BTC 当前涨跌幅</div>
+                        <div id="btcChange" class="text-3xl font-bold mb-2">--</div>
+                        <div id="btcStatus" class="text-lg font-semibold">--</div>
+                    </div>
+                    
+                    <!-- 状态说明 -->
+                    <div class="col-span-1 md:col-span-1 lg:col-span-2 bg-gray-50 p-4 rounded-lg">
+                        <div class="text-sm font-semibold text-gray-700 mb-2">状态分类标准：</div>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+                            <div class="flex items-center">
+                                <span class="w-3 h-3 rounded-full bg-red-600 mr-2"></span>
+                                <span><strong>主跌：</strong>跌幅 &gt; 3%</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="w-3 h-3 rounded-full bg-orange-500 mr-2"></span>
+                                <span><strong>大幅下跌：</strong>-3% ~ -1.5%</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="w-3 h-3 rounded-full bg-yellow-400 mr-2"></span>
+                                <span><strong>小幅震荡偏空：</strong>-1.5% ~ 0%</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="w-3 h-3 rounded-full bg-blue-400 mr-2"></span>
+                                <span><strong>小幅震荡偏多：</strong>0% ~ 1.5%</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="w-3 h-3 rounded-full bg-green-500 mr-2"></span>
+                                <span><strong>大幅上涨：</strong>1.5% ~ 3%</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="w-3 h-3 rounded-full bg-emerald-600 mr-2"></span>
+                                <span><strong>主升：</strong>涨幅 &gt; 3%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- 图表区域 - 趋势图独占一行，放大2倍 -->
         <div class="grid grid-cols-1 gap-6 mb-6">
@@ -1953,6 +2002,9 @@ pm2 status                                                # 查看所有进程�
                         ? data.rsi_values 
                         : lastRSIData.rsi_values;
                     updateDetailTable(data.changes, rsiValuesToUse);
+                    
+                    // 更新BTC当日涨跌幅状态
+                    updateBTCStatus(data.changes);
                     
                     // 更新RSI之和卡片（使用最新的或缓存的RSI数据）
                     const totalRSIToUse = data.total_rsi !== undefined ? data.total_rsi : lastRSIData.total_rsi;
@@ -2561,6 +2613,75 @@ pm2 status                                                # 查看所有进程�
                 rankChart.resize();
                 console.log('✅ 排行榜图已渲染，币种数:', coins.length);
             }, 100);
+        }
+        
+        // 更新BTC当日涨跌幅状态
+        function updateBTCStatus(changes) {
+            // 查找BTC数据
+            let btcChange = null;
+            for (const [symbol, data] of Object.entries(changes)) {
+                if (symbol.includes('BTC')) {
+                    btcChange = data.change_pct || 0;
+                    break;
+                }
+            }
+            
+            if (btcChange === null) {
+                document.getElementById('btcChange').textContent = '--';
+                document.getElementById('btcStatus').textContent = '暂无数据';
+                return;
+            }
+            
+            // 更新涨跌幅显示
+            const btcChangeEl = document.getElementById('btcChange');
+            btcChangeEl.textContent = `${btcChange > 0 ? '+' : ''}${btcChange.toFixed(2)}%`;
+            
+            // 根据涨跌幅确定状态和样式
+            let status = '';
+            let bgColor = '';
+            let textColor = '';
+            let borderColor = '';
+            
+            if (btcChange < -3) {
+                status = '主跌';
+                bgColor = 'bg-red-50';
+                textColor = 'text-red-600';
+                borderColor = 'border-red-600';
+            } else if (btcChange >= -3 && btcChange < -1.5) {
+                status = '大幅下跌';
+                bgColor = 'bg-orange-50';
+                textColor = 'text-orange-600';
+                borderColor = 'border-orange-500';
+            } else if (btcChange >= -1.5 && btcChange < 0) {
+                status = '小幅震荡偏空';
+                bgColor = 'bg-yellow-50';
+                textColor = 'text-yellow-600';
+                borderColor = 'border-yellow-400';
+            } else if (btcChange >= 0 && btcChange < 1.5) {
+                status = '小幅震荡偏多';
+                bgColor = 'bg-blue-50';
+                textColor = 'text-blue-600';
+                borderColor = 'border-blue-400';
+            } else if (btcChange >= 1.5 && btcChange < 3) {
+                status = '大幅上涨';
+                bgColor = 'bg-green-50';
+                textColor = 'text-green-600';
+                borderColor = 'border-green-500';
+            } else {
+                status = '主升';
+                bgColor = 'bg-emerald-50';
+                textColor = 'text-emerald-600';
+                borderColor = 'border-emerald-600';
+            }
+            
+            // 更新状态显示
+            document.getElementById('btcStatus').textContent = status;
+            document.getElementById('btcStatus').className = `text-lg font-semibold ${textColor}`;
+            btcChangeEl.className = `text-3xl font-bold mb-2 ${textColor}`;
+            
+            // 更新卡片样式
+            const btcCard = document.getElementById('btcChangeCard');
+            btcCard.className = `p-4 rounded-lg border-2 transition-all duration-300 ${bgColor} ${borderColor}`;
         }
         
         // 更新详细表格

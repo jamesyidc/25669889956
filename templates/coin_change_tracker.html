@@ -1720,6 +1720,17 @@ pm2 status                                                # 查看所有进程�
                 <div class="text-sm text-gray-500 mt-2">
                     <span id="rsiStatus" class="font-medium">--</span>
                 </div>
+                <!-- 当日最高/最低点 -->
+                <div class="text-xs text-gray-400 mt-3 flex justify-between">
+                    <div>
+                        <span class="text-red-500">↑</span> 
+                        <span id="rsiMax">--</span>
+                    </div>
+                    <div>
+                        <span class="text-green-500">↓</span> 
+                        <span id="rsiMin">--</span>
+                    </div>
+                </div>
             </div>
 
             <!-- 有效币种数 -->
@@ -2712,15 +2723,31 @@ pm2 status                                                # 查看所有进程�
                             
                             console.log('✅ RSI数据加载成功，原始数据点:', rsiData.length, '映射后数据点:', rsiValues.length);
                             console.log('✅ RSI非空数据点:', rsiValues.filter(v => v !== null).length);
+                            
+                            // 计算当日RSI最高和最低值
+                            const validRsiValues = rsiValues.filter(v => v !== null && v !== undefined);
+                            if (validRsiValues.length > 0) {
+                                const rsiMax = Math.max(...validRsiValues);
+                                const rsiMin = Math.min(...validRsiValues);
+                                document.getElementById('rsiMax').textContent = rsiMax.toFixed(2);
+                                document.getElementById('rsiMin').textContent = rsiMin.toFixed(2);
+                            } else {
+                                document.getElementById('rsiMax').textContent = '--';
+                                document.getElementById('rsiMin').textContent = '--';
+                            }
                         } else {
                             console.log('⚠️ RSI数据文件不存在或为空');
                             // 如果没有RSI数据，填充null数组
                             rsiValues = times.map(() => null);
+                            document.getElementById('rsiMax').textContent = '--';
+                            document.getElementById('rsiMin').textContent = '--';
                         }
                     } catch (e) {
                         console.warn('⚠️ RSI数据加载失败:', e);
                         // 出错时也填充null数组
                         rsiValues = times.map(() => null);
+                        document.getElementById('rsiMax').textContent = '--';
+                        document.getElementById('rsiMin').textContent = '--';
                     }
                     
                     console.log('Times count:', times.length, 'Changes count:', changes.length, 'RSI count:', rsiValues.length);

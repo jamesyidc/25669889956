@@ -1397,52 +1397,78 @@ pm2 status                                                # 查看所有进程�
                         }
                     },
                     formatter: function(params) {
-                        const p = params[0];
-                        const time = p.axisValue;
-                        const value = p.value;
-                        const dataIndex = p.dataIndex;
+                        const time = params[0].axisValue;
+                        let html = `<div style="padding: 8px; min-width: 240px;">`;
+                        html += `<div style="font-weight: bold; margin-bottom: 8px; font-size: 14px;">`;
+                        html += `<i class="far fa-clock" style="margin-right: 4px;"></i>${time}`;
+                        html += `</div>`;
                         
-                        // 获取当前时间点对应的完整数据
-                        let upRatio = '--';
-                        if (historyData && historyData[dataIndex]) {
-                            // 优先使用JSONL中保存的up_ratio字段
-                            if (historyData[dataIndex].up_ratio !== undefined) {
-                                upRatio = historyData[dataIndex].up_ratio.toFixed(1) + '%';
-                            } 
-                            // 如果没有up_ratio字段，则实时计算
-                            else if (historyData[dataIndex].changes) {
-                                const changes = historyData[dataIndex].changes;
-                                const changesArray = Object.values(changes);
-                                const upCoins = changesArray.filter(coin => coin.change_pct > 0).length;
-                                const totalCoins = changesArray.length;
-                                upRatio = totalCoins > 0 ? (upCoins / totalCoins * 100).toFixed(1) + '%' : '--';
+                        // 遍历所有系列
+                        params.forEach(p => {
+                            const dataIndex = p.dataIndex;
+                            
+                            if (p.seriesName === '27币涨跌幅之和') {
+                                const value = p.value;
+                                let upRatio = '--';
+                                
+                                // 获取上涨占比
+                                if (historyData && historyData[dataIndex]) {
+                                    if (historyData[dataIndex].up_ratio !== undefined) {
+                                        upRatio = historyData[dataIndex].up_ratio.toFixed(1) + '%';
+                                    } else if (historyData[dataIndex].changes) {
+                                        const changes = historyData[dataIndex].changes;
+                                        const changesArray = Object.values(changes);
+                                        const upCoins = changesArray.filter(coin => coin.change_pct > 0).length;
+                                        const totalCoins = changesArray.length;
+                                        upRatio = totalCoins > 0 ? (upCoins / totalCoins * 100).toFixed(1) + '%' : '--';
+                                    }
+                                }
+                                
+                                html += `<div style="margin-bottom: 4px;">`;
+                                html += `${p.marker}<span style="font-weight: 600;">${p.seriesName}</span>`;
+                                html += `</div>`;
+                                html += `<div style="font-size: 16px; font-weight: bold; color: ${value > 0 ? '#10B981' : value < 0 ? '#EF4444' : '#6B7280'};">`;
+                                html += `${value > 0 ? '+' : ''}${value}%`;
+                                html += `</div>`;
+                                html += `<div style="margin-top: 4px; font-size: 13px; color: #6B7280;">`;
+                                html += `上涨占比: <span style="font-weight: 600; color: #10B981;">${upRatio}</span>`;
+                                html += `</div>`;
+                            } else if (p.seriesName === 'RSI之和') {
+                                const rsiValue = p.value;
+                                const avgRsi = (rsiValue / 27).toFixed(1);
+                                let status = '中性';
+                                let statusColor = '#6B7280';
+                                
+                                if (rsiValue >= 1890) {
+                                    status = '超买';
+                                    statusColor = '#EF4444';
+                                } else if (rsiValue <= 810) {
+                                    status = '超卖';
+                                    statusColor = '#10B981';
+                                }
+                                
+                                html += `<div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #E5E7EB;">`;
+                                html += `<div style="margin-bottom: 4px;">`;
+                                html += `${p.marker}<span style="font-weight: 600;">${p.seriesName}</span>`;
+                                html += `</div>`;
+                                html += `<div style="font-size: 16px; font-weight: bold; color: #9333EA;">`;
+                                html += `${rsiValue.toFixed(1)}`;
+                                html += `</div>`;
+                                html += `<div style="margin-top: 4px; font-size: 13px; color: #6B7280;">`;
+                                html += `平均RSI: <span style="font-weight: 600;">${avgRsi}</span> | `;
+                                html += `状态: <span style="font-weight: 600; color: ${statusColor};">${status}</span>`;
+                                html += `</div>`;
+                                html += `</div>`;
                             }
-                        }
+                        });
                         
-                        return `
-                            <div style="padding: 8px; min-width: 200px;">
-                                <div style="font-weight: bold; margin-bottom: 8px; font-size: 14px;">
-                                    <i class="far fa-clock" style="margin-right: 4px;"></i>${time}
-                                </div>
-                                <div style="margin-bottom: 4px;">
-                                    ${p.marker}<span style="font-weight: 600;">${p.seriesName}</span>
-                                </div>
-                                <div style="font-size: 16px; font-weight: bold; color: ${value > 0 ? '#10B981' : value < 0 ? '#EF4444' : '#6B7280'};">
-                                    ${value > 0 ? '+' : ''}${value}%
-                                </div>
-                                <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #E5E7EB;">
-                                    <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px;">
-                                        <span style="color: #6B7280;">上涨占比:</span>
-                                        <span style="font-weight: 600; color: #10B981;">${upRatio}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
+                        html += `</div>`;
+                        return html;
                     }
                 },
                 grid: {
                     left: '3%',
-                    right: '4%',
+                    right: '10%',
                     bottom: '3%',
                     containLabel: true
                 },
@@ -1451,32 +1477,130 @@ pm2 status                                                # 查看所有进程�
                     boundaryGap: false,
                     data: []
                 },
-                yAxis: {
-                    type: 'value',
-                    axisLabel: {
-                        formatter: '{value}%'
-                    }
-                },
-                series: [{
-                    name: '27币涨跌幅之和',
-                    type: 'line',
-                    smooth: true,
-                    data: [],
-                    areaStyle: {
-                        color: {
-                            type: 'linear',
-                            x: 0, y: 0, x2: 0, y2: 1,
-                            colorStops: [
-                                { offset: 0, color: 'rgba(59, 130, 246, 0.5)' },
-                                { offset: 1, color: 'rgba(59, 130, 246, 0.1)' }
-                            ]
+                yAxis: [
+                    {
+                        type: 'value',
+                        name: '涨跌幅(%)',
+                        position: 'left',
+                        axisLabel: {
+                            formatter: '{value}%'
+                        },
+                        axisLine: {
+                            lineStyle: {
+                                color: '#3B82F6'
+                            }
                         }
                     },
-                    lineStyle: {
-                        color: '#3B82F6',
-                        width: 2
+                    {
+                        type: 'value',
+                        name: 'RSI之和',
+                        position: 'right',
+                        min: 0,
+                        max: 2700,
+                        interval: 270,
+                        axisLabel: {
+                            formatter: '{value}'
+                        },
+                        axisLine: {
+                            lineStyle: {
+                                color: '#9333EA'
+                            }
+                        },
+                        splitLine: {
+                            show: false
+                        }
                     }
-                }]
+                ],
+                series: [
+                    {
+                        name: '27币涨跌幅之和',
+                        type: 'line',
+                        yAxisIndex: 0,
+                        smooth: true,
+                        data: [],
+                        areaStyle: {
+                            color: {
+                                type: 'linear',
+                                x: 0, y: 0, x2: 0, y2: 1,
+                                colorStops: [
+                                    { offset: 0, color: 'rgba(59, 130, 246, 0.5)' },
+                                    { offset: 1, color: 'rgba(59, 130, 246, 0.1)' }
+                                ]
+                            }
+                        },
+                        lineStyle: {
+                            color: '#3B82F6',
+                            width: 2
+                        }
+                    },
+                    {
+                        name: 'RSI之和',
+                        type: 'line',
+                        yAxisIndex: 1,
+                        smooth: true,
+                        data: [],
+                        lineStyle: {
+                            color: '#9333EA',
+                            width: 2,
+                            type: 'dashed'
+                        },
+                        symbol: 'circle',
+                        symbolSize: 4,
+                        markLine: {
+                            silent: true,
+                            symbol: 'none',
+                            label: {
+                                show: true,
+                                position: 'end',
+                                formatter: '{b}'
+                            },
+                            data: [
+                                {
+                                    name: '超买线 (平均70)',
+                                    yAxis: 1890,
+                                    lineStyle: {
+                                        color: '#EF4444',
+                                        type: 'dashed',
+                                        width: 1,
+                                        opacity: 0.6
+                                    },
+                                    label: {
+                                        color: '#EF4444',
+                                        fontSize: 11
+                                    }
+                                },
+                                {
+                                    name: '中性线 (平均50)',
+                                    yAxis: 1350,
+                                    lineStyle: {
+                                        color: '#6B7280',
+                                        type: 'dashed',
+                                        width: 1,
+                                        opacity: 0.6
+                                    },
+                                    label: {
+                                        color: '#6B7280',
+                                        fontSize: 11
+                                    }
+                                },
+                                {
+                                    name: '超卖线 (平均30)',
+                                    yAxis: 810,
+                                    lineStyle: {
+                                        color: '#10B981',
+                                        type: 'dashed',
+                                        width: 1,
+                                        opacity: 0.6
+                                    },
+                                    label: {
+                                        color: '#10B981',
+                                        fontSize: 11
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
             });
         }
         
@@ -1538,11 +1662,6 @@ pm2 status                                                # 查看所有进程�
                     // 更新详细表格
                     updateDetailTable(data.changes);
                     
-                    // 更新RSI图表（如果有历史数据）
-                    if (historyData && historyData.length > 0) {
-                        updateRSIChart();
-                    }
-                    
                     // 检查预警（添加）- 使用延迟调用确保函数已定义
                     if (typeof checkAlerts === 'function') {
                         checkAlerts({
@@ -1599,7 +1718,46 @@ pm2 status                                                # 查看所有进程�
                     });
                     const changes = historyData.map(d => d.total_change);
                     
-                    console.log('Times count:', times.length, 'Changes count:', changes.length);
+                    // 加载RSI数据
+                    let rsiUrl = '/api/coin-change-tracker/rsi-history?limit=1440';
+                    if (date) {
+                        rsiUrl += `&date=${formatDate(date)}`;
+                    }
+                    rsiUrl += `&_t=${Date.now()}`;
+                    
+                    console.log('Fetching RSI data from:', rsiUrl);
+                    
+                    let rsiData = [];
+                    let rsiTimes = [];
+                    let rsiValues = [];
+                    
+                    try {
+                        const rsiResponse = await fetch(rsiUrl, {
+                            cache: 'no-store',
+                            headers: {
+                                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                                'Pragma': 'no-cache',
+                                'Expires': '0'
+                            }
+                        });
+                        const rsiResult = await rsiResponse.json();
+                        
+                        if (rsiResult.success && rsiResult.data && rsiResult.data.length > 0) {
+                            rsiData = rsiResult.data;
+                            rsiTimes = rsiData.map(d => {
+                                const timeStr = d.beijing_time || '';
+                                return timeStr.split(' ')[1] || 'undefined';
+                            });
+                            rsiValues = rsiData.map(d => d.total_rsi || null);
+                            console.log('✅ RSI数据加载成功，数据点数:', rsiValues.length);
+                        } else {
+                            console.log('⚠️ RSI数据文件不存在或为空');
+                        }
+                    } catch (e) {
+                        console.warn('⚠️ RSI数据加载失败:', e);
+                    }
+                    
+                    console.log('Times count:', times.length, 'Changes count:', changes.length, 'RSI count:', rsiValues.length);
                     
                     // 找出最高价和最低价
                     const maxChange = Math.max(...changes);
@@ -1622,47 +1780,85 @@ pm2 status                                                # 查看所有进程�
                                 }
                             },
                             formatter: function(params) {
-                                const p = params[0];
-                                const time = p.axisValue;
-                                const value = p.value;
-                                const dataIndex = p.dataIndex;
+                                if (!params || params.length === 0) return '';
                                 
-                                // 获取当前时间点对应的完整数据
-                                let upRatio = '--';
-                                if (historyData && historyData[dataIndex]) {
-                                    // 优先使用JSONL中保存的up_ratio字段
-                                    if (historyData[dataIndex].up_ratio !== undefined) {
-                                        upRatio = historyData[dataIndex].up_ratio.toFixed(1) + '%';
-                                    } 
-                                    // 如果没有up_ratio字段，则实时计算
-                                    else if (historyData[dataIndex].changes) {
-                                        const changes = historyData[dataIndex].changes;
-                                        const changesArray = Object.values(changes);
-                                        const upCoins = changesArray.filter(coin => coin.change_pct > 0).length;
-                                        const totalCoins = changesArray.length;
-                                        upRatio = totalCoins > 0 ? (upCoins / totalCoins * 100).toFixed(1) + '%' : '--';
+                                const time = params[0].axisValue;
+                                const dataIndex = params[0].dataIndex;
+                                
+                                let html = `<div style="padding: 8px; min-width: 200px;">
+                                    <div style="font-weight: bold; margin-bottom: 8px; font-size: 14px;">
+                                        <i class="far fa-clock" style="margin-right: 4px;"></i>${time}
+                                    </div>`;
+                                
+                                // 显示涨跌幅数据
+                                const changeParam = params.find(p => p.seriesName === '27币涨跌幅之和');
+                                if (changeParam) {
+                                    const value = changeParam.value;
+                                    
+                                    // 获取上涨占比
+                                    let upRatio = '--';
+                                    if (historyData && historyData[dataIndex]) {
+                                        if (historyData[dataIndex].up_ratio !== undefined) {
+                                            upRatio = historyData[dataIndex].up_ratio.toFixed(1) + '%';
+                                        } else if (historyData[dataIndex].changes) {
+                                            const changes = historyData[dataIndex].changes;
+                                            const changesArray = Object.values(changes);
+                                            const upCoins = changesArray.filter(coin => coin.change_pct > 0).length;
+                                            const totalCoins = changesArray.length;
+                                            upRatio = totalCoins > 0 ? (upCoins / totalCoins * 100).toFixed(1) + '%' : '--';
+                                        }
                                     }
+                                    
+                                    html += `<div style="margin-bottom: 4px;">
+                                        ${changeParam.marker}<span style="font-weight: 600;">${changeParam.seriesName}</span>
+                                    </div>
+                                    <div style="font-size: 16px; font-weight: bold; color: ${value > 0 ? '#10B981' : value < 0 ? '#EF4444' : '#6B7280'};">
+                                        ${value > 0 ? '+' : ''}${value}%
+                                    </div>
+                                    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #E5E7EB;">
+                                        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px;">
+                                            <span style="color: #6B7280;">上涨占比:</span>
+                                            <span style="font-weight: 600; color: #10B981;">${upRatio}</span>
+                                        </div>
+                                    </div>`;
                                 }
                                 
-                                return `
-                                    <div style="padding: 8px; min-width: 200px;">
-                                        <div style="font-weight: bold; margin-bottom: 8px; font-size: 14px;">
-                                            <i class="far fa-clock" style="margin-right: 4px;"></i>${time}
-                                        </div>
+                                // 显示RSI数据
+                                const rsiParam = params.find(p => p.seriesName === 'RSI之和');
+                                if (rsiParam && rsiParam.value !== null && rsiParam.value !== undefined) {
+                                    const rsiValue = rsiParam.value;
+                                    const avgRsi = (rsiValue / 27).toFixed(2);
+                                    
+                                    let status = '中性';
+                                    let statusColor = '#6B7280';
+                                    if (rsiValue > 1890) {
+                                        status = '超买';
+                                        statusColor = '#EF4444';
+                                    } else if (rsiValue < 810) {
+                                        status = '超卖';
+                                        statusColor = '#10B981';
+                                    }
+                                    
+                                    html += `<div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #E5E7EB;">
                                         <div style="margin-bottom: 4px;">
-                                            ${p.marker}<span style="font-weight: 600;">${p.seriesName}</span>
+                                            ${rsiParam.marker}<span style="font-weight: 600; color: #9CA3AF;">RSI之和</span>
                                         </div>
-                                        <div style="font-size: 16px; font-weight: bold; color: ${value > 0 ? '#10B981' : value < 0 ? '#EF4444' : '#6B7280'};">
-                                            ${value > 0 ? '+' : ''}${value}%
+                                        <div style="font-size: 14px; font-weight: bold; color: #9CA3AF;">
+                                            ${rsiValue.toFixed(2)}
                                         </div>
-                                        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #E5E7EB;">
-                                            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px;">
-                                                <span style="color: #6B7280;">上涨占比:</span>
-                                                <span style="font-weight: 600; color: #10B981;">${upRatio}</span>
-                                            </div>
+                                        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 12px; margin-top: 4px;">
+                                            <span style="color: #6B7280;">平均RSI:</span>
+                                            <span style="font-weight: 600;">${avgRsi}</span>
                                         </div>
-                                    </div>
-                                `;
+                                        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 12px;">
+                                            <span style="color: #6B7280;">市场状态:</span>
+                                            <span style="font-weight: 600; color: ${statusColor};">${status}</span>
+                                        </div>
+                                    </div>`;
+                                }
+                                
+                                html += '</div>';
+                                return html;
                             }
                         },
                         xAxis: { 
@@ -1670,12 +1866,39 @@ pm2 status                                                # 查看所有进程�
                             boundaryGap: false,
                             data: times 
                         },
-                        yAxis: {
-                            type: 'value',
-                            axisLabel: {
-                                formatter: '{value}%'
+                        yAxis: [
+                            {
+                                type: 'value',
+                                name: '涨跌幅 (%)',
+                                position: 'left',
+                                axisLabel: {
+                                    formatter: '{value}%'
+                                },
+                                axisLine: {
+                                    lineStyle: {
+                                        color: '#3B82F6'
+                                    }
+                                }
+                            },
+                            {
+                                type: 'value',
+                                name: 'RSI之和',
+                                position: 'right',
+                                min: 0,
+                                max: 2700,
+                                axisLabel: {
+                                    formatter: '{value}'
+                                },
+                                axisLine: {
+                                    lineStyle: {
+                                        color: '#D1D5DB'
+                                    }
+                                },
+                                splitLine: {
+                                    show: false
+                                }
                             }
-                        },
+                        ],
                         series: [{
                             name: '27币涨跌幅之和',
                             type: 'line',
@@ -1836,6 +2059,23 @@ pm2 status                                                # 查看所有进程�
                                     }
                                 ]
                             }
+                        },
+                        {
+                            name: 'RSI之和',
+                            type: 'line',
+                            yAxisIndex: 1,
+                            smooth: true,
+                            data: rsiValues.length > 0 ? rsiValues : [],
+                            lineStyle: {
+                                width: 1.5,
+                                type: 'dashed',
+                                color: 'rgba(209, 213, 219, 0.8)'
+                            },
+                            itemStyle: {
+                                color: 'rgba(209, 213, 219, 0.8)'
+                            },
+                            symbol: 'none',
+                            zlevel: 1
                         }]
                     }, true, true); // notMerge=true, lazyUpdate=true
                     
@@ -1843,9 +2083,6 @@ pm2 status                                                # 查看所有进程�
                     setTimeout(() => {
                         trendChart.resize();
                         console.log('✅ 趋势图已渲染，数据点数:', changes.length);
-                        
-                        // 同时更新RSI图表
-                        updateRSIChart();
                     }, 100);
                 } else {
                     console.warn('历史数据为空或加载失败');
@@ -1981,179 +2218,6 @@ pm2 status                                                # 查看所有进程�
             setTimeout(() => {
                 rankChart.resize();
                 console.log('✅ 排行榜图已渲染，币种数:', coins.length);
-            }, 100);
-        }
-        
-        // 更新RSI图表
-        function updateRSIChart() {
-            if (!rsiChart || !historyData || historyData.length === 0) {
-                console.log('⚠️ RSI图表未初始化或无数据');
-                return;
-            }
-            
-            // 筛选包含RSI数据的记录
-            const rsiData = historyData.filter(d => d.total_rsi !== undefined && d.total_rsi !== null);
-            
-            if (rsiData.length === 0) {
-                console.log('⚠️ 无RSI数据');
-                return;
-            }
-            
-            // 提取时间和RSI值
-            const times = rsiData.map(d => {
-                const beijingTime = d.beijing_time || '';
-                // 只显示时:分
-                return beijingTime.split(' ')[1] || beijingTime;
-            });
-            
-            const rsiValues = rsiData.map(d => d.total_rsi);
-            
-            console.log(`📊 更新RSI图表，数据点数: ${rsiValues.length}`);
-            
-            // RSI图表配置
-            rsiChart.setOption({
-                tooltip: {
-                    trigger: 'axis',
-                    axisPointer: {
-                        type: 'cross',
-                        label: {
-                            backgroundColor: '#6a7985'
-                        }
-                    },
-                    formatter: function(params) {
-                        const p = params[0];
-                        const time = p.axisValue;
-                        const value = p.value;
-                        const avgRsi = (value / 27).toFixed(2);
-                        
-                        // 判断市场状态
-                        let status = '中性';
-                        let statusColor = '#6B7280';
-                        if (value > 1890) {
-                            status = '超买';
-                            statusColor = '#EF4444';
-                        } else if (value < 810) {
-                            status = '超卖';
-                            statusColor = '#10B981';
-                        }
-                        
-                        return `
-                            <div style="padding: 8px; min-width: 200px;">
-                                <div style="font-weight: bold; margin-bottom: 8px; font-size: 14px;">
-                                    <i class="far fa-clock" style="margin-right: 4px;"></i>${time}
-                                </div>
-                                <div style="margin-bottom: 4px;">
-                                    ${p.marker}<span style="font-weight: 600;">27币RSI之和</span>
-                                </div>
-                                <div style="font-size: 16px; font-weight: bold; color: ${p.color};">
-                                    ${value.toFixed(2)}
-                                </div>
-                                <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #E5E7EB;">
-                                    <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
-                                        <span style="color: #6B7280;">平均RSI:</span>
-                                        <span style="font-weight: 600;">${avgRsi}</span>
-                                    </div>
-                                    <div style="display: flex; align-items: center; justify-content: space-between; font-size: 13px;">
-                                        <span style="color: #6B7280;">市场状态:</span>
-                                        <span style="font-weight: 600; color: ${statusColor};">${status}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    }
-                },
-                grid: {
-                    left: '3%',
-                    right: '4%',
-                    bottom: '3%',
-                    containLabel: true
-                },
-                xAxis: {
-                    type: 'category',
-                    boundaryGap: false,
-                    data: times
-                },
-                yAxis: {
-                    type: 'value',
-                    min: 0,
-                    max: 2700,
-                    axisLabel: {
-                        formatter: '{value}'
-                    }
-                },
-                series: [{
-                    name: '27币RSI之和',
-                    type: 'line',
-                    data: rsiValues,
-                    smooth: true,
-                    lineStyle: {
-                        width: 2,
-                        color: '#9333EA'
-                    },
-                    itemStyle: {
-                        color: '#9333EA'
-                    },
-                    areaStyle: {
-                        color: {
-                            type: 'linear',
-                            x: 0,
-                            y: 0,
-                            x2: 0,
-                            y2: 1,
-                            colorStops: [{
-                                offset: 0, color: 'rgba(147, 51, 234, 0.3)'
-                            }, {
-                                offset: 1, color: 'rgba(147, 51, 234, 0.05)'
-                            }]
-                        }
-                    },
-                    markLine: {
-                        silent: true,
-                        symbol: 'none',
-                        lineStyle: {
-                            type: 'dashed',
-                            width: 2
-                        },
-                        data: [
-                            {
-                                name: '超买线',
-                                yAxis: 1890,
-                                lineStyle: { color: '#EF4444' },
-                                label: {
-                                    formatter: '超买线 (1890)',
-                                    position: 'end',
-                                    color: '#EF4444'
-                                }
-                            },
-                            {
-                                name: '中性线',
-                                yAxis: 1350,
-                                lineStyle: { color: '#6B7280' },
-                                label: {
-                                    formatter: '中性线 (1350)',
-                                    position: 'end',
-                                    color: '#6B7280'
-                                }
-                            },
-                            {
-                                name: '超卖线',
-                                yAxis: 810,
-                                lineStyle: { color: '#10B981' },
-                                label: {
-                                    formatter: '超卖线 (810)',
-                                    position: 'end',
-                                    color: '#10B981'
-                                }
-                            }
-                        ]
-                    }
-                }]
-            });
-            
-            // 强制resize图表确保正确显示
-            setTimeout(() => {
-                rsiChart.resize();
-                console.log('✅ RSI图已渲染，数据点数:', rsiValues.length);
             }, 100);
         }
         

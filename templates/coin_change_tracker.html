@@ -2674,9 +2674,18 @@ pm2 status                                                # 查看所有进程�
                     
                     // 提取时间和总涨跌幅（使用beijing_time字段，格式化为HH:MM:SS）
                     const times = historyData.map(d => {
-                        // beijing_time格式: "2026-02-11 17:59:57"
-                        const timeStr = d.beijing_time || '';
-                        return timeStr.split(' ')[1] || 'undefined';  // 提取时间部分 "17:59:57"
+                        // 兼容两种格式：
+                        // 新格式: beijing_time: "2026-02-18 00:17:39"
+                        // 旧格式: time: "00:17:39"
+                        if (d.beijing_time) {
+                            // 新格式：提取时间部分
+                            return d.beijing_time.split(' ')[1] || 'undefined';
+                        } else if (d.time) {
+                            // 旧格式：直接使用time字段
+                            return d.time;
+                        } else {
+                            return 'undefined';
+                        }
                     });
                     const changes = historyData.map(d => d.total_change);
                     

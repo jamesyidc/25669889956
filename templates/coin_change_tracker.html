@@ -2994,10 +2994,14 @@ pm2 status                                                # 查看所有进程�
                                     
                                     // 添加波峰标记点 (B-A-C三点)
                                     if (wavePeaksData && wavePeaksData.length > 0) {
+                                        console.log('🔍 开始添加波峰标记点，波峰数量:', wavePeaksData.length);
+                                        console.log('🔍 Times数组示例（前5个）:', times.slice(0, 5));
+                                        
                                         wavePeaksData.forEach((peak, peakIdx) => {
                                             // B点 (谷底)
                                             const bTime = peak.b_point.beijing_time.split(' ')[1];
                                             const bIndex = times.indexOf(bTime);
+                                            console.log(`🔍 波峰${peakIdx+1} B点: ${peak.b_point.beijing_time} -> 时间=${bTime}, 索引=${bIndex}`);
                                             if (bIndex >= 0) {
                                                 points.push({
                                                     name: `波峰${peakIdx+1}-B`,
@@ -3026,6 +3030,7 @@ pm2 status                                                # 查看所有进程�
                                             // A点 (峰顶)
                                             const aTime = peak.a_point.beijing_time.split(' ')[1];
                                             const aIndex = times.indexOf(aTime);
+                                            console.log(`🔍 波峰${peakIdx+1} A点: ${peak.a_point.beijing_time} -> 时间=${aTime}, 索引=${aIndex}`);
                                             if (aIndex >= 0) {
                                                 points.push({
                                                     name: `波峰${peakIdx+1}-A`,
@@ -3054,6 +3059,7 @@ pm2 status                                                # 查看所有进程�
                                             // C点 (回调后反弹点)
                                             const cTime = peak.c_point.beijing_time.split(' ')[1];
                                             const cIndex = times.indexOf(cTime);
+                                            console.log(`🔍 波峰${peakIdx+1} C点: ${peak.c_point.beijing_time} -> 时间=${cTime}, 索引=${cIndex}`);
                                             if (cIndex >= 0) {
                                                 points.push({
                                                     name: `波峰${peakIdx+1}-C`,
@@ -3079,6 +3085,8 @@ pm2 status                                                # 查看所有进程�
                                                 });
                                             }
                                         });
+                                        
+                                        console.log('✅ 波峰标记点添加完成，总标记点数:', points.length);
                                     }
                                     
                                     return points;

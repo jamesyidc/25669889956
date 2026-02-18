@@ -21860,6 +21860,123 @@ def get_wave_peaks():
             'traceback': traceback.format_exc()
         })
 
+@app.route('/api/coin-change-tracker/wave-peaks-history', methods=['GET'])
+def get_wave_peaks_history():
+    """获取历史波峰数据"""
+    try:
+        from pathlib import Path
+        
+        # 获取参数
+        date_str = request.args.get('date', '')  # YYYY-MM-DD 或 YYYYMMDD
+        start_date = request.args.get('start_date', '')
+        end_date = request.args.get('end_date', '')
+        
+        wave_peaks_dir = Path('/home/user/webapp/data/coin_change_tracker/wave_peaks')
+        
+        if not wave_peaks_dir.exists():
+            return jsonify({
+                'success': False,
+                'error': '波峰数据目录不存在'
+            })
+        
+        # 如果指定了单个日期
+        if date_str:
+            # 处理日期格式
+            if len(date_str) == 8:  # YYYYMMDD
+                formatted_date = date_str
+            else:  # YYYY-MM-DD
+                formatted_date = date_str.replace('-', '')
+            
+            file_path = wave_peaks_dir / f'wave_peaks_{formatted_date}.json'
+            
+            if not file_path.exists():
+                return jsonify({
+                    'success': False,
+                    'error': f'日期 {date_str} 的波峰数据不存在'
+                })
+            
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            
+            response = make_response(jsonify({
+                'success': True,
+                'date': date_str,
+                'data': data
+            }))
+            response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
+            return response
+        
+        # 如果指定了日期范围
+        if start_date and end_date:
+            # 处理日期格式
+            if len(start_date) == 8:
+                start_formatted = start_date
+            else:
+                start_formatted = start_date.replace('-', '')
+            
+            if len(end_date) == 8:
+                end_formatted = end_date
+            else:
+                end_formatted = end_date.replace('-', '')
+            
+            # 获取所有波峰文件
+            peak_files = sorted(wave_peaks_dir.glob('wave_peaks_*.json'))
+            
+            # 过滤日期范围
+            result = []
+            for file_path in peak_files:
+                file_date = file_path.stem.replace('wave_peaks_', '')
+                if start_formatted <= file_date <= end_formatted:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                    result.append({
+                        'date': file_date,
+                        'data': data
+                    })
+            
+            response = make_response(jsonify({
+                'success': True,
+                'start_date': start_date,
+                'end_date': end_date,
+                'count': len(result),
+                'data': result
+            }))
+            response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
+            return response
+        
+        # 如果没有指定参数，返回汇总数据
+        summary_file = wave_peaks_dir / 'summary.json'
+        
+        if not summary_file.exists():
+            return jsonify({
+                'success': False,
+                'error': '汇总数据不存在'
+            })
+        
+        with open(summary_file, 'r', encoding='utf-8') as f:
+            summary_data = json.load(f)
+        
+        response = make_response(jsonify({
+            'success': True,
+            'summary': summary_data
+        }))
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        })
+
 
 # ==================== 数据采集健康监控 ====================
 @app.route('/data-health-monitor')

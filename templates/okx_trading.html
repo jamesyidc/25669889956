@@ -6197,7 +6197,19 @@ ${data.sMsg || result.message || ''}`);
                 if (result.success && result.settings) {
                     const settings = result.settings;
                     document.getElementById('autoTriggerPrice').value = settings.triggerPrice || 65000;
-                    document.getElementById('autoTradeSwitch').checked = settings.enabled || false;
+                    
+                    const switchEl = document.getElementById('autoTradeSwitch');
+                    if (switchEl) {
+                        // 强制更新开关状态
+                        switchEl.checked = Boolean(settings.enabled);
+                        console.log(`✅ [抄底策略] 更新开关状态: ${switchEl.checked} (原始值: ${settings.enabled})`);
+                        
+                        // 触发UI重绘，确保视觉状态同步
+                        setTimeout(() => {
+                            switchEl.checked = Boolean(settings.enabled);
+                            console.log(`🔄 [抄底策略] 二次确认开关状态: ${switchEl.checked}`);
+                        }, 100);
+                    }
                     
                     // 加载策略类型
                     const strategyTypeEl = document.getElementById('autoStrategyType');
@@ -6281,8 +6293,15 @@ ${data.sMsg || result.message || ''}`);
                     }
                     
                     if (switchEl) {
-                        switchEl.checked = settings.enabled;
-                        console.log(`✅ 更新开关状态: ${switchEl.checked}`);
+                        // 强制更新开关状态
+                        switchEl.checked = Boolean(settings.enabled);
+                        console.log(`✅ 更新开关状态: ${switchEl.checked} (原始值: ${settings.enabled}, 类型: ${typeof settings.enabled})`);
+                        
+                        // 触发UI重绘，确保视觉状态同步
+                        setTimeout(() => {
+                            switchEl.checked = Boolean(settings.enabled);
+                            console.log(`🔄 二次确认开关状态: ${switchEl.checked}`);
+                        }, 100);
                     }
                     
                     if (typeEl) {

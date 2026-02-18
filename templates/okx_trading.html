@@ -4438,7 +4438,8 @@ data/
                 `  • ${s.name}: $${s.price.toFixed(2)} (${s.change >= 0 ? '+' : ''}${s.change}%)`
             ).join('\n');
             
-            const confirmMsg = `${emoji} 批量${strategyName}策略\n\n` +
+            // 🔔 发送Telegram通知 - 批量开仓开始
+            const startMsg = `${emoji} 批量${strategyName}策略 - 开始执行\n\n` +
                 `【常用币涨幅前6】\n${symbolsList}\n\n` +
                 `【开仓参数】\n` +
                 `  • 方向: ${directionText}\n` +
@@ -4449,13 +4450,10 @@ data/
                 `  • 每个币合约价值: ${contractValuePerCoin} USDT\n` +
                 `  • 总保证金: ${totalMargin} USDT\n` +
                 `  • 总合约价值: ${totalContractValue} USDT\n` +
-                `  • 可用余额: ${balance.toFixed(2)} USDT\n\n` +
-                `确认批量开仓？`;
+                `  • 可用余额: ${balance.toFixed(2)} USDT`;
             
-            if (!confirm(confirmMsg)) {
-                console.log('[batchOrder] 用户取消批量开仓');
-                return;
-            }
+            console.log('[batchOrder] 📢 发送开始通知...');
+            await sendTelegramMessage(startMsg);
             
             // 开始批量下单
             console.log('[batchOrder] 开始批量下单...');
@@ -4512,14 +4510,16 @@ data/
                 }
             }
             
-            // 显示结果
+            // 🔔 显示结果并发送Telegram通知
             const resultMsg = `${emoji} 批量开仓完成\n\n` +
                 `【结果统计】\n` +
                 `  • 成功: ${successCount} 个\n` +
                 `  • 失败: ${failCount} 个\n\n` +
                 `【详细结果】\n${results.join('\n')}`;
             
-            alert(resultMsg);
+            console.log('[batchOrder] 📢 发送完成通知...');
+            await sendTelegramMessage(resultMsg);
+            console.log('[batchOrder] ✅ 批量开仓完成');
             
             // 刷新账户信息和持仓
             await refreshAccountData();
@@ -4597,7 +4597,8 @@ data/
                 `  • ${s.name}: $${s.price.toFixed(2)} (${s.change >= 0 ? '+' : ''}${s.change}%)`
             ).join('\n');
             
-            const confirmMsg = `${emoji} 涨幅前8批量${strategyName}策略\n\n` +
+            // 🔔 发送Telegram通知 - 批量开仓开始
+            const startMsg = `${emoji} 涨幅前8批量${strategyName}策略 - 开始执行\n\n` +
                 `【常用币涨幅前8】\n${symbolsList}\n\n` +
                 `【开仓参数】\n` +
                 `  • 方向: ${directionText}\n` +
@@ -4608,13 +4609,10 @@ data/
                 `  • 每个币合约价值: ${contractValuePerCoin} USDT\n` +
                 `  • 总保证金: ${totalMargin} USDT\n` +
                 `  • 总合约价值: ${totalContractValue} USDT\n` +
-                `  • 可用余额: ${balance.toFixed(2)} USDT\n\n` +
-                `确认批量开仓？`;
+                `  • 可用余额: ${balance.toFixed(2)} USDT`;
             
-            if (!confirm(confirmMsg)) {
-                console.log('[batchOrderTop8] 用户取消批量开仓');
-                return;
-            }
+            console.log('[batchOrderTop8] 📢 发送开始通知...');
+            await sendTelegramMessage(startMsg);
             
             // 开始批量下单
             console.log('[batchOrderTop8] 开始批量下单...');
@@ -4668,14 +4666,15 @@ data/
                 }
             }
             
-            // 显示结果
+            // 🔔 显示结果并发送Telegram通知
             const resultMsg = `${emoji} 批量开仓完成\n\n` +
                 `成功: ${successCount}/${top8Symbols.length}\n` +
                 `失败: ${failCount}/${top8Symbols.length}\n\n` +
                 `详细结果:\n${results.join('\n')}`;
             
-            alert(resultMsg);
-            console.log('[batchOrderTop8] 批量开仓完成:', { successCount, failCount });
+            console.log('[batchOrderTop8] 📢 发送完成通知...');
+            await sendTelegramMessage(resultMsg);
+            console.log('[batchOrderTop8] ✅ 批量开仓完成:', { successCount, failCount });
             
             // 刷新数据
             await refreshAccountData();
@@ -4743,34 +4742,17 @@ data/
                 return;
             }
             
-            // 风险警告
-            const riskWarning = `⚠️ 高风险策略警告\n\n` +
-                `此策略针对跌幅最大的币种，波动性极高！\n\n` +
-                `【涨幅后8名 = 跌幅最大】\n` +
+            // 🔔 记录风险信息到日志（无需确认，直接执行）
+            const riskInfo = `⚠️ 高风险策略 - 涨幅后8名（跌幅最大）：\n` +
                 bottom8Symbols.map(s => 
                     `  • ${s.name}: ${s.change >= 0 ? '+' : ''}${s.change}%`
-                ).join('\n') + '\n\n' +
-                `⚠️ 这些币种可能：\n` +
-                `  • 继续下跌（空单获利）\n` +
-                `  • 超跌反弹（多单获利）\n` +
-                `  • 剧烈波动（高风险）\n\n` +
-                `确定要继续吗？`;
+                ).join('\n');
             
-            if (!confirm(riskWarning)) {
-                console.log('[batchOrderBottom8] 用户取消（风险警告）');
-                return;
-            }
+            console.log('[batchOrderBottom8] ' + riskInfo);
+            console.log('[batchOrderBottom8] ⚠️ 风险提示已记录，直接执行策略...');
             
-            // 确认对话框
-            const directionText = direction === 'long' ? '做多（预期反弹）' : '做空（预期延续）';
-            const emoji = direction === 'long' ? '📈' : '📉';
-            const strategyName = direction === 'long' ? '多单' : '空单';
-            
-            const symbolsList = bottom8Symbols.map(s => 
-                `  • ${s.name}: $${s.price.toFixed(2)} (${s.change >= 0 ? '+' : ''}${s.change}%)`
-            ).join('\n');
-            
-            const confirmMsg = `${emoji} 涨幅后8批量${strategyName}策略\n\n` +
+            // 🔔 发送Telegram通知 - 批量开仓开始
+            const startMsg = `${emoji} 涨幅后8批量${strategyName}策略 - 开始执行\n\n` +
                 `【常用币涨幅后8（跌幅最大）】\n${symbolsList}\n\n` +
                 `【开仓参数】\n` +
                 `  • 方向: ${directionText}\n` +
@@ -4782,12 +4764,10 @@ data/
                 `  • 总保证金: ${totalMargin} USDT\n` +
                 `  • 总合约价值: ${totalContractValue} USDT\n` +
                 `  • 可用余额: ${balance.toFixed(2)} USDT\n\n` +
-                `⚠️ 最后确认：这是高风险策略！`;
+                `⚠️ 注意：这是高风险策略！`;
             
-            if (!confirm(confirmMsg)) {
-                console.log('[batchOrderBottom8] 用户取消批量开仓');
-                return;
-            }
+            console.log('[batchOrderBottom8] 📢 发送开始通知...');
+            await sendTelegramMessage(startMsg);
             
             // 开始批量下单
             console.log('[batchOrderBottom8] 开始批量下单...');
@@ -4841,14 +4821,15 @@ data/
                 }
             }
             
-            // 显示结果
+            // 🔔 显示结果并发送Telegram通知
             const resultMsg = `${emoji} 批量开仓完成\n\n` +
                 `成功: ${successCount}/${bottom8Symbols.length}\n` +
                 `失败: ${failCount}/${bottom8Symbols.length}\n\n` +
                 `详细结果:\n${results.join('\n')}`;
             
-            alert(resultMsg);
-            console.log('[batchOrderBottom8] 批量开仓完成:', { successCount, failCount });
+            console.log('[batchOrderBottom8] 📢 发送完成通知...');
+            await sendTelegramMessage(resultMsg);
+            console.log('[batchOrderBottom8] ✅ 批量开仓完成:', { successCount, failCount });
             
             // 刷新数据
             await refreshAccountData();
@@ -6850,20 +6831,23 @@ ${data.sMsg || result.message || ''}`);
                         
                         await sendTelegramMessage(completionMessage);
                         
-                        // 通知用户（弹窗）
-                        const priceCondition = strategyType === 'top_performers' 
-                            ? `BTC价格 $${btcPrice.toFixed(2)} > $${settings.triggerPrice}`
-                            : `BTC价格 $${btcPrice.toFixed(2)} < $${settings.triggerPrice}`;
+                        // 🔕 移除弹窗通知，只发送TG消息（用户需求：不要确认弹窗，自动执行）
+                        // 原弹窗代码已注释：
+                        // const priceCondition = strategyType === 'top_performers' 
+                        //     ? `BTC价格 $${btcPrice.toFixed(2)} > $${settings.triggerPrice}`
+                        //     : `BTC价格 $${btcPrice.toFixed(2)} < $${settings.triggerPrice}`;
+                        // 
+                        // let alertMessage = `✅ ${strategyName}策略执行完成！\n\n`;
+                        // alertMessage += `触发条件：${priceCondition}\n`;
+                        // alertMessage += `成功开单：${result.successCount}/${result.totalCount} 个币种\n\n`;
+                        // if (successCoins) alertMessage += `成功币种：\n${successCoins}\n\n`;
+                        // if (failedCoins) alertMessage += `失败币种：\n${failedCoins}\n\n`;
+                        // alertMessage += `策略已自动关闭，如需再次执行请重新开启。`;
+                        // 
+                        // alert(alertMessage);
+                        // playAlertSound();
                         
-                        let alertMessage = `✅ ${strategyName}策略执行完成！\n\n`;
-                        alertMessage += `触发条件：${priceCondition}\n`;
-                        alertMessage += `成功开单：${result.successCount}/${result.totalCount} 个币种\n\n`;
-                        if (successCoins) alertMessage += `成功币种：\n${successCoins}\n\n`;
-                        if (failedCoins) alertMessage += `失败币种：\n${failedCoins}\n\n`;
-                        alertMessage += `策略已自动关闭，如需再次执行请重新开启。`;
-                        
-                        alert(alertMessage);
-                        playAlertSound();
+                        console.log(`📢 策略执行完成通知已发送到Telegram`);
                         
                         // 刷新持仓
                         await loadPositions();
@@ -7053,15 +7037,18 @@ ${data.sMsg || result.message || ''}`);
                             console.error('❌ Telegram通知发送失败:', err);
                         }
                         
-                        // 显示弹窗提示
-                        const alertMsg = `✅ 上涨占比0-涨幅前8名策略执行完成！\n\n` +
-                            `账户：${account.name}\n` +
-                            `触发条件：上涨占比 = 0%\n` +
-                            `成功开单：${result.successCount}/${result.totalCount} 个币种\n\n` +
-                            `成功币种：\n${successCoins || '无'}\n\n` +
-                            `失败币种：\n${failedCoins || '无'}\n\n` +
-                            `策略已自动关闭，如需再次执行请重新开启。`;
-                        alert(alertMsg);
+                        // 🔕 移除弹窗通知，只发送TG消息（用户需求：不要确认弹窗，自动执行）
+                        // 原弹窗代码已注释：
+                        // const alertMsg = `✅ 上涨占比0-涨幅前8名策略执行完成！\n\n` +
+                        //     `账户：${account.name}\n` +
+                        //     `触发条件：上涨占比 = 0%\n` +
+                        //     `成功开单：${result.successCount}/${result.totalCount} 个币种\n\n` +
+                        //     `成功币种：\n${successCoins || '无'}\n\n` +
+                        //     `失败币种：\n${failedCoins || '无'}\n\n` +
+                        //     `策略已自动关闭，如需再次执行请重新开启。`;
+                        // alert(alertMsg);
+                        
+                        console.log(`📢 上涨占比0-涨幅前8名策略执行完成通知已发送到Telegram`);
                     }
                 }
             } catch (e) {
@@ -7246,15 +7233,18 @@ ${data.sMsg || result.message || ''}`);
                             console.error('❌ Telegram通知发送失败:', err);
                         }
                         
-                        // 显示弹窗提示
-                        const alertMsg = `✅ 上涨占比0-涨幅后8名策略执行完成！\n\n` +
-                            `账户：${account.name}\n` +
-                            `触发条件：上涨占比 = 0%\n` +
-                            `成功开单：${result.successCount}/${result.totalCount} 个币种\n\n` +
-                            `成功币种：\n${successCoins || '无'}\n\n` +
-                            `失败币种：\n${failedCoins || '无'}\n\n` +
-                            `策略已自动关闭，如需再次执行请重新开启。`;
-                        alert(alertMsg);
+                        // 🔕 移除弹窗通知，只发送TG消息（用户需求：不要确认弹窗，自动执行）
+                        // 原弹窗代码已注释：
+                        // const alertMsg = `✅ 上涨占比0-涨幅后8名策略执行完成！\n\n` +
+                        //     `账户：${account.name}\n` +
+                        //     `触发条件：上涨占比 = 0%\n` +
+                        //     `成功开单：${result.successCount}/${result.totalCount} 个币种\n\n` +
+                        //     `成功币种：\n${successCoins || '无'}\n\n` +
+                        //     `失败币种：\n${failedCoins || '无'}\n\n` +
+                        //     `策略已自动关闭，如需再次执行请重新开启。`;
+                        // alert(alertMsg);
+                        
+                        console.log(`📢 上涨占比0-涨幅后8名策略执行完成通知已发送到Telegram`);
                     }
                 }
             } catch (e) {

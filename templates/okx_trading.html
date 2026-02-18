@@ -6503,8 +6503,8 @@ ${data.sMsg || result.message || ''}`);
                 statusBadgeEl.textContent = '✅ 已启用';
                 statusBadgeEl.style.color = '#8b5cf6';
                 
-                // 同时检查JSONL状态
-                updateJsonlAllowedStatus();
+                // 同时检查JSONL状态（传递suffix和strategyType）
+                updateJsonlAllowedStatus(settings.strategyType, suffix);
             } else {
                 settingsBox.style.display = 'none';
             }
@@ -6513,17 +6513,27 @@ ${data.sMsg || result.message || ''}`);
         }
         
         // 检查并更新JSONL执行许可状态
-        async function updateJsonlAllowedStatus(strategyType = 'bottom_performers') {
+        async function updateJsonlAllowedStatus(strategyType = 'bottom_performers', suffix = '') {
             const account = accounts.find(acc => acc.id === currentAccount);
             if (!account) return;
             
-            const jsonlStatusEl = document.getElementById('jsonlAllowedStatus');
-            if (!jsonlStatusEl) return;
+            // 根据suffix确定元素ID
+            const jsonlStatusId = suffix ? `jsonlAllowedStatus${suffix}` : 'jsonlAllowedStatus';
+            const jsonlStatusEl = document.getElementById(jsonlStatusId);
+            
+            if (!jsonlStatusEl) {
+                console.warn(`⚠️ 未找到JSONL状态元素: ${jsonlStatusId}`);
+                return;
+            }
+            
+            console.log(`🔍 检查JSONL执行许可状态: strategy=${strategyType}, suffix=${suffix}, elementId=${jsonlStatusId}`);
             
             try {
-                // 🆕 根据策略类型调用不同的API
+                // 根据策略类型调用不同的API
                 const response = await fetch(`/api/okx-trading/check-allowed/${account.id}/${strategyType}`);
                 const result = await response.json();
+                
+                console.log(`📄 JSONL状态检查结果:`, result);
                 
                 if (result.success) {
                     if (result.allowed) {

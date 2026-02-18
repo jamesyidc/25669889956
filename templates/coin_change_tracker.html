@@ -3525,10 +3525,22 @@ pm2 status                                                # 查看所有进程�
                     }, true, true); // notMerge=true, lazyUpdate=true
                     
                     // 强制resize图表确保正确显示
+                    // 多次resize确保图表正确显示
                     setTimeout(() => {
                         trendChart.resize();
+                        rankChart.resize();
                         console.log('✅ 趋势图已渲染，数据点数:', changes.length);
+                        console.log('📊 图表容器尺寸 -', 
+                            'trendChart:', document.getElementById('trendChart').offsetWidth, 'x', document.getElementById('trendChart').offsetHeight,
+                            'rankChart:', document.getElementById('rankChart').offsetWidth, 'x', document.getElementById('rankChart').offsetHeight);
                     }, 100);
+                    
+                    // 再次延迟resize
+                    setTimeout(() => {
+                        trendChart.resize();
+                        rankChart.resize();
+                        console.log('📊 第二次resize完成');
+                    }, 500);
                     
                     // 更新波峰告警框
                     updateWavePeakAlert(wavePeaksData, falseBreakout, crashWarning);

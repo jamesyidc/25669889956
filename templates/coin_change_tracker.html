@@ -2956,7 +2956,7 @@ pm2 status                                                # 查看所有进程�
                                     if (wavePeaksData && wavePeaksData.length > 0) {
                                         wavePeaksData.forEach((peak, peakIdx) => {
                                             // B点 (谷底)
-                                            const bTime = peak.b_point.time.split(' ')[1];
+                                            const bTime = peak.b_point.beijing_time.split(' ')[1];
                                             const bIndex = times.indexOf(bTime);
                                             if (bIndex >= 0) {
                                                 points.push({
@@ -2981,7 +2981,7 @@ pm2 status                                                # 查看所有进程�
                                             }
                                             
                                             // A点 (峰顶)
-                                            const aTime = peak.a_point.time.split(' ')[1];
+                                            const aTime = peak.a_point.beijing_time.split(' ')[1];
                                             const aIndex = times.indexOf(aTime);
                                             if (aIndex >= 0) {
                                                 points.push({
@@ -3006,7 +3006,7 @@ pm2 status                                                # 查看所有进程�
                                             }
                                             
                                             // C点 (回调后反弹点)
-                                            const cTime = peak.c_point.time.split(' ')[1];
+                                            const cTime = peak.c_point.beijing_time.split(' ')[1];
                                             const cIndex = times.indexOf(cTime);
                                             if (cIndex >= 0) {
                                                 points.push({

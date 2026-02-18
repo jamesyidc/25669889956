@@ -68,12 +68,197 @@
                         </h3>
                         <div class="space-y-3 text-sm text-gray-700">
                             <p><strong>系统名称：</strong>27币涨跌幅追踪系统 (Coin Change Tracker)</p>
-                            <p><strong>系统版本：</strong>V2.2 (2026-02-18 RSI指标 + BTC状态框)</p>
+                            <p><strong>系统版本：</strong>V2.3 (2026-02-18 波峰检测 + 暴跌预警 + RSI极值显示)</p>
                             <p><strong>核心功能：</strong>实时追踪27种主流加密货币的价格变化、累计涨跌幅、RSI指标及BTC市场状态</p>
                             <p><strong>数据源：</strong>OKX API (永续合约 + 现货)</p>
                             <p><strong>更新频率：</strong>每5分钟自动采集一次</p>
                             <p><strong>重置周期：</strong>每天0点重置基准价格，重新开始计算</p>
                             <p><strong>监控币种：</strong>BTC, ETH, BNB, XRP, DOGE, SOL, DOT, LTC, LINK, HBAR, CFX, TRX, TON, NEAR, LDO, CRO, ETC, XLM, BCH, UNI, SUI, FIL, STX, CRV, AAVE, APT (共27种)</p>
+                        </div>
+                    </div>
+
+                    <!-- V2.3 更新说明 (2026-02-18) -->
+                    <div class="bg-gradient-to-r from-red-50 to-orange-50 rounded-lg p-6 shadow-md border-2 border-red-300">
+                        <h3 class="text-lg font-bold text-red-800 mb-4 border-b-2 border-red-500 pb-2">
+                            <i class="fas fa-rocket text-red-600 mr-2"></i>
+                            🚨 V2.3 重大更新 - 波峰检测 + 暴跌预警系统 (2026-02-18)
+                        </h3>
+                        <div class="space-y-4 text-sm text-gray-700">
+                            
+                            <!-- 新功能1: B-A-C波峰检测 -->
+                            <div class="bg-white p-4 rounded-lg border-l-4 border-cyan-500">
+                                <h4 class="font-bold text-cyan-800 mb-2">
+                                    <i class="fas fa-mountain mr-2"></i>
+                                    1️⃣ B-A-C波峰检测系统
+                                </h4>
+                                <p class="mb-2 font-semibold">智能识别市场波峰波谷，精准捕捉买卖时机：</p>
+                                <ul class="list-disc list-inside space-y-1 ml-4">
+                                    <li><strong>B点（谷底）：</strong>蓝色圆形标记，市场最低点，潜在买入机会</li>
+                                    <li><strong>A点（峰顶）：</strong>橙色三角标记，市场最高点，潜在卖出机会</li>
+                                    <li><strong>C点（回调）：</strong>紫色菱形标记，反弹后的回调点，观察支撑位</li>
+                                    <li><strong>振幅计算：</strong>自动计算B到A的涨幅和A到C的回撤幅度</li>
+                                    <li><strong>历史查看：</strong>支持查看历史日期的波峰标记，分析历史形态</li>
+                                    <li><strong>可视化增强：</strong>大号标记点（18-20px）+ 粗边框（3px）+ 高对比度字体</li>
+                                    <li><strong>智能阈值：</strong>振幅≥35%、窗口期15分钟，过滤小波动</li>
+                                </ul>
+                                <div class="mt-3 p-3 bg-cyan-50 rounded">
+                                    <p class="font-semibold text-cyan-800">📈 波峰形态解读：</p>
+                                    <table class="w-full text-xs mt-2 border-collapse">
+                                        <thead>
+                                            <tr class="bg-gray-200">
+                                                <th class="border border-gray-400 px-2 py-1">形态</th>
+                                                <th class="border border-gray-400 px-2 py-1">特征</th>
+                                                <th class="border border-gray-400 px-2 py-1">交易含义</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td class="border border-gray-400 px-2 py-1 font-semibold text-blue-600">B点出现</td>
+                                                <td class="border border-gray-400 px-2 py-1">价格触底反弹</td>
+                                                <td class="border border-gray-400 px-2 py-1">🟢 考虑买入，设置止损</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="border border-gray-400 px-2 py-1 font-semibold text-orange-600">A点出现</td>
+                                                <td class="border border-gray-400 px-2 py-1">价格见顶回落</td>
+                                                <td class="border border-gray-400 px-2 py-1">🔴 考虑卖出，锁定利润</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="border border-gray-400 px-2 py-1 font-semibold text-purple-600">C点出现</td>
+                                                <td class="border border-gray-400 px-2 py-1">回调测试支撑</td>
+                                                <td class="border border-gray-400 px-2 py-1">🟡 观察是否跌破，决定进出</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="border border-gray-400 px-2 py-1 font-semibold text-green-600">C点守住</td>
+                                                <td class="border border-gray-400 px-2 py-1">支撑有效</td>
+                                                <td class="border border-gray-400 px-2 py-1">✅ 可能继续上涨，持有或加仓</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="border border-gray-400 px-2 py-1 font-semibold text-red-600">C点跌破</td>
+                                                <td class="border border-gray-400 px-2 py-1">支撑失效</td>
+                                                <td class="border border-gray-400 px-2 py-1">⚠️ 趋势转弱，考虑离场</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- 新功能2: 假突破检测 -->
+                            <div class="bg-white p-4 rounded-lg border-l-4 border-indigo-500">
+                                <h4 class="font-bold text-indigo-800 mb-2">
+                                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                                    2️⃣ 假突破信号检测
+                                </h4>
+                                <p class="mb-2 font-semibold">自动识别虚假突破，避免追高被套：</p>
+                                <ul class="list-disc list-inside space-y-1 ml-4">
+                                    <li><strong>检测条件：</strong>连续3个波峰的A点均未突破第1个波峰的前高</li>
+                                    <li><strong>市场含义：</strong>上涨动能减弱，高位盘整，可能转为下跌趋势</li>
+                                    <li><strong>预警展示：</strong>页面顶部红色预警框，显示A点对比和突破判断</li>
+                                    <li><strong>详细分析：</strong>展示A1、A2、A3的具体数值和相互对比</li>
+                                    <li><strong>交易建议：</strong>根据具体情况提供离场或观望建议</li>
+                                </ul>
+                                <div class="mt-3 p-3 bg-indigo-50 rounded">
+                                    <p class="font-semibold text-indigo-800">🎯 假突破案例：</p>
+                                    <ul class="list-disc list-inside space-y-1 ml-2 mt-2 text-xs">
+                                        <li><strong>波峰1：</strong>A1 = +40%（首次冲高）</li>
+                                        <li><strong>波峰2：</strong>A2 = +35%（未突破40%，第一次假突破）</li>
+                                        <li><strong>波峰3：</strong>A3 = +32%（未突破40%，第二次假突破）</li>
+                                        <li><strong>结论：</strong>连续两次冲高失败，上涨动能衰竭，市场可能转跌 ⚠️</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- 新功能3: 暴跌预警 -->
+                            <div class="bg-white p-4 rounded-lg border-l-4 border-red-500">
+                                <h4 class="font-bold text-red-800 mb-2">
+                                    <i class="fas fa-bolt mr-2"></i>
+                                    3️⃣ 暴跌预警系统（AX < AX+1 < AX+2）
+                                </h4>
+                                <p class="mb-2 font-semibold">检测连续反弹高点递增模式，预警潜在暴跌风险：</p>
+                                <ul class="list-disc list-inside space-y-1 ml-4">
+                                    <li><strong>A点递增：</strong>检测A1 < A2 < A3的反弹高点递增趋势</li>
+                                    <li><strong>市场含义：</strong>反弹高点升高，但实际是下跌趋势中的反弹，暴跌前兆</li>
+                                    <li><strong>B点递减：</strong>同时检测B1 > B2 > B3，谷底越来越低，风险更高</li>
+                                    <li><strong>风险等级：</strong>A递增=中风险，A递增+B递减=高风险</li>
+                                    <li><strong>预警展示：</strong>橙色/红色预警框，展示A点和B点趋势分析</li>
+                                    <li><strong>交易建议：</strong>高风险→立即离场或开空；中风险→谨慎观望</li>
+                                </ul>
+                                <div class="mt-3 p-3 bg-red-50 rounded">
+                                    <p class="font-semibold text-red-800">⚠️ 暴跌预警案例：</p>
+                                    <table class="w-full text-xs mt-2 border-collapse">
+                                        <thead>
+                                            <tr class="bg-gray-200">
+                                                <th class="border border-gray-400 px-2 py-1">波峰</th>
+                                                <th class="border border-gray-400 px-2 py-1">A点（高点）</th>
+                                                <th class="border border-gray-400 px-2 py-1">B点（低点）</th>
+                                                <th class="border border-gray-400 px-2 py-1">市场状态</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td class="border border-gray-400 px-2 py-1 font-semibold">波峰1</td>
+                                                <td class="border border-gray-400 px-2 py-1">A1 = -10%</td>
+                                                <td class="border border-gray-400 px-2 py-1">B1 = -30%</td>
+                                                <td class="border border-gray-400 px-2 py-1">下跌后反弹</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="border border-gray-400 px-2 py-1 font-semibold">波峰2</td>
+                                                <td class="border border-gray-400 px-2 py-1 text-orange-600">A2 = -5% ↑</td>
+                                                <td class="border border-gray-400 px-2 py-1 text-red-600">B2 = -35% ↓</td>
+                                                <td class="border border-gray-400 px-2 py-1">反弹更高但底更低</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="border border-gray-400 px-2 py-1 font-semibold">波峰3</td>
+                                                <td class="border border-gray-400 px-2 py-1 text-orange-600">A3 = 0% ↑↑</td>
+                                                <td class="border border-gray-400 px-2 py-1 text-red-600">B3 = -40% ↓↓</td>
+                                                <td class="border border-gray-400 px-2 py-1 font-bold text-red-600">🚨 高风险暴跌信号</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <p class="mt-2 text-xs text-red-700 font-semibold">📉 解读：反弹高点递增但谷底递减，说明下跌主趋势未改变，每次反弹都是卖出机会，可能面临更大幅度下跌！</p>
+                                </div>
+                            </div>
+
+                            <!-- 新功能4: RSI当日极值显示 -->
+                            <div class="bg-white p-4 rounded-lg border-l-4 border-purple-500">
+                                <h4 class="font-bold text-purple-800 mb-2">
+                                    <i class="fas fa-chart-bar mr-2"></i>
+                                    4️⃣ RSI当日最高/最低点显示
+                                </h4>
+                                <p class="mb-2 font-semibold">RSI卡片新增当日极值信息，快速判断超买超卖程度：</p>
+                                <ul class="list-disc list-inside space-y-1 ml-4">
+                                    <li><strong>最高点：</strong>红色向上箭头标记，显示当日RSI之和最大值</li>
+                                    <li><strong>最低点：</strong>绿色向下箭头标记，显示当日RSI之和最小值</li>
+                                    <li><strong>振幅计算：</strong>自动计算最高点与最低点的差值（振幅）</li>
+                                    <li><strong>超买超卖：</strong>最高>1890标红（超买），最低<810标绿（超卖）</li>
+                                    <li><strong>小字显示：</strong>位于RSI状态下方，不影响主要信息展示</li>
+                                    <li><strong>实时更新：</strong>随数据更新自动刷新，保持同步</li>
+                                </ul>
+                                <div class="mt-3 p-3 bg-purple-50 rounded">
+                                    <p class="font-semibold text-purple-800">💡 RSI极值应用场景：</p>
+                                    <ul class="list-disc list-inside space-y-1 ml-2 mt-2 text-xs">
+                                        <li><strong>场景1：</strong>最高2005（超买）→ 最低610（超卖），振幅1394 → 日内波动极大，高抛低吸机会</li>
+                                        <li><strong>场景2：</strong>最高1750（接近超买）→ 最低1650，振幅100 → 窄幅震荡，等待突破</li>
+                                        <li><strong>场景3：</strong>当前RSI接近最高点 → 可能回调，考虑减仓</li>
+                                        <li><strong>场景4：</strong>当前RSI接近最低点 → 可能反弹，考虑加仓</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- 技术改进 -->
+                            <div class="bg-white p-4 rounded-lg border-l-4 border-blue-500">
+                                <h4 class="font-bold text-blue-800 mb-2">
+                                    <i class="fas fa-cogs mr-2"></i>
+                                    5️⃣ 技术优化与改进
+                                </h4>
+                                <ul class="list-disc list-inside space-y-1 ml-4">
+                                    <li><strong>历史数据兼容：</strong>为2月1-17日数据自动补充beijing_time字段</li>
+                                    <li><strong>B-A-C标记优化：</strong>增大标记点尺寸（18-20px），加粗边框（3px）</li>
+                                    <li><strong>时间匹配算法：</strong>精确匹配波峰时间与图表数据点，避免索引错误</li>
+                                    <li><strong>详细调试日志：</strong>控制台输出波峰检测过程，便于问题排查</li>
+                                    <li><strong>预警框动态标题：</strong>根据预警类型自动更新标题和图标</li>
+                                    <li><strong>响应式布局：</strong>预警框和波峰详情框自适应屏幕宽度</li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
 

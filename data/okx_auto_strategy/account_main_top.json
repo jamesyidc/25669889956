@@ -1,0 +1,8 @@
+{
+  "enabled": false,
+  "triggerPrice": 68000.0,
+  "strategyType": "top_performers",
+  "lastExecutedTime": null,
+  "executedCount": 0,
+  "lastUpdated": "2026-02-18 02:45:40"
+}

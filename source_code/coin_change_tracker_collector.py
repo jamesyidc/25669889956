@@ -12,6 +12,7 @@ import requests
 from datetime import datetime, timedelta
 from pathlib import Path
 import pytz
+import numpy as np
 
 # 配置
 DATA_DIR = Path('/home/user/webapp/data/coin_change_tracker')
@@ -29,6 +30,100 @@ SYMBOLS = [
     'BCH', 'UNI', 'SUI', 'FIL', 'STX',
     'CRV', 'AAVE', 'APT'
 ]
+
+
+def calculate_rsi(prices, period=14):
+    """
+    计算RSI指标
+    :param prices: 价格列表(从旧到新)
+    :param period: RSI周期，默认14
+    :return: RSI值 (0-100)
+    """
+    if len(prices) < period + 1:
+        return None
+    
+    # 计算价格变化
+    deltas = np.diff(prices)
+    
+    # 分离涨跌
+    gains = np.where(deltas > 0, deltas, 0)
+    losses = np.where(deltas < 0, -deltas, 0)
+    
+    # 计算平均涨跌
+    avg_gain = np.mean(gains[-period:])
+    avg_loss = np.mean(losses[-period:])
+    
+    # 避免除零
+    if avg_loss == 0:
+        return 100.0
+    
+    rs = avg_gain / avg_loss
+    rsi = 100 - (100 / (1 + rs))
+    
+    return round(rsi, 2)
+
+
+def get_5min_candles(symbol, limit=20):
+    """
+    获取5分钟K线数据
+    :param symbol: 币种符号
+    :param limit: 获取K线数量，默认20根（足够计算RSI14）
+    :return: 收盘价列表(从旧到新)
+    """
+    try:
+        # 优先使用永续合约
+        url = f"https://www.okx.com/api/v5/market/candles?instId={symbol}-USDT-SWAP&bar=5m&limit={limit}"
+        response = requests.get(url, timeout=5)
+        data = response.json()
+        
+        # 如果永续合约失败，尝试现货
+        if data.get('code') != '0' or not data.get('data'):
+            url = f"https://www.okx.com/api/v5/market/candles?instId={symbol}-USDT&bar=5m&limit={limit}"
+            response = requests.get(url, timeout=5)
+            data = response.json()
+        
+        if data.get('code') == '0' and data.get('data'):
+            # K线数据格式: [时间戳, 开盘价, 最高价, 最低价, 收盘价, ...]
+            # OKX返回的数据是从新到旧，需要反转
+            candles = data['data']
+            close_prices = [float(candle[4]) for candle in reversed(candles)]
+            return close_prices
+        else:
+            print(f"[警告] {symbol} 5分钟K线获取失败")
+            return None
+            
+    except Exception as e:
+        print(f"[错误] {symbol} 获取5分钟K线失败: {e}")
+        return None
+
+
+def get_all_rsi_values():
+    """
+    获取所有27个币种的RSI值
+    :return: 字典 {symbol: rsi_value}
+    """
+    rsi_values = {}
+    
+    for symbol in SYMBOLS:
+        try:
+            # 获取5分钟K线数据
+            close_prices = get_5min_candles(symbol, limit=20)
+            
+            if close_prices and len(close_prices) >= 15:  # 至少需要15根K线来计算RSI14
+                rsi = calculate_rsi(close_prices, period=14)
+                if rsi is not None:
+                    rsi_values[symbol] = rsi
+                    print(f"[RSI] {symbol}: {rsi}")
+            else:
+                print(f"[警告] {symbol} K线数据不足，无法计算RSI")
+            
+            time.sleep(0.1)  # 避免请求过快
+            
+        except Exception as e:
+            print(f"[错误] {symbol} 计算RSI失败: {e}")
+            continue
+    
+    return rsi_values
 
 
 def get_daily_open_prices():
@@ -178,6 +273,7 @@ def main():
     # 加载或初始化基准价格
     baseline_prices = load_baseline()
     last_baseline_date = None
+    last_rsi_collect_time = None  # 记录上次RSI采集时间
     
     # 如果没有基准价格，或者是新的一天，获取今日开盘价
     today = datetime.now(BEIJING_TZ).strftime('%Y%m%d')
@@ -209,6 +305,26 @@ def main():
             # 获取当前价格
             current_prices = get_current_prices()
             
+            # 检查是否需要采集RSI（每5分钟一次）
+            should_collect_rsi = False
+            if last_rsi_collect_time is None:
+                should_collect_rsi = True
+            else:
+                minutes_since_last = (now - last_rsi_collect_time).total_seconds() / 60
+                if minutes_since_last >= 5:
+                    should_collect_rsi = True
+            
+            # 获取RSI数据
+            rsi_values = {}
+            total_rsi = None
+            if should_collect_rsi:
+                print("[RSI] 开始采集5分钟RSI数据...")
+                rsi_values = get_all_rsi_values()
+                if rsi_values:
+                    total_rsi = round(sum(rsi_values.values()), 2)
+                    print(f"[RSI] 27币RSI之和: {total_rsi}")
+                    last_rsi_collect_time = now
+            
             if current_prices:
                 # 计算涨跌幅
                 changes = calculate_changes(current_prices, baseline_prices)
@@ -234,10 +350,18 @@ def main():
                     'count': len(changes)
                 }
                 
+                # 如果有RSI数据，添加到记录中
+                if rsi_values:
+                    record['rsi_values'] = rsi_values
+                    record['total_rsi'] = total_rsi
+                
                 # 保存到JSONL
                 save_to_jsonl(record)
                 
-                print(f"[统计] 总涨跌幅: {total_change:.2f}%, 币种数: {len(changes)}, 上涨占比: {up_ratio:.1f}% ({up_coins}↑/{total_coins - up_coins}↓)")
+                log_msg = f"[统计] 总涨跌幅: {total_change:.2f}%, 币种数: {len(changes)}, 上涨占比: {up_ratio:.1f}% ({up_coins}↑/{total_coins - up_coins}↓)"
+                if total_rsi is not None:
+                    log_msg += f", RSI之和: {total_rsi}"
+                print(log_msg)
             
             # 每1分钟采集一次
             print(f"[等待] 下次采集时间: {(now + timedelta(minutes=1)).strftime('%H:%M:%S')}")
@@ -248,6 +372,8 @@ def main():
             break
         except Exception as e:
             print(f"[错误] 采集失败: {e}")
+            import traceback
+            traceback.print_exc()
             time.sleep(60)
 
 

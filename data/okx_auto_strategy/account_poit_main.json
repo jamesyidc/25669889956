@@ -1,8 +1,8 @@
 {
   "enabled": true,
-  "triggerPrice": 67000.0,
+  "triggerPrice": 66000.0,
   "strategyType": "bottom_performers",
   "lastExecutedTime": "2026/2/18 01:41:31",
   "executedCount": 2,
-  "lastUpdated": "2026-02-18 01:14:59"
+  "lastUpdated": "2026-02-18 01:49:48"
 }

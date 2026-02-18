@@ -6307,7 +6307,11 @@ ${data.sMsg || result.message || ''}`);
         
         // 保存自动交易策略设置（到服务器API和JSONL文件，按账户独立存储）
         async function saveAutoStrategySettings() {
+            console.log('🔔 saveAutoStrategySettings 函数被调用');
+            
             const account = accounts.find(acc => acc.id === currentAccount);
+            console.log('📋 当前账户:', account ? account.name : '未选择');
+            
             if (!account) {
                 alert('⚠️ 请先选择账户');
                 return;
@@ -6315,6 +6319,7 @@ ${data.sMsg || result.message || ''}`);
             
             // 读取当前设置
             const currentSettings = await loadAutoStrategySettingsData();
+            console.log('📥 已加载当前设置:', currentSettings);
             
             const settings = {
                 enabled: document.getElementById('autoTradeSwitch').checked,
@@ -6324,7 +6329,11 @@ ${data.sMsg || result.message || ''}`);
                 executedCount: currentSettings?.executedCount || 0
             };
             
+            console.log('💾 准备保存的设置:', settings);
+            
             try {
+                console.log('🌐 正在发送请求到API:', `/api/okx-trading/auto-strategy/${account.id}`);
+                
                 const response = await fetch(`/api/okx-trading/auto-strategy/${account.id}`, {
                     method: 'POST',
                     headers: {
@@ -6333,7 +6342,10 @@ ${data.sMsg || result.message || ''}`);
                     body: JSON.stringify(settings)
                 });
                 
+                console.log('📡 API响应状态:', response.status);
+                
                 const result = await response.json();
+                console.log('📦 API响应结果:', result);
                 
                 if (result.success) {
                     console.log(`✅ 已保存账户 ${account.name} 的自动交易策略设置到服务器`, settings);
@@ -6341,7 +6353,7 @@ ${data.sMsg || result.message || ''}`);
                     // ⚠️ 如果开关被打开，写入JSONL设置allowed=true
                     if (settings.enabled) {
                         console.log('📝 用户开启策略，写入JSONL：设置allowed=true');
-                        await fetch(`/api/okx-trading/set-allowed/${account.id}/${settings.strategyType}`, {
+                        const jsonlResponse = await fetch(`/api/okx-trading/set-allowed/${account.id}/${settings.strategyType}`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -6351,6 +6363,8 @@ ${data.sMsg || result.message || ''}`);
                                 strategyType: settings.strategyType
                             })
                         });
+                        const jsonlResult = await jsonlResponse.json();
+                        console.log('📄 JSONL写入结果:', jsonlResult);
                     }
                     
                     updateAutoTradeStatus(settings.enabled, settings.lastExecutedTime);

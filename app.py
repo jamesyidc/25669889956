@@ -21833,7 +21833,7 @@ def get_wave_peaks():
         # 创建检测器并分析
         detector = WavePeakDetector()
         data_records = detector.load_data(str(data_file))
-        peaks = detector.detect_wave_peaks(data_records)
+        peaks, current_state = detector.detect_wave_peaks(data_records)
         false_breakout = detector.detect_false_breakout(peaks)
         
         # 构造响应数据
@@ -21842,7 +21842,8 @@ def get_wave_peaks():
             'date': file_date_str,
             'peaks_count': len(peaks),
             'false_breakout': false_breakout,
-            'peaks': peaks
+            'peaks': peaks,
+            'current_state': current_state  # 添加当前状态信息
         }
         
         response = jsonify(result)

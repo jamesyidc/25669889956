@@ -70,7 +70,7 @@ class WavePeakDetector:
         
         return data
     
-    def detect_wave_peaks(self, data: List[Dict]) -> List[Dict]:
+    def detect_wave_peaks(self, data: List[Dict]) -> tuple[List[Dict], Dict]:
         """
         检测波峰（B-A-C结构）- 状态机版本
         
@@ -90,7 +90,9 @@ class WavePeakDetector:
             data: 数据列表
             
         Returns:
-            波峰列表，每个波峰包含B、A、C三个点
+            (波峰列表, 当前状态信息)
+            - 波峰列表：已完成的波峰（有B、A、C三个点）
+            - 当前状态：包含进行中的波峰信息（可能只有B，或只有B-A）
         """
         if len(data) < self.window_minutes * 3:
             return []
@@ -291,7 +293,25 @@ class WavePeakDetector:
                 
                 i += 1
         
-        return wave_peaks
+        # 构建当前状态信息
+        current_state = {
+            'state': state.value if state else 'COMPLETED',
+            'b_candidate': b_candidate if b_candidate else None,
+            'a_candidate': a_candidate if a_candidate else None,
+            'has_incomplete_peak': (b_candidate is not None or a_candidate is not None)
+        }
+        
+        # 如果有B-A但没有C，说明有一个进行中的波峰
+        if b_candidate and a_candidate and state == DetectionState.LOOKING_FOR_C:
+            amplitude = a_candidate['value'] - b_candidate['value']
+            current_state['incomplete_peak'] = {
+                'b_point': b_candidate,
+                'a_point': a_candidate,
+                'amplitude': amplitude,
+                'status': '等待C点形成'
+            }
+        
+        return wave_peaks, current_state
     
     def detect_false_breakout(self, wave_peaks: List[Dict]) -> Optional[Dict]:
         """
@@ -366,7 +386,7 @@ def main():
     print('=' * 80)
     
     # 检测波峰
-    wave_peaks = detector.detect_wave_peaks(data)
+    wave_peaks, current_state = detector.detect_wave_peaks(data)
     
     print(f"\n{'=' * 80}")
     print(f"🏔️  检测到波峰数: {len(wave_peaks)}")
@@ -380,6 +400,18 @@ def main():
             print(f"  C点（回调）: {peak['c_point']['beijing_time']} | 涨跌幅: {peak['c_point']['value']:.2f}%")
             print(f"  振幅 (B→A): {peak['amplitude']:.2f}%")
             print(f"  回调 (A→C): {peak['decline']:.2f}% (占振幅 {peak['decline_ratio']:.1f}%)")
+    
+    # 显示进行中的波峰
+    if current_state.get('incomplete_peak'):
+        print(f"\n{'=' * 80}")
+        print(f"⏳ 进行中的波峰")
+        print('=' * 80)
+        incomplete = current_state['incomplete_peak']
+        print(f"\n  B点（谷底）: {incomplete['b_point']['beijing_time']} | 涨跌幅: {incomplete['b_point']['value']:.2f}%")
+        print(f"  A点（峰顶）: {incomplete['a_point']['beijing_time']} | 涨跌幅: {incomplete['a_point']['value']:.2f}%")
+        print(f"  C点（回调）: {incomplete['status']}")
+        print(f"  振幅 (B→A): {incomplete['amplitude']:.2f}%")
+        print(f"\n  💡 提示：A点已确认，正在等待价格回落超过50%振幅后反弹，形成C点")
     
     # 检测假突破
     false_breakout = detector.detect_false_breakout(wave_peaks)

@@ -2727,6 +2727,7 @@ pm2 status                                                # 查看所有进程�
                     // 加载波峰数据
                     let wavePeaksData = [];
                     let falseBreakout = null;
+                    let currentState = null;  // 添加当前状态变量
                     
                     try {
                         let wavePeaksUrl = '/api/coin-change-tracker/wave-peaks?';
@@ -2750,9 +2751,13 @@ pm2 status                                                # 查看所有进程�
                         if (wavePeaksResult.success && wavePeaksResult.peaks) {
                             wavePeaksData = wavePeaksResult.peaks;
                             falseBreakout = wavePeaksResult.false_breakout;
+                            currentState = wavePeaksResult.current_state;  // 保存当前状态
                             console.log('✅ 波峰数据加载成功，波峰数量:', wavePeaksData.length);
                             if (falseBreakout) {
                                 console.log('⚠️ 检测到假突破信号！', falseBreakout);
+                            }
+                            if (currentState && currentState.incomplete_peak) {
+                                console.log('🔄 检测到进行中的波峰:', currentState.incomplete_peak);
                             }
                         } else {
                             console.log('⚠️ 波峰数据为空或检测失败');
@@ -3260,7 +3265,7 @@ pm2 status                                                # 查看所有进程�
                     updateWavePeakAlert(wavePeaksData, falseBreakout);
                     
                     // 更新B-A-C波峰详情框
-                    updateWavePeakDetails(wavePeaksData);
+                    updateWavePeakDetails(wavePeaksData, currentState);
                 } else {
                     console.warn('历史数据为空或加载失败');
                     console.warn('Result:', result);
@@ -3543,12 +3548,13 @@ pm2 status                                                # 查看所有进程�
         }
         
         // 更新B-A-C波峰详情框
-        function updateWavePeakDetails(wavePeaksData) {
+        function updateWavePeakDetails(wavePeaksData, currentState) {
             const detailsBox = document.getElementById('wavePeakDetailsBox');
             const detailsContent = document.getElementById('wavePeakDetailsContent');
             
-            // 如果没有波峰数据，隐藏详情框
-            if (!wavePeaksData || wavePeaksData.length === 0) {
+            // 如果没有波峰数据也没有进行中的波峰，隐藏详情框
+            if ((!wavePeaksData || wavePeaksData.length === 0) && 
+                (!currentState || !currentState.incomplete_peak)) {
                 detailsBox.style.display = 'none';
                 return;
             }
@@ -3687,6 +3693,129 @@ pm2 status                                                # 查看所有进程�
                     </div>
                 `;
             });
+            
+            // 如果有进行中的波峰，显示它
+            if (currentState && currentState.incomplete_peak) {
+                const peak = currentState.incomplete_peak;
+                html += `
+                    <div class="bg-gradient-to-r from-yellow-50 to-amber-50 rounded-lg p-4 border-2 border-yellow-400 mt-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="text-lg font-bold text-yellow-800">
+                                <i class="fas fa-clock mr-2"></i>⏳ 进行中的波峰
+                            </h4>
+                            <div class="text-sm">
+                                <span class="px-2 py-1 bg-yellow-500 text-white rounded-full text-xs font-semibold animate-pulse">
+                                    等待C点形成
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- B点（谷底） -->
+                            <div class="bg-white rounded-lg p-3 border-2 border-cyan-400 shadow-sm">
+                                <div class="flex items-center mb-2">
+                                    <div class="w-8 h-8 bg-cyan-400 rounded-full flex items-center justify-center text-white font-bold mr-2">
+                                        B
+                                    </div>
+                                    <div class="text-sm font-semibold text-gray-700">谷底（起点）✅</div>
+                                </div>
+                                <div class="space-y-1 text-xs">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">时间:</span>
+                                        <span class="font-mono font-semibold">${peak.b_point.beijing_time.split(' ')[1]}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">涨跌幅:</span>
+                                        <span class="font-bold ${peak.b_point.value < 0 ? 'text-red-600' : 'text-green-600'}">
+                                            ${peak.b_point.value.toFixed(2)}%
+                                        </span>
+                                    </div>
+                                    <div class="mt-2 pt-2 border-t border-gray-200">
+                                        <div class="text-xs text-green-600 font-semibold">
+                                            <i class="fas fa-check-circle mr-1"></i>已确认
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- A点（峰顶） -->
+                            <div class="bg-white rounded-lg p-3 border-2 border-orange-400 shadow-sm">
+                                <div class="flex items-center mb-2">
+                                    <div class="w-8 h-8 bg-orange-400 rounded-full flex items-center justify-center text-white font-bold mr-2">
+                                        A
+                                    </div>
+                                    <div class="text-sm font-semibold text-gray-700">峰顶（最高点）✅</div>
+                                </div>
+                                <div class="space-y-1 text-xs">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">时间:</span>
+                                        <span class="font-mono font-semibold">${peak.a_point.beijing_time.split(' ')[1]}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">涨跌幅:</span>
+                                        <span class="font-bold ${peak.a_point.value > 0 ? 'text-green-600' : 'text-red-600'}">
+                                            ${peak.a_point.value.toFixed(2)}%
+                                        </span>
+                                    </div>
+                                    <div class="mt-2 pt-2 border-t border-gray-200">
+                                        <div class="text-xs text-green-600 font-semibold">
+                                            <i class="fas fa-check-circle mr-1"></i>已确认
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- C点（等待中） -->
+                            <div class="bg-white rounded-lg p-3 border-2 border-dashed border-purple-300 shadow-sm opacity-75">
+                                <div class="flex items-center mb-2">
+                                    <div class="w-8 h-8 bg-purple-300 rounded-full flex items-center justify-center text-white font-bold mr-2">
+                                        C
+                                    </div>
+                                    <div class="text-sm font-semibold text-gray-700">回调反弹点⏳</div>
+                                </div>
+                                <div class="space-y-1 text-xs">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">时间:</span>
+                                        <span class="font-mono text-gray-400">--:--:--</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">涨跌幅:</span>
+                                        <span class="text-gray-400">待确定</span>
+                                    </div>
+                                    <div class="mt-2 pt-2 border-t border-gray-200">
+                                        <div class="text-xs text-yellow-600 font-semibold animate-pulse">
+                                            <i class="fas fa-hourglass-half mr-1"></i>等待形成
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 波峰统计信息 -->
+                        <div class="mt-3 pt-3 border-t border-yellow-200 grid grid-cols-2 gap-2 text-xs">
+                            <div class="bg-white rounded p-2">
+                                <div class="text-gray-600">B→A振幅</div>
+                                <div class="font-bold text-blue-600">${peak.amplitude.toFixed(2)}%</div>
+                            </div>
+                            <div class="bg-white rounded p-2">
+                                <div class="text-gray-600">状态</div>
+                                <div class="font-bold text-yellow-600">${peak.status}</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 提示信息 -->
+                        <div class="mt-3 p-3 bg-yellow-100 rounded-lg border border-yellow-300">
+                            <div class="flex items-start">
+                                <i class="fas fa-info-circle text-yellow-600 mt-0.5 mr-2"></i>
+                                <div class="text-xs text-gray-700">
+                                    <strong>提示：</strong>A点已确认，正在等待价格回落超过50%振幅（${(peak.amplitude / 2).toFixed(2)}%）后反弹，形成C点。
+                                    <br>目标回落幅度：≥ ${(peak.amplitude * 0.5).toFixed(2)}%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
             
             detailsContent.innerHTML = html;
         }

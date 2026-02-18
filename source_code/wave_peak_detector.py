@@ -330,6 +330,98 @@ class WavePeakDetector:
         
         return wave_peaks, current_state
     
+    def detect_crash_warning(self, wave_peaks: List[Dict]) -> Optional[Dict]:
+        """
+        检测暴跌前兆信号
+        
+        连续3个波峰的A点递增（A1 < A2 < A3），通常预示暴跌
+        这种情况下，虽然反弹高点在升高，但整体处于下跌趋势
+        
+        Args:
+            wave_peaks: 波峰列表
+            
+        Returns:
+            暴跌预警信号字典，如果没有暴跌前兆返回None
+        """
+        if len(wave_peaks) < 3:
+            return None
+        
+        # 检查最近的3个波峰
+        recent_peaks = wave_peaks[-3:]
+        
+        peak1 = recent_peaks[0]
+        peak2 = recent_peaks[1]
+        peak3 = recent_peaks[2]
+        
+        a1 = peak1['a_point']['value']
+        a2 = peak2['a_point']['value']
+        a3 = peak3['a_point']['value']
+        
+        # 检查B点是否也在下降（更强的暴跌信号）
+        b1 = peak1['b_point']['value']
+        b2 = peak2['b_point']['value']
+        b3 = peak3['b_point']['value']
+        
+        # 判断A点是否递增：A1 < A2 < A3
+        a_ascending = (a1 < a2) and (a2 < a3)
+        
+        # 判断B点是否递减：B1 > B2 > B3（谷底越来越低）
+        b_descending = (b1 > b2) and (b2 > b3)
+        
+        if a_ascending:
+            warning_level = 'high' if b_descending else 'medium'
+            warning_msg = '⚠️ 暴跌预警！连续反弹高点升高，但可能是下跌趋势中的反弹'
+            
+            if b_descending:
+                warning_msg = '🚨 强烈暴跌预警！A点递增且B点递减，市场处于加速下跌趋势'
+            
+            return {
+                'signal_type': 'crash_warning',
+                'consecutive_peaks': 3,
+                'warning_level': warning_level,
+                'warning': warning_msg,
+                'peaks': recent_peaks,
+                'pattern': {
+                    'a_ascending': a_ascending,
+                    'b_descending': b_descending,
+                    'description': 'A点递增（反弹高点升高）' + (' + B点递减（谷底下降）' if b_descending else '')
+                },
+                'comparisons': {
+                    'a_values': {
+                        'a1': a1,
+                        'a2': a2,
+                        'a3': a3,
+                        'a2_vs_a1': {
+                            'increase': a2 > a1,
+                            'diff': a2 - a1,
+                            'diff_pct': ((a2 - a1) / abs(a1) * 100) if a1 != 0 else 0
+                        },
+                        'a3_vs_a2': {
+                            'increase': a3 > a2,
+                            'diff': a3 - a2,
+                            'diff_pct': ((a3 - a2) / abs(a2) * 100) if a2 != 0 else 0
+                        }
+                    },
+                    'b_values': {
+                        'b1': b1,
+                        'b2': b2,
+                        'b3': b3,
+                        'b2_vs_b1': {
+                            'decrease': b2 < b1,
+                            'diff': b2 - b1,
+                            'diff_pct': ((b2 - b1) / abs(b1) * 100) if b1 != 0 else 0
+                        },
+                        'b3_vs_b2': {
+                            'decrease': b3 < b2,
+                            'diff': b3 - b2,
+                            'diff_pct': ((b3 - b2) / abs(b2) * 100) if b2 != 0 else 0
+                        }
+                    }
+                }
+            }
+        
+        return None
+    
     def detect_false_breakout(self, wave_peaks: List[Dict]) -> Optional[Dict]:
         """
         检测假突破信号

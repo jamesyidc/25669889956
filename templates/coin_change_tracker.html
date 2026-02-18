@@ -1879,8 +1879,8 @@ pm2 status                                                # 查看所有进程�
                         <i class="fas fa-exclamation-triangle text-red-600 text-3xl"></i>
                     </div>
                     <div class="ml-4 flex-1">
-                        <h3 class="text-xl font-bold text-red-800 mb-2">
-                            <i class="fas fa-chart-line mr-2"></i>假突破信号告警
+                        <h3 id="wavePeakAlertTitle" class="text-xl font-bold text-red-800 mb-2">
+                            <i class="fas fa-chart-line mr-2"></i>市场预警信号
                         </h3>
                         <div id="wavePeakAlertContent" class="text-gray-700">
                             <!-- 动态内容将在这里填充 -->
@@ -2764,6 +2764,7 @@ pm2 status                                                # 查看所有进程�
                     // 加载波峰数据
                     let wavePeaksData = [];
                     let falseBreakout = null;
+                    let crashWarning = null;  // 添加暴跌预警变量
                     let currentState = null;  // 添加当前状态变量
                     
                     try {
@@ -2791,6 +2792,7 @@ pm2 status                                                # 查看所有进程�
                         if (wavePeaksResult.success && wavePeaksResult.peaks) {
                             wavePeaksData = wavePeaksResult.peaks;
                             falseBreakout = wavePeaksResult.false_breakout;
+                            crashWarning = wavePeaksResult.crash_warning;  // 保存暴跌预警
                             currentState = wavePeaksResult.current_state;  // 保存当前状态
                             console.log('✅ 波峰数据加载成功，波峰数量:', wavePeaksData.length);
                             console.log('📅 波峰数据日期:', wavePeaksResult.date);
@@ -2799,6 +2801,9 @@ pm2 status                                                # 查看所有进程�
                             }
                             if (falseBreakout) {
                                 console.log('⚠️ 检测到假突破信号！', falseBreakout);
+                            }
+                            if (crashWarning) {
+                                console.log('🚨 检测到暴跌预警！', crashWarning);
                             }
                             if (currentState && currentState.incomplete_peak) {
                                 console.log('🔄 检测到进行中的波峰:', currentState.incomplete_peak);
@@ -3334,7 +3339,7 @@ pm2 status                                                # 查看所有进程�
                     }, 100);
                     
                     // 更新波峰告警框
-                    updateWavePeakAlert(wavePeaksData, falseBreakout);
+                    updateWavePeakAlert(wavePeaksData, falseBreakout, crashWarning);
                     
                     // 更新B-A-C波峰详情框
                     updateWavePeakDetails(wavePeaksData, currentState);
@@ -3545,12 +3550,13 @@ pm2 status                                                # 查看所有进程�
         }
         
         // 更新波峰告警框
-        function updateWavePeakAlert(wavePeaksData, falseBreakout) {
+        function updateWavePeakAlert(wavePeaksData, falseBreakout, crashWarning) {
             const alertBox = document.getElementById('wavePeakAlertBox');
             const alertContent = document.getElementById('wavePeakAlertContent');
+            const alertTitle = document.getElementById('wavePeakAlertTitle');
             
-            // 如果没有假突破信号，隐藏告警框
-            if (!falseBreakout) {
+            // 如果没有任何信号，隐藏告警框
+            if (!falseBreakout && !crashWarning) {
                 alertBox.style.display = 'none';
                 return;
             }
@@ -3558,7 +3564,146 @@ pm2 status                                                # 查看所有进程�
             // 显示告警框
             alertBox.style.display = 'block';
             
-            // 获取比较信息
+            // 动态更新标题
+            if (crashWarning && falseBreakout) {
+                alertTitle.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>暴跌预警 + 假突破信号';
+            } else if (crashWarning) {
+                alertTitle.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>暴跌预警';
+            } else {
+                alertTitle.innerHTML = '<i class="fas fa-chart-line-down mr-2"></i>假突破信号';
+            }
+            
+            let html = '<div class="space-y-4">';
+            
+            // 显示暴跌预警（优先级更高）
+            if (crashWarning) {
+                const isHighLevel = crashWarning.warning_level === 'high';
+                const aValues = crashWarning.comparisons?.a_values || {};
+                const bValues = crashWarning.comparisons?.b_values || {};
+                
+                html += `
+                    <div class="bg-white p-4 rounded-lg shadow-sm border-2 ${isHighLevel ? 'border-red-500' : 'border-orange-400'}">
+                        <p class="text-lg font-semibold ${isHighLevel ? 'text-red-700' : 'text-orange-700'} mb-2">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>${crashWarning.warning}
+                        </p>
+                        <p class="text-gray-700 mb-3">
+                            ${crashWarning.pattern.description}
+                        </p>
+                        
+                        <!-- A点递增趋势 -->
+                        <div class="bg-gradient-to-r from-orange-50 to-red-50 p-4 rounded-lg border-2 border-orange-300 mb-3">
+                            <div class="text-base font-bold text-orange-800 mb-3 flex items-center">
+                                <i class="fas fa-chart-line-up mr-2"></i>A点趋势（反弹高点递增）
+                            </div>
+                            <div class="space-y-2">
+                                <div class="bg-white p-3 rounded-lg border border-orange-400">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-2">
+                                            <span class="font-semibold text-gray-700">A1 → A2:</span>
+                                            <span class="text-sm text-gray-600">
+                                                ${aValues.a1?.toFixed(2)}% → ${aValues.a2?.toFixed(2)}%
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            <span class="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">
+                                                <i class="fas fa-arrow-up mr-1"></i>上升
+                                            </span>
+                                            <span class="text-xs text-orange-600 font-semibold">
+                                                +${aValues.a2_vs_a1?.diff?.toFixed(2)}%
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white p-3 rounded-lg border border-orange-400">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-2">
+                                            <span class="font-semibold text-gray-700">A2 → A3:</span>
+                                            <span class="text-sm text-gray-600">
+                                                ${aValues.a2?.toFixed(2)}% → ${aValues.a3?.toFixed(2)}%
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            <span class="px-2 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">
+                                                <i class="fas fa-arrow-up mr-1"></i>上升
+                                            </span>
+                                            <span class="text-xs text-orange-600 font-semibold">
+                                                +${aValues.a3_vs_a2?.diff?.toFixed(2)}%
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                `;
+                
+                // 如果B点也在递减，显示更强烈的警告
+                if (crashWarning.pattern.b_descending) {
+                    html += `
+                        <div class="bg-gradient-to-r from-red-50 to-red-100 p-4 rounded-lg border-2 border-red-500">
+                            <div class="text-base font-bold text-red-800 mb-3 flex items-center">
+                                <i class="fas fa-chart-line-down mr-2"></i>B点趋势（谷底递减，加速下跌）
+                            </div>
+                            <div class="space-y-2">
+                                <div class="bg-white p-3 rounded-lg border border-red-400">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-2">
+                                            <span class="font-semibold text-gray-700">B1 → B2:</span>
+                                            <span class="text-sm text-gray-600">
+                                                ${bValues.b1?.toFixed(2)}% → ${bValues.b2?.toFixed(2)}%
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">
+                                                <i class="fas fa-arrow-down mr-1"></i>下降
+                                            </span>
+                                            <span class="text-xs text-red-600 font-semibold">
+                                                ${bValues.b2_vs_b1?.diff?.toFixed(2)}%
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-white p-3 rounded-lg border border-red-400">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-2">
+                                            <span class="font-semibold text-gray-700">B2 → B3:</span>
+                                            <span class="text-sm text-gray-600">
+                                                ${bValues.b2?.toFixed(2)}% → ${bValues.b3?.toFixed(2)}%
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            <span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold">
+                                                <i class="fas fa-arrow-down mr-1"></i>下降
+                                            </span>
+                                            <span class="text-xs text-red-600 font-semibold">
+                                                ${bValues.b3_vs_b2?.diff?.toFixed(2)}%
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                html += `
+                        <div class="bg-yellow-50 p-3 rounded-lg border border-yellow-400 mt-3">
+                            <p class="text-sm font-semibold text-yellow-800 mb-1">
+                                <i class="fas fa-lightbulb mr-1"></i>交易建议
+                            </p>
+                            <ul class="text-sm text-yellow-900 space-y-1 ml-4">
+                                <li>• ${isHighLevel ? '考虑立即离场或开空单' : '谨慎观望，控制仓位'}</li>
+                                <li>• ${isHighLevel ? '设置严格止损，防范大幅下跌' : '等待跌势确认后再做空'}</li>
+                                <li>• ${isHighLevel ? '关注重要支撑位突破情况' : '密切关注后续波峰形态'}</li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // 显示假突破预警
+            if (falseBreakout) {
             const comparisons = falseBreakout.comparisons || {};
             const a1 = comparisons.a1 || 0;
             const a2 = comparisons.a2 || 0;

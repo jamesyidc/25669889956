@@ -21835,6 +21835,7 @@ def get_wave_peaks():
         data_records = detector.load_data(str(data_file))
         peaks, current_state = detector.detect_wave_peaks(data_records)
         false_breakout = detector.detect_false_breakout(peaks)
+        crash_warning = detector.detect_crash_warning(peaks)  # 添加暴跌预警检测
         
         # 构造响应数据
         result = {
@@ -21842,6 +21843,7 @@ def get_wave_peaks():
             'date': file_date_str,
             'peaks_count': len(peaks),
             'false_breakout': false_breakout,
+            'crash_warning': crash_warning,  # 添加暴跌预警信息
             'peaks': peaks,
             'current_state': current_state  # 添加当前状态信息
         }

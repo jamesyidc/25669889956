@@ -2481,6 +2481,13 @@ pm2 status                                                # 查看所有进程�
             trendChart = echarts.init(trendChartDom);
             rankChart = echarts.init(rankChartDom);
             
+            // 强制resize确保图表正确显示
+            setTimeout(() => {
+                trendChart.resize();
+                rankChart.resize();
+                console.log('📊 图表已resize');
+            }, 100);
+            
             console.log('📊 ECharts实例已创建:', {trendChart, rankChart});
             
             // 趋势图配置

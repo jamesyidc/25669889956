@@ -4165,7 +4165,8 @@ data/
             loadAccountData();
             refreshAccountData();  // 刷新账户信息和持仓
             loadTakeProfitStopLossSettings();  // 加载该账户的止盈止损设置
-            loadAutoStrategySettings();  // 加载该账户的自动交易策略设置
+            loadAutoStrategySettings();  // 加载该账户的抄底策略设置
+            loadAutoStrategySettingsTop();  // 🆕 加载该账户的追涨策略设置
             loadUpRatio0StrategySettings();  // 🆕 加载该账户的上涨占比0策略设置
             
             const account = accounts.find(acc => acc.id === accountId);

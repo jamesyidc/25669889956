@@ -1387,7 +1387,14 @@
                                 <li>涨幅前8名：按涨跌幅降序排列，取前8名（涨幅最高的8个）</li>
                             </ul>
                         </li>
-                        <li><strong>仓位计算：</strong>每个币种用总权益的1.5%（上限5 USDT），10倍杠杆</li>
+                        <li><strong>仓位计算：</strong>每个币种用总权益 × positionSize%（默认1.5%，上限5 USDT），10倍杠杆
+                            <ul style="margin: 2px 0 0 20px; font-size: 10px; color: #64748b;">
+                                <li>📝 可在配置文件中设置 <code>positionSize</code> 字段（如 0.5、1.5、3.0）</li>
+                                <li>💰 计算公式：min(总权益 × positionSize%, 5 USDT)</li>
+                                <li>🟢 保守：0.5% | 🟡 稳健：1.5% | 🔴 激进：3.0%</li>
+                                <li>📊 示例（总权益198.64 USDT）：1.5% → 2.98 USDT/币 × 8 = 23.84 USDT</li>
+                            </ul>
+                        </li>
                         <li><strong>批量开单：</strong>对这8个币种逐个下市价多单</li>
                         <li><strong>发送通知：</strong>触发时发送TG消息，执行完成后发送TG消息和Alert弹窗</li>
                         <li><strong>自动关闭：</strong>执行完成后自动关闭策略开关（enabled=false）</li>
@@ -1411,7 +1418,14 @@
                                 <li>涨幅后8名策略：按涨跌幅升序排列，取前8名（跌幅最大的8个）</li>
                             </ul>
                         </li>
-                        <li><strong>仓位计算：</strong>每个币种用总权益的1.5%（上限5 USDT），10倍杠杆</li>
+                        <li><strong>仓位计算：</strong>每个币种用总权益 × positionSize%（默认1.5%，上限5 USDT），10倍杠杆
+                            <ul style="margin: 2px 0 0 20px; font-size: 10px; color: #64748b;">
+                                <li>📝 可在配置文件中设置 <code>positionSize</code> 字段（如 0.5、1.5、3.0）</li>
+                                <li>💰 计算公式：min(总权益 × positionSize%, 5 USDT)</li>
+                                <li>🟢 保守：0.5% | 🟡 稳健：1.5% | 🔴 激进：3.0%</li>
+                                <li>📊 示例（总权益198.64 USDT）：1.5% → 2.98 USDT/币 × 8 = 23.84 USDT</li>
+                            </ul>
+                        </li>
                         <li><strong>批量开单：</strong>对这8个币种逐个下市价多单</li>
                         <li><strong>发送通知：</strong>执行完成后发送TG消息和Alert弹窗</li>
                         <li><strong>写入JSONL：</strong>设置allowed=false，防止重复执行</li>
@@ -1419,6 +1433,101 @@
                         <li><strong>刷新持仓：</strong>自动刷新持仓列表</li>
                     </ol>
                     <p style="margin: 8px 0 4px 0; padding: 8px; background: #fef3c7; border-radius: 4px;"><strong>⚠️ 注意：</strong>触发价格/上涨占比只是触发条件，真正开单的是常用币中涨幅前8名/后8名的币种</p>
+                </div>
+                
+                <!-- 2.5 仓位配置指南 -->
+                <div style="background: white; padding: 10px; border-radius: 6px; margin-bottom: 10px; border-left: 4px solid #10b981;">
+                    <h4 style="margin: 0 0 8px 0; color: #0369a1; font-size: 12px;">📊 二.五、仓位配置指南（positionSize）</h4>
+                    
+                    <p style="margin: 4px 0; font-size: 10px;"><strong>🎯 配置说明：</strong></p>
+                    <ul style="margin: 2px 0 0 20px; padding: 0; font-size: 10px;">
+                        <li><strong>positionSize</strong>：每个币种的开仓金额占总权益的百分比（如 1.5 表示 1.5%）</li>
+                        <li><strong>默认值</strong>：1.5（即 1.5%），如配置文件中未设置则使用此值</li>
+                        <li><strong>计算公式</strong>：开仓金额 = min(总权益 × positionSize%, 5 USDT)</li>
+                        <li><strong>上限保护</strong>：单笔开仓最多 5 USDT（防止错误配置）</li>
+                        <li><strong>生效时机</strong>：修改配置文件后，下次策略触发时自动生效</li>
+                    </ul>
+                    
+                    <p style="margin: 8px 0 4px 0; font-size: 10px;"><strong>💰 推荐配置：</strong></p>
+                    <table style="width: 100%; font-size: 9px; border-collapse: collapse; margin: 4px 0;">
+                        <thead>
+                            <tr style="background: #f1f5f9;">
+                                <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: left;">风险等级</th>
+                                <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: center;">positionSize</th>
+                                <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: center;">每币开仓*</th>
+                                <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: center;">8币总计*</th>
+                                <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: center;">占总权益</th>
+                                <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: left;">适用场景</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">🟢 保守</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center;">0.5</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center;">0.99 U</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center;">7.95 U</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center;">4.0%</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">策略测试、小资金</td>
+                            </tr>
+                            <tr style="background: #fef3c7;">
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;"><strong>🟡 稳健（推荐）</strong></td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center;"><strong>1.5</strong></td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center;"><strong>2.98 U</strong></td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center;"><strong>23.84 U</strong></td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center;"><strong>12.0%</strong></td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;"><strong>日常运行、平衡风险</strong></td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">🟠 中等</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center;">2.0</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center;">3.97 U</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center;">31.78 U</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center;">16.0%</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">较激进策略</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">🔴 激进</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center;">3.0</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center;">5.00 U ⬆️</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center;">40.00 U</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center;">20.1%</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">高风险，触发上限</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p style="margin: 2px 0; font-size: 9px; color: #64748b;">*基于总权益 198.64 USDT 计算示例；⬆️ 表示触发 5 USDT 上限</p>
+                    
+                    <p style="margin: 8px 0 4px 0; font-size: 10px;"><strong>🔧 配置方法：</strong></p>
+                    <pre style="background: #1e293b; color: #e2e8f0; padding: 8px; border-radius: 4px; overflow-x: auto; font-size: 9px; margin: 4px 0;"># 编辑配置文件
+vim /home/user/webapp/data/okx_auto_strategy/account_poit_main.json
+
+# 修改 positionSize 字段
+{
+  "enabled": true,
+  "triggerPrice": 67000.0,
+  "strategyType": "bottom_performers",
+  "positionSize": 1.5,    ← 修改这个值（如改为 2.0）
+  ...
+}
+
+# 保存后下次策略触发时生效（无需重启）</pre>
+                    
+                    <p style="margin: 8px 0 4px 0; font-size: 10px;"><strong>✅ 验证配置：</strong></p>
+                    <pre style="background: #1e293b; color: #e2e8f0; padding: 8px; border-radius: 4px; overflow-x: auto; font-size: 9px; margin: 4px 0;"># 查看执行日志
+pm2 logs flask-app --lines 20 | grep "开仓金额"
+
+# 预期输出示例：
+📊 每个币种开仓金额: 2.98 USDT (总权益198.64 × 1.5%, 上限5U)</pre>
+                    
+                    <div style="margin: 8px 0; padding: 6px; background: #fee2e2; border-left: 3px solid #ef4444; border-radius: 4px; font-size: 9px;">
+                        <p style="margin: 0 0 2px 0; font-weight: 600; color: #991b1b;">⚠️ 风险提示</p>
+                        <ul style="margin: 2px 0 0 16px; padding: 0; color: #7f1d1d;">
+                            <li>positionSize 过高会增加风险，建议不超过 3.0（总权益的3%）</li>
+                            <li>8个币种同时开仓，总仓位 = positionSize × 8（如 1.5% × 8 = 12%）</li>
+                            <li>使用 10 倍杠杆，实际风险敞口 = 总仓位 × 10（如 12% × 10 = 120%）</li>
+                            <li>建议先用小金额（0.5%）测试，确认无误后再提高</li>
+                        </ul>
+                    </div>
                 </div>
                 
                 <!-- 3. 数据存储结构 -->
@@ -1441,6 +1550,17 @@
   "executedCount": 0,              // 执行次数
   "lastUpdated": "2026-02-13 13:10:00"  // 最后更新时间
 }</pre>
+                    <div style="margin: 8px 0; padding: 8px; background: #dbeafe; border-left: 3px solid #3b82f6; border-radius: 4px; font-size: 10px;">
+                        <p style="margin: 0 0 4px 0; font-weight: 600; color: #1e40af;">📊 positionSize 字段说明（v2.6新增）</p>
+                        <ul style="margin: 2px 0 0 16px; padding: 0; color: #1e3a8a;">
+                            <li><strong>作用：</strong>每个币种的开仓金额占总权益的百分比</li>
+                            <li><strong>默认值：</strong>1.5（即1.5%）</li>
+                            <li><strong>计算公式：</strong>开仓金额 = min(总权益 × positionSize%, 5 USDT)</li>
+                            <li><strong>推荐配置：</strong>🟢 保守 0.5% | 🟡 稳健 1.5% | 🔴 激进 3.0%</li>
+                            <li><strong>示例：</strong>总权益198.64 USDT，positionSize=1.5 → 每币2.98 USDT，8币总计23.84 USDT</li>
+                            <li><strong>修改方式：</strong>直接编辑JSON文件，保存后下次触发时生效</li>
+                        </ul>
+                    </div>
                     <p style="margin: 2px 0;"><code style="background: #f1f5f9; padding: 2px 4px; border-radius: 3px;">data/okx_auto_strategy/account_main_history.jsonl</code></p>
                     <pre style="background: #1e293b; color: #e2e8f0; padding: 8px; border-radius: 4px; overflow-x: auto; font-size: 10px; margin: 4px 0;">
 {"enabled": true, "triggerPrice": 68000.0, "strategyType": "bottom_performers", "lastExecutedTime": null, "executedCount": 0, "timestamp": "2026-02-13T13:00:00"}

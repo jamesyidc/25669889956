@@ -932,9 +932,10 @@ pm2 logs coin-change-tracker --lines 20</code></pre>
                                 <h4 class="font-bold text-gray-800 mb-2">📂 存储路径</h4>
                                 <div class="bg-white p-3 rounded border border-gray-300 font-mono text-xs">
                                     <p><strong>数据目录：</strong>/home/user/webapp/data/coin_change_tracker/</p>
-                                    <p><strong>数据文件：</strong>coin_change_YYYYMMDD.jsonl (每天一个文件)</p>
-                                    <p><strong>基准文件：</strong>baseline_YYYYMMDD.json (每天一个文件)</p>
-                                    <p><strong>示例：</strong>coin_change_20260211.jsonl, baseline_20260211.json</p>
+                                    <p><strong>主数据文件：</strong>coin_change_YYYYMMDD.jsonl (每天一个文件，包含涨跌幅+RSI)</p>
+                                    <p><strong>RSI专用文件：</strong>rsi_YYYYMMDD.jsonl (每天一个文件，仅RSI数据)</p>
+                                    <p><strong>基准文件：</strong>baseline_YYYYMMDD.json (每天一个文件，开盘价)</p>
+                                    <p><strong>示例：</strong>coin_change_20260218.jsonl, rsi_20260218.jsonl, baseline_20260218.json</p>
                                 </div>
                             </div>
                             
@@ -942,27 +943,96 @@ pm2 logs coin-change-tracker --lines 20</code></pre>
                                 <h4 class="font-bold text-gray-800 mb-2">📋 数据文件格式 (coin_change_YYYYMMDD.jsonl)</h4>
                                 <div class="space-y-2">
                                     <p class="text-gray-700"><strong>格式：</strong>JSONL (每行一个完整的JSON对象)</p>
+                                    <p class="text-gray-700"><strong>更新频率：</strong>每1分钟一条记录</p>
                                     <p class="text-gray-700"><strong>字段说明：</strong></p>
                                     <div class="bg-white p-3 rounded border border-gray-300 font-mono text-xs overflow-x-auto">
                                         <pre>{
-  "timestamp": 1770802416898,              // Unix时间戳 (毫秒)
-  "beijing_time": "2026-02-11 17:33:26",  // 北京时间字符串
-  "total_change": -81.0,                   // 27币累计涨跌幅 (百分比之和)
-  "count": 26,                             // 实际采集到的币种数量
+  "timestamp": 1771402915151,              // Unix时间戳 (毫秒)
+  "beijing_time": "2026-02-18 16:21:45",  // 北京时间字符串
+  "total_change": 31.3,                    // 27币累计涨跌幅 (百分比之和)
+  "cumulative_pct": 31.3,                  // 累计涨跌幅 (与total_change相同)
+  "count": 27,                             // 实际采集到的币种数量
+  "up_ratio": 92.6,                        // 上涨占比 (%)
+  "up_coins": 25,                          // 上涨币种数
+  "down_coins": 2,                         // 下跌币种数
+  "total_rsi": 1820.72,                    // RSI之和 (0-2700，每5分钟更新)
+  "rsi_values": {                          // 各币种RSI值 (每5分钟更新)
+    "BTC": 80.58,                          // BTC的RSI值 (0-100)
+    "ETH": 78.79,                          // ETH的RSI值
+    "BNB": 74.79,
+    ... // 其余24个币种的RSI
+  },
   "changes": {                             // 各币种详细数据
     "BTC": {
-      "current_price": 66947.1,            // 当前价格 (USDT)
-      "baseline_price": 69288.2,           // 基准价格 (今日开盘价)
-      "change_pct": -3.38                  // 涨跌幅 (%)
+      "current_price": 68294.3,            // 当前价格 (USDT)
+      "baseline_price": 67349.9,           // 基准价格 (今日开盘价)
+      "change_pct": 1.4                    // 涨跌幅 (%)
     },
     "ETH": {
-      "current_price": 1951.56,
-      "baseline_price": 2022.8,
-      "change_pct": -3.52
+      "current_price": 2024.94,
+      "baseline_price": 1967.53,
+      "change_pct": 2.92
     },
     ... // 其余25个币种
   }
 }</pre>
+                                    </div>
+                                    <div class="mt-2 p-2 bg-yellow-50 rounded border border-yellow-200">
+                                        <p class="text-xs text-yellow-800"><strong>⚠️ 注意：</strong>RSI字段(total_rsi、rsi_values)仅在每5分钟采集周期时存在，其他时间点的记录中这些字段可能为空或不存在。</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-gray-100 p-4 rounded-lg">
+                                <h4 class="font-bold text-gray-800 mb-2">📋 RSI专用文件格式 (rsi_YYYYMMDD.jsonl)</h4>
+                                <div class="space-y-2">
+                                    <p class="text-gray-700"><strong>格式：</strong>JSONL (每行一个完整的JSON对象)</p>
+                                    <p class="text-gray-700"><strong>更新频率：</strong>每5分钟一条记录</p>
+                                    <p class="text-gray-700"><strong>RSI计算：</strong>14周期，基于5分钟K线</p>
+                                    <p class="text-gray-700"><strong>字段说明：</strong></p>
+                                    <div class="bg-white p-3 rounded border border-gray-300 font-mono text-xs overflow-x-auto">
+                                        <pre>{
+  "timestamp": 1771402705553,              // Unix时间戳 (毫秒)
+  "beijing_time": "2026-02-18 16:18:06",  // 北京时间字符串
+  "total_rsi": 1865.23,                    // RSI之和 (0-2700)
+  "count": 27,                             // 采集到的币种数量
+  "rsi_values": {                          // 各币种RSI值
+    "BTC": 80.58,                          // BTC的14周期RSI (0-100)
+    "ETH": 78.79,                          // ETH的14周期RSI
+    "BNB": 74.79,
+    "XRP": 74.52,
+    "DOGE": 66.67,
+    "SOL": 76.57,
+    "DOT": 76.19,
+    "LTC": 68.09,
+    "LINK": 78.24,
+    "HBAR": 67.69,
+    "TAO": 57.47,
+    "CFX": 68.83,
+    "TRX": 39.64,
+    "TON": 61.9,
+    "NEAR": 70.68,
+    "LDO": 72.22,
+    "CRO": 59.5,
+    "ETC": 71.14,
+    "XLM": 86.11,
+    "BCH": 67.61,
+    "UNI": 68.83,
+    "SUI": 82.91,
+    "FIL": 66.3,
+    "STX": 63.64,
+    "CRV": 70.18,
+    "AAVE": 50.92,
+    "APT": 65.22
+  }
+}</pre>
+                                    </div>
+                                    <div class="mt-2 p-2 bg-blue-50 rounded border border-blue-200">
+                                        <p class="text-xs text-blue-800"><strong>💡 RSI判断标准：</strong></p>
+                                        <ul class="list-disc list-inside text-xs text-blue-700 mt-1 ml-2">
+                                            <li><strong>单币RSI：</strong>70以上超买，30以下超卖，30-70中性</li>
+                                            <li><strong>27币RSI之和：</strong>1890以上超买(平均70)，810以下超卖(平均30)，810-1890中性</li>
+                                        </ul>
                                     </div>
                                 </div>
                             </div>

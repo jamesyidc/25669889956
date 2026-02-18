@@ -3011,19 +3011,20 @@ pm2 status                                                # 查看所有进程�
                                                     itemStyle: {
                                                         color: '#06B6D4',
                                                         borderColor: '#fff',
-                                                        borderWidth: 2
+                                                        borderWidth: 3
                                                     },
                                                     label: {
                                                         formatter: (params) => {
                                                             return `${params.name}\n${params.value}`;
                                                         },
-                                                        fontSize: 11,
+                                                        fontSize: 12,
                                                         fontWeight: 'bold',
                                                         color: '#06B6D4',
-                                                        show: true
+                                                        show: true,
+                                                        position: 'bottom'
                                                     },
                                                     symbol: 'circle',
-                                                    symbolSize: 12
+                                                    symbolSize: 18
                                                 });
                                             }
                                             
@@ -3040,19 +3041,20 @@ pm2 status                                                # 查看所有进程�
                                                     itemStyle: {
                                                         color: '#F59E0B',
                                                         borderColor: '#fff',
-                                                        borderWidth: 2
+                                                        borderWidth: 3
                                                     },
                                                     label: {
                                                         formatter: (params) => {
                                                             return `${params.name}\n${params.value}`;
                                                         },
-                                                        fontSize: 11,
+                                                        fontSize: 12,
                                                         fontWeight: 'bold',
                                                         color: '#F59E0B',
-                                                        show: true
+                                                        show: true,
+                                                        position: 'top'
                                                     },
                                                     symbol: 'triangle',
-                                                    symbolSize: 14
+                                                    symbolSize: 20
                                                 });
                                             }
                                             
@@ -3069,19 +3071,20 @@ pm2 status                                                # 查看所有进程�
                                                     itemStyle: {
                                                         color: '#8B5CF6',
                                                         borderColor: '#fff',
-                                                        borderWidth: 2
+                                                        borderWidth: 3
                                                     },
                                                     label: {
                                                         formatter: (params) => {
                                                             return `${params.name}\n${params.value}`;
                                                         },
-                                                        fontSize: 11,
+                                                        fontSize: 12,
                                                         fontWeight: 'bold',
                                                         color: '#8B5CF6',
-                                                        show: true
+                                                        show: true,
+                                                        position: 'right'
                                                     },
                                                     symbol: 'diamond',
-                                                    symbolSize: 12
+                                                    symbolSize: 18
                                                 });
                                             }
                                         });

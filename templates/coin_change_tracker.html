@@ -1369,6 +1369,13 @@ pm2 status                                                # 查看所有进程�
         let historyData = [];
         let rsiHistoryData = [];  // RSI历史数据
         
+        // 最后的RSI数据缓存
+        let lastRSIData = {
+            total_rsi: null,
+            rsi_values: {},
+            timestamp: null
+        };
+        
         // 当前选择的日期
         let currentDate = new Date();
         
@@ -1624,12 +1631,24 @@ pm2 status                                                # 查看所有进程�
                     // 更新单币排行榜
                     updateRankChart(data.changes);
                     
-                    // 更新详细表格（传入RSI数据）
-                    updateDetailTable(data.changes, data.rsi_values || {});
-                    
-                    // 更新RSI之和卡片
+                    // 更新RSI数据缓存
                     if (data.total_rsi !== undefined) {
-                        const totalRSI = data.total_rsi;
+                        lastRSIData.total_rsi = data.total_rsi;
+                        lastRSIData.rsi_values = data.rsi_values || {};
+                        lastRSIData.timestamp = data.beijing_time;
+                    }
+                    
+                    // 更新详细表格（使用最新的或缓存的RSI数据）
+                    const rsiValuesToUse = (data.rsi_values && Object.keys(data.rsi_values).length > 0) 
+                        ? data.rsi_values 
+                        : lastRSIData.rsi_values;
+                    updateDetailTable(data.changes, rsiValuesToUse);
+                    
+                    // 更新RSI之和卡片（使用最新的或缓存的RSI数据）
+                    const totalRSIToUse = data.total_rsi !== undefined ? data.total_rsi : lastRSIData.total_rsi;
+                    
+                    if (totalRSIToUse !== null) {
+                        const totalRSI = totalRSIToUse;
                         const totalRSIEl = document.getElementById('totalRSI');
                         totalRSIEl.textContent = totalRSI.toFixed(2);
                         
@@ -1654,7 +1673,7 @@ pm2 status                                                # 查看所有进程�
                         rsiStatusEl.className = `font-medium ${statusColor}`;
                     } else {
                         document.getElementById('totalRSI').textContent = '--';
-                        document.getElementById('rsiStatus').textContent = '--';
+                        document.getElementById('rsiStatus').textContent = '等待采集';
                     }
                     
                     // 检查预警（添加）- 使用延迟调用确保函数已定义

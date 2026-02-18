@@ -16240,6 +16240,10 @@ def get_okx_auto_strategy(account_id):
     try:
         import json
         import os
+        from flask import request
+        
+        # 获取策略类型参数（可选）
+        strategy_type = request.args.get('strategy_type', 'bottom_performers')
         
         # 获取项目根目录
         # app.py 在 /home/user/webapp/app.py
@@ -16247,7 +16251,11 @@ def get_okx_auto_strategy(account_id):
         settings_dir = os.path.join(current_dir, 'data', 'okx_auto_strategy')
         os.makedirs(settings_dir, exist_ok=True)
         
-        settings_file = os.path.join(settings_dir, f'{account_id}.json')
+        # 根据策略类型使用不同的文件名
+        if strategy_type == 'top_performers':
+            settings_file = os.path.join(settings_dir, f'{account_id}_top.json')
+        else:
+            settings_file = os.path.join(settings_dir, f'{account_id}.json')
         
         # 如果设置文件存在，读取并返回
         if os.path.exists(settings_file):
@@ -16261,8 +16269,8 @@ def get_okx_auto_strategy(account_id):
             # 返回默认设置
             default_settings = {
                 'enabled': False,
-                'triggerPrice': 65000,
-                'strategyType': 'bottom_performers',
+                'triggerPrice': 68000 if strategy_type == 'top_performers' else 65000,
+                'strategyType': strategy_type,
                 'lastExecutedTime': None,
                 'executedCount': 0
             }
@@ -16292,16 +16300,23 @@ def save_okx_auto_strategy(account_id):
         settings_dir = os.path.join(current_dir, 'data', 'okx_auto_strategy')
         os.makedirs(settings_dir, exist_ok=True)
         
-        settings_file = os.path.join(settings_dir, f'{account_id}.json')
-        
         # 获取前端传来的设置
         data = request.get_json()
+        strategy_type = data.get('strategyType', 'bottom_performers')
+        
+        # 根据策略类型使用不同的文件名
+        if strategy_type == 'top_performers':
+            settings_file = os.path.join(settings_dir, f'{account_id}_top.json')
+            jsonl_file = os.path.join(settings_dir, f'{account_id}_top_history.jsonl')
+        else:
+            settings_file = os.path.join(settings_dir, f'{account_id}.json')
+            jsonl_file = os.path.join(settings_dir, f'{account_id}_history.jsonl')
         
         # 构建设置对象
         settings = {
             'enabled': bool(data.get('enabled', False)),
             'triggerPrice': float(data.get('triggerPrice', 65000)),
-            'strategyType': data.get('strategyType', 'bottom_performers'),
+            'strategyType': strategy_type,
             'lastExecutedTime': data.get('lastExecutedTime'),
             'executedCount': int(data.get('executedCount', 0)),
             'lastUpdated': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -16312,7 +16327,6 @@ def save_okx_auto_strategy(account_id):
             json.dump(settings, f, ensure_ascii=False, indent=2)
         
         # 同时保存到JSONL历史记录
-        jsonl_file = os.path.join(settings_dir, f'{account_id}_history.jsonl')
         with open(jsonl_file, 'a', encoding='utf-8') as f:
             history_entry = settings.copy()
             history_entry['timestamp'] = datetime.now().isoformat()

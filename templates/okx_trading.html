@@ -6230,6 +6230,44 @@ ${data.sMsg || result.message || ''}`);
             }
         }
         
+        // 加载追涨策略设置（涨幅前8名）
+        async function loadAutoStrategySettingsTop() {
+            const account = accounts.find(acc => acc.id === currentAccount);
+            if (!account) return;
+            
+            try {
+                const response = await fetch(`/api/okx-trading/auto-strategy/${account.id}?strategy_type=top_performers`);
+                const result = await response.json();
+                
+                if (result.success && result.settings) {
+                    const settings = result.settings;
+                    document.getElementById('autoTriggerPriceTop').value = settings.triggerPrice || 68000;
+                    document.getElementById('autoTradeSwitchTop').checked = settings.enabled || false;
+                    document.getElementById('autoStrategyTypeTop').value = settings.strategyType || 'top_performers';
+                    
+                    // 更新状态显示
+                    updateAutoTradeStatus(settings.enabled, settings.lastExecutedTime, 'Top');
+                    updateServerAutoTradeDisplay(settings, 'Top');
+                    
+                    // 加载并显示当前BTC价格
+                    const btcPrice = await getBTCPrice();
+                    if (btcPrice) {
+                        const priceEl = document.getElementById('currentBtcPriceTop');
+                        if (priceEl) {
+                            priceEl.textContent = `$${btcPrice.toFixed(2)}`;
+                            priceEl.style.color = btcPrice > settings.triggerPrice ? '#10b981' : '#ef4444';
+                        }
+                    }
+                    
+                    console.log(`✅ 已从服务器加载账户 ${account.name} 的追涨策略设置`, settings);
+                } else {
+                    console.warn('⚠️ 加载追涨策略设置失败:', result.error);
+                }
+            } catch (e) {
+                console.warn('⚠️ 加载追涨策略设置异常', e);
+            }
+        }
+        
         // 🆕 加载上涨占比0策略的开关状态（按账户独立加载）
         async function loadUpRatio0StrategySettings() {
             const account = accounts.find(acc => acc.id === currentAccount);
@@ -6306,8 +6344,9 @@ ${data.sMsg || result.message || ''}`);
         }
         
         // 保存自动交易策略设置（到服务器API和JSONL文件，按账户独立存储）
-        async function saveAutoStrategySettings() {
-            console.log('🔔 saveAutoStrategySettings 函数被调用');
+        // 参数：suffix - 策略后缀（空字符串表示默认策略，'Top'表示追涨策略）
+        async function saveAutoStrategySettings(suffix = '') {
+            console.log(`🔔 saveAutoStrategySettings${suffix ? `(${suffix})` : ''} 函数被调用`);
             
             const account = accounts.find(acc => acc.id === currentAccount);
             console.log('📋 当前账户:', account ? account.name : '未选择');
@@ -6317,14 +6356,30 @@ ${data.sMsg || result.message || ''}`);
                 return;
             }
             
+            // 根据suffix确定元素ID
+            const switchId = suffix ? `autoTradeSwitch${suffix}` : 'autoTradeSwitch';
+            const priceId = suffix ? `autoTriggerPrice${suffix}` : 'autoTriggerPrice';
+            const typeId = suffix ? `autoStrategyType${suffix}` : 'autoStrategyType';
+            
+            console.log(`📍 使用的元素ID: switch=${switchId}, price=${priceId}, type=${typeId}`);
+            
             // 读取当前设置
-            const currentSettings = await loadAutoStrategySettingsData();
+            const currentSettings = await loadAutoStrategySettingsData(suffix);
             console.log('📥 已加载当前设置:', currentSettings);
             
+            const switchEl = document.getElementById(switchId);
+            const priceEl = document.getElementById(priceId);
+            const typeEl = document.getElementById(typeId);
+            
+            if (!switchEl || !priceEl || !typeEl) {
+                console.error('❌ 找不到策略配置元素', {switchEl, priceEl, typeEl});
+                return;
+            }
+            
             const settings = {
-                enabled: document.getElementById('autoTradeSwitch').checked,
-                triggerPrice: parseFloat(document.getElementById('autoTriggerPrice').value),
-                strategyType: document.getElementById('autoStrategyType').value,
+                enabled: switchEl.checked,
+                triggerPrice: parseFloat(priceEl.value),
+                strategyType: typeEl.value,
                 lastExecutedTime: currentSettings?.lastExecutedTime || null,
                 executedCount: currentSettings?.executedCount || 0
             };
@@ -6367,10 +6422,9 @@ ${data.sMsg || result.message || ''}`);
                         console.log('📄 JSONL写入结果:', jsonlResult);
                     }
                     
-                    updateAutoTradeStatus(settings.enabled, settings.lastExecutedTime);
-                    
-                    // 更新服务器设置显示
-                    updateServerAutoTradeDisplay(settings);
+                    // 更新对应的状态显示
+                    updateAutoTradeStatus(settings.enabled, settings.lastExecutedTime, suffix);
+                    updateServerAutoTradeDisplay(settings, suffix);
                 } else {
                     alert(`❌ 保存失败：${result.error}`);
                     console.error('❌ 保存自动交易策略设置失败:', result.error);
@@ -6382,12 +6436,17 @@ ${data.sMsg || result.message || ''}`);
         }
         
         // 仅用于读取数据，不更新UI
-        async function loadAutoStrategySettingsData() {
+        async function loadAutoStrategySettingsData(suffix = '') {
             const account = accounts.find(acc => acc.id === currentAccount);
             if (!account) return null;
             
+            // 确定策略类型
+            const typeId = suffix ? `autoStrategyType${suffix}` : 'autoStrategyType';
+            const typeEl = document.getElementById(typeId);
+            const strategyType = typeEl ? typeEl.value : 'bottom_performers';
+            
             try {
-                const response = await fetch(`/api/okx-trading/auto-strategy/${account.id}`);
+                const response = await fetch(`/api/okx-trading/auto-strategy/${account.id}?strategy_type=${strategyType}`);
                 const result = await response.json();
                 if (result.success && result.settings) {
                     return result.settings;
@@ -6399,30 +6458,41 @@ ${data.sMsg || result.message || ''}`);
         }
         
         // 更新自动交易状态显示
-        function updateAutoTradeStatus(enabled, lastExecutedTime) {
-            const statusEl = document.getElementById('autoTradeStatus');
-            const timeEl = document.getElementById('autoTradeLastTime');
+        function updateAutoTradeStatus(enabled, lastExecutedTime, suffix = '') {
+            const statusId = suffix ? `autoTradeStatus${suffix}` : 'autoTradeStatus';
+            const timeId = suffix ? `autoTradeLastTime${suffix}` : 'autoTradeLastTime';
             
-            if (enabled) {
-                statusEl.textContent = '🟢 已启用（监控中）';
-                statusEl.style.color = '#10b981';
-            } else {
-                statusEl.textContent = '⚪ 未启用';
-                statusEl.style.color = '#6b7280';
+            const statusEl = document.getElementById(statusId);
+            const timeEl = document.getElementById(timeId);
+            
+            if (statusEl) {
+                if (enabled) {
+                    statusEl.textContent = '🟢 已启用（监控中）';
+                    statusEl.style.color = '#10b981';
+                } else {
+                    statusEl.textContent = '⚪ 未启用';
+                    statusEl.style.color = '#6b7280';
+                }
             }
             
-            if (lastExecutedTime) {
-                timeEl.textContent = lastExecutedTime;
-            } else {
-                timeEl.textContent = '--';
+            if (timeEl) {
+                if (lastExecutedTime) {
+                    timeEl.textContent = lastExecutedTime;
+                } else {
+                    timeEl.textContent = '--';
+                }
             }
         }
         
         // 更新服务器自动交易设置显示
-        function updateServerAutoTradeDisplay(settings) {
-            const settingsBox = document.getElementById('serverAutoTradeSettings');
-            const triggerPriceEl = document.getElementById('serverTriggerPrice');
-            const statusBadgeEl = document.getElementById('serverAutoTradeStatusBadge');
+        function updateServerAutoTradeDisplay(settings, suffix = '') {
+            const settingsBoxId = suffix ? `serverAutoTradeSettings${suffix}` : 'serverAutoTradeSettings';
+            const triggerPriceId = suffix ? `serverTriggerPrice${suffix}` : 'serverTriggerPrice';
+            const statusBadgeId = suffix ? `serverAutoTradeStatusBadge${suffix}` : 'serverAutoTradeStatusBadge';
+            
+            const settingsBox = document.getElementById(settingsBoxId);
+            const triggerPriceEl = document.getElementById(triggerPriceId);
+            const statusBadgeEl = document.getElementById(statusBadgeId);
             
             if (!settingsBox || !triggerPriceEl || !statusBadgeEl) return;
             
@@ -6507,6 +6577,9 @@ ${data.sMsg || result.message || ''}`);
             // 加载自动交易策略设置
             loadAutoStrategySettings();
             
+            // 🆕 加载追涨策略设置（涨幅前8名）
+            loadAutoStrategySettingsTop();
+            
             // 🆕 加载上涨占比0策略设置
             loadUpRatio0StrategySettings();
             
@@ -6541,6 +6614,23 @@ ${data.sMsg || result.message || ''}`);
                 console.log('✅ autoTradeSwitch 事件监听器已添加');
             } else {
                 console.warn('⚠️ 未找到 autoTradeSwitch 元素');
+            }
+            
+            // 添加追涨策略（涨幅前8名）的事件监听器
+            const autoTriggerPriceTopEl = document.getElementById('autoTriggerPriceTop');
+            if (autoTriggerPriceTopEl) {
+                autoTriggerPriceTopEl.addEventListener('change', () => saveAutoStrategySettings('Top'));
+                console.log('✅ autoTriggerPriceTop 事件监听器已添加');
+            } else {
+                console.warn('⚠️ 未找到 autoTriggerPriceTop 元素');
+            }
+            
+            const autoTradeSwitchTopEl = document.getElementById('autoTradeSwitchTop');
+            if (autoTradeSwitchTopEl) {
+                autoTradeSwitchTopEl.addEventListener('change', () => saveAutoStrategySettings('Top'));
+                console.log('✅ autoTradeSwitchTop 事件监听器已添加');
+            } else {
+                console.warn('⚠️ 未找到 autoTradeSwitchTop 元素');
             }
             
             // ✅ 上涨占比0策略A（涨幅前8名）开关事件监听

@@ -249,6 +249,23 @@ class WavePeakDetector:
                     i += 1
                     continue
                 
+                # ⚠️ 关键逻辑：即使在寻找C点期间，如果出现更高点，A点也要更新！
+                if current_value > a_candidate['value']:
+                    new_amplitude = current_value - b_candidate['value']
+                    if new_amplitude >= self.min_amplitude:
+                        print(f"⚠️  在寻找C点期间，发现更高点！A点更新")
+                        print(f"   旧A点: {a_candidate['beijing_time']} = {a_candidate['value']:.2f}%")
+                        a_candidate = {
+                            'index': i,
+                            'timestamp': data[i]['timestamp'],
+                            'beijing_time': data[i]['beijing_time'],
+                            'value': current_value
+                        }
+                        print(f"   新A点: {a_candidate['beijing_time']} = {a_candidate['value']:.2f}%")
+                        print(f"   新振幅: {new_amplitude:.2f}%")
+                        i += 1
+                        continue  # 继续寻找C点，但使用新的A点
+                
                 # 计算目标回落值（振幅的一半）
                 amplitude = a_candidate['value'] - b_candidate['value']
                 half_amplitude = amplitude / 2

@@ -4415,14 +4415,21 @@ data/
                 return;
             }
             
-            // 余额警告记录到日志（无需确认，继续执行）
+            // 余额警告提示（手动执行需要确认）
             if (balance < requiredBalance * 1.5) {
-                const warningMsg = `⚠️ 余额偏紧 - 可用余额: ${balance.toFixed(2)} USDT, 预计占用: ${totalMargin} USDT, 剩余: ${(balance - parseFloat(totalMargin)).toFixed(2)} USDT`;
-                console.warn('[batchOrder] ' + warningMsg);
-                console.log('[batchOrder] ⚠️ 余额警告已记录，继续执行...');
+                const warningMsg = `⚠️ 余额偏紧\n\n` +
+                    `可用余额: ${balance.toFixed(2)} USDT\n` +
+                    `预计占用保证金: ${totalMargin} USDT\n` +
+                    `剩余: ${(balance - parseFloat(totalMargin)).toFixed(2)} USDT\n\n` +
+                    `建议增加余额或降低开仓比例，避免因余额不足导致部分订单失败。\n\n` +
+                    `是否继续？`;
+                if (!confirm(warningMsg)) {
+                    console.log('[batchOrder] 用户因余额不足取消');
+                    return;
+                }
             }
             
-            // 确认对话框
+            // 手动批量开仓 - 确认对话框
             const directionText = direction === 'long' ? '做多' : '做空';
             const emoji = direction === 'long' ? '📈' : '📉';
             const strategyName = direction === 'long' ? '多单' : '空单';
@@ -4430,6 +4437,25 @@ data/
             const symbolsList = top6Symbols.map(s => 
                 `  • ${s.name}: $${s.price.toFixed(2)} (${s.change >= 0 ? '+' : ''}${s.change}%)`
             ).join('\n');
+            
+            const confirmMsg = `${emoji} 批量${strategyName}策略\n\n` +
+                `【常用币涨幅前6】\n${symbolsList}\n\n` +
+                `【开仓参数】\n` +
+                `  • 方向: ${directionText}\n` +
+                `  • 杠杆: 10x\n` +
+                `  • 订单类型: 市价单\n\n` +
+                `【资金分配】\n` +
+                `  • 每个币保证金: ${marginPerCoin} USDT (${percentPerCoin}%)\n` +
+                `  • 每个币合约价值: ${contractValuePerCoin} USDT\n` +
+                `  • 总保证金: ${totalMargin} USDT\n` +
+                `  • 总合约价值: ${totalContractValue} USDT\n` +
+                `  • 可用余额: ${balance.toFixed(2)} USDT\n\n` +
+                `确认批量开仓？`;
+            
+            if (!confirm(confirmMsg)) {
+                console.log('[batchOrder] 用户取消批量开仓');
+                return;
+            }
             
             // 🔔 发送Telegram通知 - 批量开仓开始
             const startMsg = `${emoji} 批量${strategyName}策略 - 开始执行\n\n` +
@@ -4503,13 +4529,14 @@ data/
                 }
             }
             
-            // 🔔 显示结果并发送Telegram通知
+            // 显示结果并发送Telegram通知
             const resultMsg = `${emoji} 批量开仓完成\n\n` +
                 `【结果统计】\n` +
                 `  • 成功: ${successCount} 个\n` +
                 `  • 失败: ${failCount} 个\n\n` +
                 `【详细结果】\n${results.join('\n')}`;
             
+            alert(resultMsg);
             console.log('[batchOrder] 📢 发送完成通知...');
             await sendTelegramMessage(resultMsg);
             console.log('[batchOrder] ✅ 批量开仓完成');
@@ -4581,7 +4608,7 @@ data/
                 return;
             }
             
-            // 确认对话框
+            // 手动批量开仓 - 确认对话框
             const directionText = direction === 'long' ? '做多' : '做空';
             const emoji = direction === 'long' ? '📈' : '📉';
             const strategyName = direction === 'long' ? '多单' : '空单';
@@ -4589,6 +4616,25 @@ data/
             const symbolsList = top8Symbols.map(s => 
                 `  • ${s.name}: $${s.price.toFixed(2)} (${s.change >= 0 ? '+' : ''}${s.change}%)`
             ).join('\n');
+            
+            const confirmMsg = `${emoji} 涨幅前8批量${strategyName}策略\n\n` +
+                `【常用币涨幅前8】\n${symbolsList}\n\n` +
+                `【开仓参数】\n` +
+                `  • 方向: ${directionText}\n` +
+                `  • 杠杆: 10x\n` +
+                `  • 订单类型: 市价单\n\n` +
+                `【资金分配】\n` +
+                `  • 每个币保证金: ${marginPerCoin} USDT (${percentPerCoin}%)\n` +
+                `  • 每个币合约价值: ${contractValuePerCoin} USDT\n` +
+                `  • 总保证金: ${totalMargin} USDT\n` +
+                `  • 总合约价值: ${totalContractValue} USDT\n` +
+                `  • 可用余额: ${balance.toFixed(2)} USDT\n\n` +
+                `确认批量开仓？`;
+            
+            if (!confirm(confirmMsg)) {
+                console.log('[batchOrderTop8] 用户取消批量开仓');
+                return;
+            }
             
             // 🔔 发送Telegram通知 - 批量开仓开始
             const startMsg = `${emoji} 涨幅前8批量${strategyName}策略 - 开始执行\n\n` +
@@ -4659,12 +4705,13 @@ data/
                 }
             }
             
-            // 🔔 显示结果并发送Telegram通知
+            // 显示结果并发送Telegram通知
             const resultMsg = `${emoji} 批量开仓完成\n\n` +
                 `成功: ${successCount}/${top8Symbols.length}\n` +
                 `失败: ${failCount}/${top8Symbols.length}\n\n` +
                 `详细结果:\n${results.join('\n')}`;
             
+            alert(resultMsg);
             console.log('[batchOrderTop8] 📢 发送完成通知...');
             await sendTelegramMessage(resultMsg);
             console.log('[batchOrderTop8] ✅ 批量开仓完成:', { successCount, failCount });
@@ -4735,14 +4782,51 @@ data/
                 return;
             }
             
-            // 🔔 记录风险信息到日志（无需确认，直接执行）
-            const riskInfo = `⚠️ 高风险策略 - 涨幅后8名（跌幅最大）：\n` +
+            // 风险警告（手动执行需要确认）
+            const riskWarning = `⚠️ 高风险策略警告\n\n` +
+                `此策略针对跌幅最大的币种，波动性极高！\n\n` +
+                `【涨幅后8名 = 跌幅最大】\n` +
                 bottom8Symbols.map(s => 
                     `  • ${s.name}: ${s.change >= 0 ? '+' : ''}${s.change}%`
-                ).join('\n');
+                ).join('\n') + '\n\n' +
+                `⚠️ 这些币种可能：\n` +
+                `  • 继续下跌（空单获利）\n` +
+                `  • 超跌反弹（多单获利）\n` +
+                `  • 剧烈波动（高风险）\n\n` +
+                `确定要继续吗？`;
             
-            console.log('[batchOrderBottom8] ' + riskInfo);
-            console.log('[batchOrderBottom8] ⚠️ 风险提示已记录，直接执行策略...');
+            if (!confirm(riskWarning)) {
+                console.log('[batchOrderBottom8] 用户取消（风险警告）');
+                return;
+            }
+            
+            // 确认对话框
+            const directionText = direction === 'long' ? '做多（预期反弹）' : '做空（预期延续）';
+            const emoji = direction === 'long' ? '📈' : '📉';
+            const strategyName = direction === 'long' ? '多单' : '空单';
+            
+            const symbolsList = bottom8Symbols.map(s => 
+                `  • ${s.name}: $${s.price.toFixed(2)} (${s.change >= 0 ? '+' : ''}${s.change}%)`
+            ).join('\n');
+            
+            const confirmMsg = `${emoji} 涨幅后8批量${strategyName}策略\n\n` +
+                `【常用币涨幅后8（跌幅最大）】\n${symbolsList}\n\n` +
+                `【开仓参数】\n` +
+                `  • 方向: ${directionText}\n` +
+                `  • 杠杆: 10x\n` +
+                `  • 订单类型: 市价单\n\n` +
+                `【资金分配】\n` +
+                `  • 每个币保证金: ${marginPerCoin} USDT (${percentPerCoin}%)\n` +
+                `  • 每个币合约价值: ${contractValuePerCoin} USDT\n` +
+                `  • 总保证金: ${totalMargin} USDT\n` +
+                `  • 总合约价值: ${totalContractValue} USDT\n` +
+                `  • 可用余额: ${balance.toFixed(2)} USDT\n\n` +
+                `⚠️ 最后确认：这是高风险策略！`;
+            
+            if (!confirm(confirmMsg)) {
+                console.log('[batchOrderBottom8] 用户取消批量开仓');
+                return;
+            }
             
             // 🔔 发送Telegram通知 - 批量开仓开始
             const startMsg = `${emoji} 涨幅后8批量${strategyName}策略 - 开始执行\n\n` +
@@ -4814,12 +4898,13 @@ data/
                 }
             }
             
-            // 🔔 显示结果并发送Telegram通知
+            // 显示结果并发送Telegram通知
             const resultMsg = `${emoji} 批量开仓完成\n\n` +
                 `成功: ${successCount}/${bottom8Symbols.length}\n` +
                 `失败: ${failCount}/${bottom8Symbols.length}\n\n` +
                 `详细结果:\n${results.join('\n')}`;
             
+            alert(resultMsg);
             console.log('[batchOrderBottom8] 📢 发送完成通知...');
             await sendTelegramMessage(resultMsg);
             console.log('[batchOrderBottom8] ✅ 批量开仓完成:', { successCount, failCount });

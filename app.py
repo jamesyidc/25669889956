@@ -21790,6 +21790,77 @@ def get_rsi_history():
         })
 
 
+@app.route('/api/coin-change-tracker/wave-peaks', methods=['GET'])
+def get_wave_peaks():
+    """获取波峰检测结果"""
+    try:
+        from datetime import datetime, timezone, timedelta
+        from pathlib import Path
+        import sys
+        sys.path.insert(0, '/home/user/webapp/source_code')
+        from wave_peak_detector import WavePeakDetector
+        
+        # 获取参数
+        date_str = request.args.get('date')  # YYYY-MM-DD 或 YYYYMMDD
+        
+        data_dir = Path('/home/user/webapp/data/coin_change_tracker')
+        if not data_dir.exists():
+            return jsonify({
+                'success': False,
+                'error': '数据目录不存在'
+            })
+        
+        # 如果没有指定日期,使用今天
+        if not date_str:
+            beijing_time = datetime.now(timezone(timedelta(hours=8)))
+            file_date_str = beijing_time.strftime('%Y%m%d')
+        else:
+            # 支持两种格式:YYYY-MM-DD 或 YYYYMMDD
+            if '-' in date_str:
+                file_date_str = date_str.replace('-', '')
+            else:
+                file_date_str = date_str
+        
+        # 读取数据并检测波峰
+        data_file = data_dir / f'coin_change_{file_date_str}.jsonl'
+        
+        if not data_file.exists():
+            return jsonify({
+                'success': False,
+                'error': f'数据文件不存在: {file_date_str}'
+            })
+        
+        # 创建检测器并分析
+        detector = WavePeakDetector()
+        data_records = detector.load_data(str(data_file))
+        peaks = detector.detect_wave_peaks(data_records)
+        false_breakout = detector.detect_false_breakout(peaks)
+        
+        # 构造响应数据
+        result = {
+            'success': True,
+            'date': file_date_str,
+            'peaks_count': len(peaks),
+            'false_breakout': false_breakout,
+            'peaks': peaks
+        }
+        
+        response = jsonify(result)
+        # 添加禁用缓存的响应头
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        })
+
+
 # ==================== 数据采集健康监控 ====================
 @app.route('/data-health-monitor')
 def data_health_monitor_page():

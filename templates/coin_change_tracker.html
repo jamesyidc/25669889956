@@ -1811,6 +1811,25 @@ pm2 status                                                # 查看所有进程�
             </div>
         </div>
 
+        <!-- 波峰检测与假突破告警框 -->
+        <div id="wavePeakAlertBox" class="mb-6" style="display: none;">
+            <div class="bg-gradient-to-r from-red-50 to-orange-50 border-l-4 border-red-600 rounded-lg shadow-lg p-6">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-red-600 text-3xl"></i>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <h3 class="text-xl font-bold text-red-800 mb-2">
+                            <i class="fas fa-chart-line mr-2"></i>假突破信号告警
+                        </h3>
+                        <div id="wavePeakAlertContent" class="text-gray-700">
+                            <!-- 动态内容将在这里填充 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- 图表区域 - 趋势图独占一行，放大2倍 -->
         <div class="grid grid-cols-1 gap-6 mb-6">
             <!-- 总涨跌幅趋势图 - 放大2倍 -->
@@ -2472,6 +2491,43 @@ pm2 status                                                # 查看所有进程�
                     
                     console.log('Times count:', times.length, 'Changes count:', changes.length, 'RSI count:', rsiValues.length);
                     
+                    // 加载波峰数据
+                    let wavePeaksData = [];
+                    let falseBreakout = null;
+                    
+                    try {
+                        let wavePeaksUrl = '/api/coin-change-tracker/wave-peaks?';
+                        if (date) {
+                            wavePeaksUrl += `date=${formatDate(date)}&`;
+                        }
+                        wavePeaksUrl += `_t=${Date.now()}`;
+                        
+                        console.log('Fetching wave peaks from:', wavePeaksUrl);
+                        
+                        const wavePeaksResponse = await fetch(wavePeaksUrl, {
+                            cache: 'no-store',
+                            headers: {
+                                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                                'Pragma': 'no-cache',
+                                'Expires': '0'
+                            }
+                        });
+                        const wavePeaksResult = await wavePeaksResponse.json();
+                        
+                        if (wavePeaksResult.success && wavePeaksResult.peaks) {
+                            wavePeaksData = wavePeaksResult.peaks;
+                            falseBreakout = wavePeaksResult.false_breakout;
+                            console.log('✅ 波峰数据加载成功，波峰数量:', wavePeaksData.length);
+                            if (falseBreakout) {
+                                console.log('⚠️ 检测到假突破信号！', falseBreakout);
+                            }
+                        } else {
+                            console.log('⚠️ 波峰数据为空或检测失败');
+                        }
+                    } catch (e) {
+                        console.warn('⚠️ 波峰数据加载失败:', e);
+                    }
+                    
                     // 找出最高价和最低价
                     const maxChange = Math.max(...changes);
                     const minChange = Math.min(...changes);
@@ -2631,36 +2687,120 @@ pm2 status                                                # 查看所有进程�
                                 }
                             },
                             markPoint: {
-                                data: [
-                                    {
-                                        name: '最高价',
-                                        value: maxChange.toFixed(2) + '%',
-                                        xAxis: maxIndex,
-                                        yAxis: maxChange,
-                                        itemStyle: {
-                                            color: '#EF4444'
+                                data: (function() {
+                                    const points = [
+                                        {
+                                            name: '最高价',
+                                            value: maxChange.toFixed(2) + '%',
+                                            xAxis: maxIndex,
+                                            yAxis: maxChange,
+                                            itemStyle: {
+                                                color: '#EF4444'
+                                            },
+                                            label: {
+                                                formatter: '{b}\n{c}',
+                                                fontSize: 14,
+                                                fontWeight: 'bold'
+                                            }
                                         },
-                                        label: {
-                                            formatter: '{b}\n{c}',
-                                            fontSize: 14,
-                                            fontWeight: 'bold'
+                                        {
+                                            name: '最低价',
+                                            value: minChange.toFixed(2) + '%',
+                                            xAxis: minIndex,
+                                            yAxis: minChange,
+                                            itemStyle: {
+                                                color: '#10B981'
+                                            },
+                                            label: {
+                                                formatter: '{b}\n{c}',
+                                                fontSize: 14,
+                                                fontWeight: 'bold'
+                                            }
                                         }
-                                    },
-                                    {
-                                        name: '最低价',
-                                        value: minChange.toFixed(2) + '%',
-                                        xAxis: minIndex,
-                                        yAxis: minChange,
-                                        itemStyle: {
-                                            color: '#10B981'
-                                        },
-                                        label: {
-                                            formatter: '{b}\n{c}',
-                                            fontSize: 14,
-                                            fontWeight: 'bold'
-                                        }
+                                    ];
+                                    
+                                    // 添加波峰标记点 (B-A-C三点)
+                                    if (wavePeaksData && wavePeaksData.length > 0) {
+                                        wavePeaksData.forEach((peak, peakIdx) => {
+                                            // B点 (谷底)
+                                            const bTime = peak.b_point.time.split(' ')[1];
+                                            const bIndex = times.indexOf(bTime);
+                                            if (bIndex >= 0) {
+                                                points.push({
+                                                    name: `波峰${peakIdx+1}-B`,
+                                                    value: `B: ${peak.b_point.value.toFixed(1)}%`,
+                                                    xAxis: bIndex,
+                                                    yAxis: peak.b_point.value,
+                                                    itemStyle: {
+                                                        color: '#06B6D4',
+                                                        borderColor: '#fff',
+                                                        borderWidth: 2
+                                                    },
+                                                    label: {
+                                                        formatter: '{b}\\n{c}',
+                                                        fontSize: 11,
+                                                        fontWeight: 'bold',
+                                                        color: '#06B6D4'
+                                                    },
+                                                    symbol: 'circle',
+                                                    symbolSize: 12
+                                                });
+                                            }
+                                            
+                                            // A点 (峰顶)
+                                            const aTime = peak.a_point.time.split(' ')[1];
+                                            const aIndex = times.indexOf(aTime);
+                                            if (aIndex >= 0) {
+                                                points.push({
+                                                    name: `波峰${peakIdx+1}-A`,
+                                                    value: `A: ${peak.a_point.value.toFixed(1)}%`,
+                                                    xAxis: aIndex,
+                                                    yAxis: peak.a_point.value,
+                                                    itemStyle: {
+                                                        color: '#F59E0B',
+                                                        borderColor: '#fff',
+                                                        borderWidth: 2
+                                                    },
+                                                    label: {
+                                                        formatter: '{b}\\n{c}',
+                                                        fontSize: 11,
+                                                        fontWeight: 'bold',
+                                                        color: '#F59E0B'
+                                                    },
+                                                    symbol: 'triangle',
+                                                    symbolSize: 14
+                                                });
+                                            }
+                                            
+                                            // C点 (回调后反弹点)
+                                            const cTime = peak.c_point.time.split(' ')[1];
+                                            const cIndex = times.indexOf(cTime);
+                                            if (cIndex >= 0) {
+                                                points.push({
+                                                    name: `波峰${peakIdx+1}-C`,
+                                                    value: `C: ${peak.c_point.value.toFixed(1)}%`,
+                                                    xAxis: cIndex,
+                                                    yAxis: peak.c_point.value,
+                                                    itemStyle: {
+                                                        color: '#8B5CF6',
+                                                        borderColor: '#fff',
+                                                        borderWidth: 2
+                                                    },
+                                                    label: {
+                                                        formatter: '{b}\\n{c}',
+                                                        fontSize: 11,
+                                                        fontWeight: 'bold',
+                                                        color: '#8B5CF6'
+                                                    },
+                                                    symbol: 'diamond',
+                                                    symbolSize: 12
+                                                });
+                                            }
+                                        });
                                     }
-                                ],
+                                    
+                                    return points;
+                                })(),
                                 symbol: 'pin',
                                 symbolSize: 60
                             },
@@ -2882,6 +3022,9 @@ pm2 status                                                # 查看所有进程�
                         trendChart.resize();
                         console.log('✅ 趋势图已渲染，数据点数:', changes.length);
                     }, 100);
+                    
+                    // 更新波峰告警框
+                    updateWavePeakAlert(wavePeaksData, falseBreakout);
                 } else {
                     console.warn('历史数据为空或加载失败');
                     console.warn('Result:', result);
@@ -3086,6 +3229,81 @@ pm2 status                                                # 查看所有进程�
             // 更新卡片样式
             const btcCard = document.getElementById('btcChangeCard');
             btcCard.className = `p-4 rounded-lg border-2 transition-all duration-300 ${bgColor} ${borderColor}`;
+        }
+        
+        // 更新波峰告警框
+        function updateWavePeakAlert(wavePeaksData, falseBreakout) {
+            const alertBox = document.getElementById('wavePeakAlertBox');
+            const alertContent = document.getElementById('wavePeakAlertContent');
+            
+            // 如果没有假突破信号，隐藏告警框
+            if (!falseBreakout) {
+                alertBox.style.display = 'none';
+                return;
+            }
+            
+            // 显示告警框
+            alertBox.style.display = 'block';
+            
+            // 构建告警内容
+            let html = `
+                <div class="space-y-3">
+                    <div class="bg-white p-4 rounded-lg shadow-sm">
+                        <p class="text-lg font-semibold text-red-700 mb-2">
+                            <i class="fas fa-chart-line-down mr-2"></i>检测到假突破 - 市场可能转跌
+                        </p>
+                        <p class="text-gray-700 mb-3">
+                            连续 <span class="font-bold text-red-600">${falseBreakout.consecutive_peaks}</span> 个波峰的最高点（A点）
+                            均未突破第一个波峰的前高 (<span class="font-bold">${falseBreakout.reference_high.toFixed(2)}%</span>)，
+                            市场上涨动能减弱，可能进入下跌趋势。
+                        </p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
+            `;
+            
+            // 添加3个波峰的信息
+            falseBreakout.peaks.forEach((peak, idx) => {
+                html += `
+                    <div class="bg-gray-50 p-3 rounded border ${idx === 0 ? 'border-blue-400' : 'border-gray-300'}">
+                        <div class="text-sm font-semibold text-gray-700 mb-2">
+                            ${idx === 0 ? '第一波峰（参考）' : `第${idx+1}波峰`}
+                        </div>
+                        <div class="space-y-1 text-xs">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">A点（峰顶）:</span>
+                                <span class="font-bold ${peak.a_point.value > falseBreakout.reference_high ? 'text-green-600' : 'text-red-600'}">
+                                    ${peak.a_point.value.toFixed(1)}%
+                                </span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">B点（谷底）:</span>
+                                <span class="font-semibold">${peak.b_point.value.toFixed(1)}%</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">振幅:</span>
+                                <span class="font-semibold text-blue-600">${peak.amplitude.toFixed(1)}%</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                        </div>
+                        <div class="mt-4 p-3 bg-yellow-50 border border-yellow-300 rounded">
+                            <p class="text-sm font-semibold text-yellow-800 mb-1">
+                                <i class="fas fa-lightbulb mr-1"></i>交易建议：
+                            </p>
+                            <ul class="text-sm text-yellow-700 space-y-1 ml-5 list-disc">
+                                <li>谨慎追高，建议观望或减仓</li>
+                                <li>关注是否跌破第3波峰的B点支撑位</li>
+                                <li>等待明确的反转信号后再考虑入场</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            alertContent.innerHTML = html;
         }
         
         // 更新详细表格

@@ -155,6 +155,16 @@ class WavePeakDetector:
                     i += 1
                     continue
                 
+                # ⚠️ 检查是否出现了比B点更低的点，如果是，则放弃当前B点，重新寻找
+                if current_value < b_candidate['value']:
+                    print(f"⚠️  在寻找A点期间，发现比B点更低的点: {data[i]['beijing_time']} = {current_value:.2f}%")
+                    print(f"   放弃当前B点，重新开始寻找B点")
+                    state = DetectionState.LOOKING_FOR_B
+                    b_candidate = None
+                    a_candidate = None
+                    # 不增加i，让下一轮循环处理这个新的低点
+                    continue
+                
                 # 检查振幅是否满足要求
                 amplitude = current_value - b_candidate['value']
                 
@@ -185,6 +195,15 @@ class WavePeakDetector:
             
             # ==================== 状态4: 确认A点 ====================
             elif state == DetectionState.CONFIRMING_A:
+                # ⚠️ 检查是否出现了比B点更低的点
+                if current_value < b_candidate['value']:
+                    print(f"⚠️  在确认A点期间，发现比B点更低的点: {data[i]['beijing_time']} = {current_value:.2f}%")
+                    print(f"   放弃当前B点和A点，重新开始")
+                    state = DetectionState.LOOKING_FOR_B
+                    b_candidate = None
+                    a_candidate = None
+                    continue
+                
                 # 检查是否出现了更高点
                 if current_value > a_candidate['value']:
                     # 检查新的高点振幅是否仍然满足

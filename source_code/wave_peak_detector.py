@@ -334,8 +334,9 @@ class WavePeakDetector:
         """
         检测暴跌前兆信号
         
-        连续3个波峰的A点递增（A1 < A2 < A3），通常预示暴跌
-        这种情况下，虽然反弹高点在升高，但整体处于下跌趋势
+        支持两种模式：
+        1. 顶部递减模式（A1 > A2 > A3）：反弹高点逐渐降低，上攻力量减弱
+        2. 底部递增模式（A1 < A2 < A3）：反弹高点升高但处于下跌趋势
         
         Args:
             wave_peaks: 波峰列表
@@ -362,13 +363,73 @@ class WavePeakDetector:
         b2 = peak2['b_point']['value']
         b3 = peak3['b_point']['value']
         
-        # 判断A点是否递增：A1 < A2 < A3
+        # 模式1：顶部递减（A1 > A2 > A3）- 反弹高点降低
+        a_descending = (a1 > a2) and (a2 > a3)
+        
+        # 模式2：底部递增（A1 < A2 < A3）- 反弹高点升高
         a_ascending = (a1 < a2) and (a2 < a3)
         
         # 判断B点是否递减：B1 > B2 > B3（谷底越来越低）
         b_descending = (b1 > b2) and (b2 > b3)
         
-        if a_ascending:
+        # 优先检测顶部递减模式（更常见的暴跌信号）
+        if a_descending:
+            # 顶部递减：A1 > A2 > A3，反弹高点逐渐降低
+            warning_level = 'high' if b_descending else 'medium'
+            warning_msg = '🚨 暴跌预警！连续反弹高点降低（A1 > A2 > A3），上攻力量减弱'
+            
+            if b_descending:
+                warning_msg = '🚨🚨 强烈暴跌预警！顶部递减 + 底部下移，市场加速下跌'
+            
+            return {
+                'signal_type': 'crash_warning_descending',
+                'pattern_name': '顶部递减模式',
+                'consecutive_peaks': 3,
+                'warning_level': warning_level,
+                'warning': warning_msg,
+                'peaks': recent_peaks,
+                'pattern': {
+                    'a_descending': a_descending,
+                    'b_descending': b_descending,
+                    'description': 'A点递减（反弹高点降低）' + (' + B点递减（谷底下降）' if b_descending else '')
+                },
+                'comparisons': {
+                    'a_values': {
+                        'a1': a1,
+                        'a2': a2,
+                        'a3': a3,
+                        'a2_vs_a1': {
+                            'decrease': a2 < a1,
+                            'diff': a2 - a1,
+                            'diff_pct': ((a2 - a1) / abs(a1) * 100) if a1 != 0 else 0
+                        },
+                        'a3_vs_a2': {
+                            'decrease': a3 < a2,
+                            'diff': a3 - a2,
+                            'diff_pct': ((a3 - a2) / abs(a2) * 100) if a2 != 0 else 0
+                        }
+                    },
+                    'b_values': {
+                        'b1': b1,
+                        'b2': b2,
+                        'b3': b3,
+                        'b2_vs_b1': {
+                            'decrease': b2 < b1,
+                            'diff': b2 - b1,
+                            'diff_pct': ((b2 - b1) / abs(b1) * 100) if b1 != 0 else 0
+                        },
+                        'b3_vs_b2': {
+                            'decrease': b3 < b2,
+                            'diff': b3 - b2,
+                            'diff_pct': ((b3 - b2) / abs(b2) * 100) if b2 != 0 else 0
+                        }
+                    }
+                }
+            }
+        
+        # 检测底部递增模式（次要信号）
+        elif a_ascending:
+            # 底部递增：A1 < A2 < A3，反弹高点升高但处于下跌趋势
             warning_level = 'high' if b_descending else 'medium'
             warning_msg = '⚠️ 暴跌预警！连续反弹高点升高，但可能是下跌趋势中的反弹'
             
@@ -376,7 +437,8 @@ class WavePeakDetector:
                 warning_msg = '🚨 强烈暴跌预警！A点递增且B点递减，市场处于加速下跌趋势'
             
             return {
-                'signal_type': 'crash_warning',
+                'signal_type': 'crash_warning_ascending',
+                'pattern_name': '底部递增模式',
                 'consecutive_peaks': 3,
                 'warning_level': warning_level,
                 'warning': warning_msg,

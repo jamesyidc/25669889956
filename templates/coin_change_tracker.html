@@ -3486,9 +3486,18 @@ pm2 status                                                # 查看所有进程�
             // 显示告警框
             alertBox.style.display = 'block';
             
+            // 获取比较信息
+            const comparisons = falseBreakout.comparisons || {};
+            const a1 = comparisons.a1 || 0;
+            const a2 = comparisons.a2 || 0;
+            const a3 = comparisons.a3 || 0;
+            const a2VsA1 = comparisons.a2_vs_a1 || {};
+            const a3VsA1 = comparisons.a3_vs_a1 || {};
+            const a3VsA2 = comparisons.a3_vs_a2 || {};
+            
             // 构建告警内容
             let html = `
-                <div class="space-y-3">
+                <div class="space-y-4">
                     <div class="bg-white p-4 rounded-lg shadow-sm">
                         <p class="text-lg font-semibold text-red-700 mb-2">
                             <i class="fas fa-chart-line-down mr-2"></i>检测到假突破 - 市场可能转跌
@@ -3498,6 +3507,78 @@ pm2 status                                                # 查看所有进程�
                             均未突破第一个波峰的前高 (<span class="font-bold">${falseBreakout.reference_high.toFixed(2)}%</span>)，
                             市场上涨动能减弱，可能进入下跌趋势。
                         </p>
+                        
+                        <!-- A点比较判断框 -->
+                        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border-2 border-blue-300 mb-4">
+                            <div class="text-base font-bold text-blue-800 mb-3 flex items-center">
+                                <i class="fas fa-balance-scale mr-2"></i>A点突破判断
+                            </div>
+                            <div class="space-y-2">
+                                <!-- A2 vs A1 -->
+                                <div class="bg-white p-3 rounded-lg border ${a2VsA1.breaks ? 'border-green-400' : 'border-red-400'}">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-2">
+                                            <span class="font-semibold text-gray-700">A2 vs A1:</span>
+                                            <span class="text-sm text-gray-600">
+                                                ${a2.toFixed(2)}% vs ${a1.toFixed(2)}%
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            ${a2VsA1.breaks 
+                                                ? '<span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold"><i class="fas fa-check-circle mr-1"></i>突破</span>'
+                                                : '<span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold"><i class="fas fa-times-circle mr-1"></i>未突破</span>'
+                                            }
+                                            <span class="text-xs ${a2VsA1.diff >= 0 ? 'text-green-600' : 'text-red-600'} font-semibold">
+                                                ${a2VsA1.diff >= 0 ? '+' : ''}${a2VsA1.diff.toFixed(2)}%
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- A3 vs A1 -->
+                                <div class="bg-white p-3 rounded-lg border ${a3VsA1.breaks ? 'border-green-400' : 'border-red-400'}">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-2">
+                                            <span class="font-semibold text-gray-700">A3 vs A1:</span>
+                                            <span class="text-sm text-gray-600">
+                                                ${a3.toFixed(2)}% vs ${a1.toFixed(2)}%
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            ${a3VsA1.breaks 
+                                                ? '<span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold"><i class="fas fa-check-circle mr-1"></i>突破</span>'
+                                                : '<span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold"><i class="fas fa-times-circle mr-1"></i>未突破</span>'
+                                            }
+                                            <span class="text-xs ${a3VsA1.diff >= 0 ? 'text-green-600' : 'text-red-600'} font-semibold">
+                                                ${a3VsA1.diff >= 0 ? '+' : ''}${a3VsA1.diff.toFixed(2)}%
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- A3 vs A2 -->
+                                <div class="bg-white p-3 rounded-lg border ${a3VsA2.breaks ? 'border-green-400' : 'border-red-400'}">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-2">
+                                            <span class="font-semibold text-gray-700">A3 vs A2:</span>
+                                            <span class="text-sm text-gray-600">
+                                                ${a3.toFixed(2)}% vs ${a2.toFixed(2)}%
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center space-x-2">
+                                            ${a3VsA2.breaks 
+                                                ? '<span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold"><i class="fas fa-check-circle mr-1"></i>突破</span>'
+                                                : '<span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold"><i class="fas fa-times-circle mr-1"></i>未突破</span>'
+                                            }
+                                            <span class="text-xs ${a3VsA2.diff >= 0 ? 'text-green-600' : 'text-red-600'} font-semibold">
+                                                ${a3VsA2.diff >= 0 ? '+' : ''}${a3VsA2.diff.toFixed(2)}%
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
             `;
             

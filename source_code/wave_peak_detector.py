@@ -352,17 +352,47 @@ class WavePeakDetector:
         peak2 = recent_peaks[1]
         peak3 = recent_peaks[2]
         
-        first_high = peak1['a_point']['value']
+        a1 = peak1['a_point']['value']
+        a2 = peak2['a_point']['value']
+        a3 = peak3['a_point']['value']
+        
+        # 判断A2是否突破A1
+        a2_breaks_a1 = a2 > a1
+        
+        # 判断A3是否突破A1或A2
+        a3_breaks_a1 = a3 > a1
+        a3_breaks_a2 = a3 > a2
+        a3_breaks_any = a3_breaks_a1 or a3_breaks_a2
         
         # 检查后续两个波峰是否都没有突破第一个波峰的高点
-        if (peak2['a_point']['value'] <= first_high and 
-            peak3['a_point']['value'] <= first_high):
-            
+        if not a2_breaks_a1 and not a3_breaks_a1:
             return {
                 'consecutive_peaks': 3,
-                'reference_high': first_high,
+                'reference_high': a1,
                 'peaks': recent_peaks,
-                'warning': '市场可能转跌，建议谨慎操作'
+                'warning': '市场可能转跌，建议谨慎操作',
+                # 添加详细的比较信息
+                'comparisons': {
+                    'a1': a1,
+                    'a2': a2,
+                    'a3': a3,
+                    'a2_vs_a1': {
+                        'breaks': a2_breaks_a1,
+                        'diff': a2 - a1,
+                        'diff_pct': ((a2 - a1) / abs(a1) * 100) if a1 != 0 else 0
+                    },
+                    'a3_vs_a1': {
+                        'breaks': a3_breaks_a1,
+                        'diff': a3 - a1,
+                        'diff_pct': ((a3 - a1) / abs(a1) * 100) if a1 != 0 else 0
+                    },
+                    'a3_vs_a2': {
+                        'breaks': a3_breaks_a2,
+                        'diff': a3 - a2,
+                        'diff_pct': ((a3 - a2) / abs(a2) * 100) if a2 != 0 else 0
+                    },
+                    'a3_breaks_any': a3_breaks_any
+                }
             }
         
         return None

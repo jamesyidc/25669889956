@@ -1830,6 +1830,26 @@ pm2 status                                                # 查看所有进程�
             </div>
         </div>
 
+        <!-- B-A-C 波峰详情框 -->
+        <div id="wavePeakDetailsBox" class="mb-6" style="display: none;">
+            <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-blue-600">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-bold text-gray-800">
+                        <i class="fas fa-mountain text-blue-600 mr-2"></i>B-A-C 波峰详情
+                        <span class="text-sm font-normal text-gray-500 ml-2">
+                            （动态确认：15分钟内保持极值才算确认）
+                        </span>
+                    </h3>
+                    <button onclick="toggleWavePeakDetails()" class="text-blue-600 hover:text-blue-800 transition-colors">
+                        <i id="wavePeakDetailsToggleIcon" class="fas fa-chevron-up"></i>
+                    </button>
+                </div>
+                <div id="wavePeakDetailsContent" class="space-y-4">
+                    <!-- 动态内容将在这里填充 -->
+                </div>
+            </div>
+        </div>
+
         <!-- 图表区域 - 趋势图独占一行，放大2倍 -->
         <div class="grid grid-cols-1 gap-6 mb-6">
             <!-- 总涨跌幅趋势图 - 放大2倍 -->
@@ -3025,6 +3045,9 @@ pm2 status                                                # 查看所有进程�
                     
                     // 更新波峰告警框
                     updateWavePeakAlert(wavePeaksData, falseBreakout);
+                    
+                    // 更新B-A-C波峰详情框
+                    updateWavePeakDetails(wavePeaksData);
                 } else {
                     console.warn('历史数据为空或加载失败');
                     console.warn('Result:', result);
@@ -3304,6 +3327,188 @@ pm2 status                                                # 查看所有进程�
             `;
             
             alertContent.innerHTML = html;
+        }
+        
+        // 更新B-A-C波峰详情框
+        function updateWavePeakDetails(wavePeaksData) {
+            const detailsBox = document.getElementById('wavePeakDetailsBox');
+            const detailsContent = document.getElementById('wavePeakDetailsContent');
+            
+            // 如果没有波峰数据，隐藏详情框
+            if (!wavePeaksData || wavePeaksData.length === 0) {
+                detailsBox.style.display = 'none';
+                return;
+            }
+            
+            // 显示详情框
+            detailsBox.style.display = 'block';
+            
+            // 构建波峰详情内容
+            let html = `
+                <div class="mb-3 text-sm text-gray-600">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    检测到 <span class="font-bold text-blue-600">${wavePeaksData.length}</span> 个完整波峰
+                    （最小振幅 ≥35%，15分钟确认）
+                </div>
+            `;
+            
+            wavePeaksData.forEach((peak, idx) => {
+                const peakNum = idx + 1;
+                html += `
+                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="text-lg font-bold text-blue-800">
+                                <i class="fas fa-mountain mr-2"></i>波峰 ${peakNum}
+                            </h4>
+                            <div class="text-sm">
+                                <span class="px-2 py-1 bg-blue-600 text-white rounded-full text-xs font-semibold">
+                                    振幅: ${peak.amplitude.toFixed(2)}%
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- B点（谷底） -->
+                            <div class="bg-white rounded-lg p-3 border-2 border-cyan-400 shadow-sm">
+                                <div class="flex items-center mb-2">
+                                    <div class="w-8 h-8 bg-cyan-400 rounded-full flex items-center justify-center text-white font-bold mr-2">
+                                        B
+                                    </div>
+                                    <div class="text-sm font-semibold text-gray-700">谷底（起点）</div>
+                                </div>
+                                <div class="space-y-1 text-xs">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">时间:</span>
+                                        <span class="font-mono font-semibold">${peak.b_point.beijing_time.split(' ')[1]}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">涨跌幅:</span>
+                                        <span class="font-bold ${peak.b_point.value < 0 ? 'text-red-600' : 'text-green-600'}">
+                                            ${peak.b_point.value.toFixed(2)}%
+                                        </span>
+                                    </div>
+                                    <div class="mt-2 pt-2 border-t border-gray-200">
+                                        <div class="text-xs text-gray-500">
+                                            <i class="fas fa-check-circle text-cyan-500 mr-1"></i>15分钟内最低
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- A点（峰顶） -->
+                            <div class="bg-white rounded-lg p-3 border-2 border-orange-400 shadow-sm">
+                                <div class="flex items-center mb-2">
+                                    <div class="w-8 h-8 bg-orange-400 rounded-full flex items-center justify-center text-white font-bold mr-2">
+                                        A
+                                    </div>
+                                    <div class="text-sm font-semibold text-gray-700">峰顶（最高点）</div>
+                                </div>
+                                <div class="space-y-1 text-xs">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">时间:</span>
+                                        <span class="font-mono font-semibold">${peak.a_point.beijing_time.split(' ')[1]}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">涨跌幅:</span>
+                                        <span class="font-bold ${peak.a_point.value > 0 ? 'text-green-600' : 'text-red-600'}">
+                                            ${peak.a_point.value.toFixed(2)}%
+                                        </span>
+                                    </div>
+                                    <div class="mt-2 pt-2 border-t border-gray-200">
+                                        <div class="text-xs text-gray-500">
+                                            <i class="fas fa-check-circle text-orange-500 mr-1"></i>15分钟内最高
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- C点（回调反弹） -->
+                            <div class="bg-white rounded-lg p-3 border-2 border-purple-400 shadow-sm">
+                                <div class="flex items-center mb-2">
+                                    <div class="w-8 h-8 bg-purple-400 rounded-full flex items-center justify-center text-white font-bold mr-2">
+                                        C
+                                    </div>
+                                    <div class="text-sm font-semibold text-gray-700">回调反弹点</div>
+                                </div>
+                                <div class="space-y-1 text-xs">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">时间:</span>
+                                        <span class="font-mono font-semibold">${peak.c_point.beijing_time.split(' ')[1]}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">涨跌幅:</span>
+                                        <span class="font-bold ${peak.c_point.value > 0 ? 'text-green-600' : 'text-red-600'}">
+                                            ${peak.c_point.value.toFixed(2)}%
+                                        </span>
+                                    </div>
+                                    <div class="mt-2 pt-2 border-t border-gray-200">
+                                        <div class="text-xs text-gray-500">
+                                            <i class="fas fa-arrow-down text-red-500 mr-1"></i>回调 ${peak.decline_ratio.toFixed(1)}%
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 波峰统计信息 -->
+                        <div class="mt-3 pt-3 border-t border-blue-200 grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                            <div class="bg-white rounded p-2">
+                                <div class="text-gray-600">B→A振幅</div>
+                                <div class="font-bold text-blue-600">${peak.amplitude.toFixed(2)}%</div>
+                            </div>
+                            <div class="bg-white rounded p-2">
+                                <div class="text-gray-600">A→C回调</div>
+                                <div class="font-bold text-orange-600">${peak.decline.toFixed(2)}%</div>
+                            </div>
+                            <div class="bg-white rounded p-2">
+                                <div class="text-gray-600">回调比例</div>
+                                <div class="font-bold text-purple-600">${peak.decline_ratio.toFixed(1)}%</div>
+                            </div>
+                            <div class="bg-white rounded p-2">
+                                <div class="text-gray-600">持续时长</div>
+                                <div class="font-bold text-gray-700">
+                                    ${calculateDuration(peak.b_point.beijing_time, peak.c_point.beijing_time)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            detailsContent.innerHTML = html;
+        }
+        
+        // 计算时长（分钟）
+        function calculateDuration(startTime, endTime) {
+            try {
+                const start = new Date('2026-01-01 ' + startTime.split(' ')[1]);
+                const end = new Date('2026-01-01 ' + endTime.split(' ')[1]);
+                const diffMs = end - start;
+                const diffMins = Math.floor(diffMs / 60000);
+                
+                if (diffMins >= 60) {
+                    const hours = Math.floor(diffMins / 60);
+                    const mins = diffMins % 60;
+                    return `${hours}h${mins}m`;
+                }
+                return `${diffMins}分钟`;
+            } catch (e) {
+                return '--';
+            }
+        }
+        
+        // 折叠/展开BAC详情
+        function toggleWavePeakDetails() {
+            const content = document.getElementById('wavePeakDetailsContent');
+            const icon = document.getElementById('wavePeakDetailsToggleIcon');
+            
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                icon.className = 'fas fa-chevron-up';
+            } else {
+                content.style.display = 'none';
+                icon.className = 'fas fa-chevron-down';
+            }
         }
         
         // 更新详细表格

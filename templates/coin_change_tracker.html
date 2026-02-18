@@ -2645,6 +2645,21 @@ pm2 status                                                # 查看所有进程�
                             symbolSize: 5,
                             connectNulls: true,
                             zlevel: 1,
+                            emphasis: {
+                                focus: 'series',
+                                lineStyle: {
+                                    width: 4,
+                                    color: '#9333EA',
+                                    type: 'solid',
+                                    shadowBlur: 10,
+                                    shadowColor: 'rgba(147, 51, 234, 0.5)'
+                                },
+                                itemStyle: {
+                                    color: '#9333EA',
+                                    borderColor: '#fff',
+                                    borderWidth: 2
+                                }
+                            },
                             markPoint: {
                                 data: (() => {
                                     // 计算RSI的最高点和最低点（排除null值）

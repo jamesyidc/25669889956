@@ -190,7 +190,69 @@
                                     <li><strong>connectNulls：</strong>RSI曲线使用null填充+连线，保证视觉连续性</li>
                                     <li><strong>双文件存储：</strong>主数据包含RSI，RSI专用文件便于单独分析</li>
                                     <li><strong>采集容错：</strong>≥20币种成功才保存，确保数据完整性</li>
+                                    <li><strong>RSI极值标记：</strong>自动标记RSI最高点(紫色)和最低点(浅绿色)，黑色字体清晰易读</li>
+                                    <li><strong>鼠标悬停高亮：</strong>悬停RSI曲线时自动高亮(紫色实线+阴影)，解决与涨跌幅重叠问题</li>
                                 </ul>
+                                <div class="mt-3 p-3 bg-blue-50 rounded">
+                                    <p class="font-semibold text-blue-800">✨ RSI交互优化：</p>
+                                    <ul class="list-disc list-inside space-y-1 ml-2 mt-2 text-xs">
+                                        <li><strong>悬停效果：</strong>鼠标移到RSI虚线上 → 整条曲线变为紫色实线(4px) + 10px阴影</li>
+                                        <li><strong>自动淡化：</strong>悬停时涨跌幅曲线自动淡化，RSI曲线突出显示在最上层</li>
+                                        <li><strong>极值标记：</strong>紫色Pin标记最高点，浅绿色Pin标记最低点，黑色字体高对比度</li>
+                                        <li><strong>数据点增强：</strong>悬停时数据点变为紫色圆点并加白色边框，更加醒目</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- 新增功能4: RSI可视化增强 -->
+                            <div class="bg-white p-4 rounded-lg border-l-4 border-indigo-500">
+                                <h4 class="font-bold text-indigo-800 mb-2">
+                                    <i class="fas fa-eye mr-2"></i>
+                                    4️⃣ RSI可视化增强
+                                </h4>
+                                <p class="mb-2 font-semibold">RSI曲线交互体验全面升级，解决重叠不清晰问题：</p>
+                                <ul class="list-disc list-inside space-y-1 ml-4">
+                                    <li><strong>最高点标记：</strong>紫色Pin标记 + 黑色字体，显示RSI最高值和时间</li>
+                                    <li><strong>最低点标记：</strong>浅绿色Pin标记 + 黑色字体，显示RSI最低值和时间</li>
+                                    <li><strong>悬停高亮：</strong>鼠标移到RSI虚线上，整条曲线自动高亮显示</li>
+                                    <li><strong>视觉增强：</strong>悬停时线条从2px加粗到4px，颜色从灰色变为紫色</li>
+                                    <li><strong>阴影效果：</strong>悬停时添加10px紫色阴影，增加立体感和层次感</li>
+                                    <li><strong>智能淡化：</strong>悬停时其他曲线自动淡化，避免视觉干扰</li>
+                                </ul>
+                                <div class="mt-3 p-3 bg-indigo-50 rounded">
+                                    <p class="font-semibold text-indigo-800">💡 使用技巧：</p>
+                                    <table class="w-full text-xs mt-2 border-collapse">
+                                        <thead>
+                                            <tr class="bg-gray-200">
+                                                <th class="border border-gray-400 px-2 py-1">场景</th>
+                                                <th class="border border-gray-400 px-2 py-1">操作</th>
+                                                <th class="border border-gray-400 px-2 py-1">效果</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td class="border border-gray-400 px-2 py-1">RSI与涨跌幅重叠</td>
+                                                <td class="border border-gray-400 px-2 py-1">悬停RSI虚线</td>
+                                                <td class="border border-gray-400 px-2 py-1">RSI紫色高亮，涨跌幅淡化</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="border border-gray-400 px-2 py-1">查看RSI极值</td>
+                                                <td class="border border-gray-400 px-2 py-1">观察Pin标记</td>
+                                                <td class="border border-gray-400 px-2 py-1">紫色最高点，绿色最低点</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="border border-gray-400 px-2 py-1">对比两条曲线</td>
+                                                <td class="border border-gray-400 px-2 py-1">鼠标来回移动</td>
+                                                <td class="border border-gray-400 px-2 py-1">交替高亮，快速对比</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="border border-gray-400 px-2 py-1">查看精确数值</td>
+                                                <td class="border border-gray-400 px-2 py-1">悬停数据点</td>
+                                                <td class="border border-gray-400 px-2 py-1">Tooltip显示详细信息</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
 
                             <!-- 改进效果 -->
@@ -230,15 +292,30 @@
                                             <td class="border border-gray-400 px-3 py-2 text-yellow-600">仅涨跌幅</td>
                                             <td class="border border-gray-400 px-3 py-2 text-green-600">✓ BTC状态 + RSI + 涨跌幅</td>
                                         </tr>
+                                        <tr>
+                                            <td class="border border-gray-400 px-3 py-2">RSI极值标记</td>
+                                            <td class="border border-gray-400 px-3 py-2 text-red-600">✗ 无</td>
+                                            <td class="border border-gray-400 px-3 py-2 text-green-600">✓ 最高点(紫色) + 最低点(绿色)</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="border border-gray-400 px-3 py-2">RSI交互体验</td>
+                                            <td class="border border-gray-400 px-3 py-2 text-red-600">✗ 无</td>
+                                            <td class="border border-gray-400 px-3 py-2 text-green-600">✓ 悬停高亮 + 阴影效果</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="border border-gray-400 px-3 py-2">重叠可读性</td>
+                                            <td class="border border-gray-400 px-3 py-2 text-red-600">✗ 虚线难以识别</td>
+                                            <td class="border border-gray-400 px-3 py-2 text-green-600">✓ 悬停自动突出显示</td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
 
                             <!-- 数据文件 -->
-                            <div class="bg-white p-4 rounded-lg border-l-4 border-indigo-500">
-                                <h4 class="font-bold text-indigo-800 mb-2">
+                            <div class="bg-white p-4 rounded-lg border-l-4 border-teal-500">
+                                <h4 class="font-bold text-teal-800 mb-2">
                                     <i class="fas fa-database mr-2"></i>
-                                    4️⃣ 数据文件结构
+                                    5️⃣ 数据文件结构
                                 </h4>
                                 <ul class="list-disc list-inside space-y-1 ml-4">
                                     <li><strong>主数据文件：</strong><code>coin_change_YYYYMMDD.jsonl</code> (涨跌幅 + RSI)</li>

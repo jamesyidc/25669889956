@@ -2976,10 +2976,13 @@ pm2 status                                                # 查看所有进程�
                                                         borderWidth: 2
                                                     },
                                                     label: {
-                                                        formatter: '{b}\\n{c}',
+                                                        formatter: (params) => {
+                                                            return `${params.name}\n${params.value}`;
+                                                        },
                                                         fontSize: 11,
                                                         fontWeight: 'bold',
-                                                        color: '#06B6D4'
+                                                        color: '#06B6D4',
+                                                        show: true
                                                     },
                                                     symbol: 'circle',
                                                     symbolSize: 12
@@ -3001,10 +3004,13 @@ pm2 status                                                # 查看所有进程�
                                                         borderWidth: 2
                                                     },
                                                     label: {
-                                                        formatter: '{b}\\n{c}',
+                                                        formatter: (params) => {
+                                                            return `${params.name}\n${params.value}`;
+                                                        },
                                                         fontSize: 11,
                                                         fontWeight: 'bold',
-                                                        color: '#F59E0B'
+                                                        color: '#F59E0B',
+                                                        show: true
                                                     },
                                                     symbol: 'triangle',
                                                     symbolSize: 14
@@ -3026,10 +3032,13 @@ pm2 status                                                # 查看所有进程�
                                                         borderWidth: 2
                                                     },
                                                     label: {
-                                                        formatter: '{b}\\n{c}',
+                                                        formatter: (params) => {
+                                                            return `${params.name}\n${params.value}`;
+                                                        },
                                                         fontSize: 11,
                                                         fontWeight: 'bold',
-                                                        color: '#8B5CF6'
+                                                        color: '#8B5CF6',
+                                                        show: true
                                                     },
                                                     symbol: 'diamond',
                                                     symbolSize: 12

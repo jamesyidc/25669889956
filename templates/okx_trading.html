@@ -6495,223 +6495,239 @@ ${data.sMsg || result.message || ''}`);
             
             // 🆕 加载上涨占比0策略设置
             loadUpRatio0StrategySettings();
+            
+            // ✅ 添加事件监听器（必须在DOM加载后）
+            // 添加止盈止损设置的事件监听器
+            ['takeProfitThreshold', 'stopLossThreshold'].forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.addEventListener('change', saveTakeProfitStopLossSettings);
+                }
+            });
+            
+            ['takeProfitSwitch', 'stopLossSwitch'].forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.addEventListener('change', saveTakeProfitStopLossSettings);
+                }
+            });
+            
+            // 添加自动交易策略设置的事件监听器
+            const autoTriggerPriceEl = document.getElementById('autoTriggerPrice');
+            if (autoTriggerPriceEl) {
+                autoTriggerPriceEl.addEventListener('change', saveAutoStrategySettings);
+                console.log('✅ autoTriggerPrice 事件监听器已添加');
+            } else {
+                console.warn('⚠️ 未找到 autoTriggerPrice 元素');
+            }
+            
+            const autoTradeSwitchEl = document.getElementById('autoTradeSwitch');
+            if (autoTradeSwitchEl) {
+                autoTradeSwitchEl.addEventListener('change', saveAutoStrategySettings);
+                console.log('✅ autoTradeSwitch 事件监听器已添加');
+            } else {
+                console.warn('⚠️ 未找到 autoTradeSwitch 元素');
+            }
+            
+            // ✅ 上涨占比0策略A（涨幅前8名）开关事件监听
+            const autoTradeSwitchUpRatio0Top8El = document.getElementById('autoTradeSwitchUpRatio0Top8');
+            if (autoTradeSwitchUpRatio0Top8El) {
+                autoTradeSwitchUpRatio0Top8El.addEventListener('change', async function() {
+                    const account = accounts.find(acc => acc.id === currentAccount);
+                    if (!account) return;
+                    
+                    const enabled = this.checked;
+                    console.log(`[上涨占比0-涨幅前8名] 开关${enabled ? '开启' : '关闭'}`);
+                    
+                    // 更新开关状态显示
+                    const switchStatusEl = document.getElementById('switchStatusUpRatio0Top8');
+                    if (switchStatusEl) {
+                        switchStatusEl.textContent = enabled ? '🟢 已开启' : '🔴 未开启';
+                        switchStatusEl.style.color = enabled ? '#10b981' : '#6b7280';
+                    }
+                    
+                    // 如果开启，写入JSONL设置allowed=true
+                    if (enabled) {
+                        try {
+                            await fetch(`/api/okx-trading/set-allowed-upratio0/${account.id}/top8`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    allowed: true,
+                                    reason: 'User enabled strategy',
+                                    upRatio: null
+                                })
+                            });
+                            console.log('✅ 已写入JSONL：允许执行（涨幅前8名）');
+                            
+                            // 更新状态显示
+                            const statusEl = document.getElementById('autoTradeStatusUpRatio0Top8');
+                            if (statusEl) statusEl.textContent = '监控中';
+                            
+                            const switchStatusEl = document.getElementById('switchStatusUpRatio0Top8');
+                            if (switchStatusEl) {
+                                switchStatusEl.textContent = '🟢 已开启';
+                                switchStatusEl.style.color = '#10b981';
+                            }
+                            
+                            // 🆕 更新JSONL执行许可状态显示
+                            const jsonlStatusEl = document.getElementById('jsonlAllowedStatusUpRatio0Top8');
+                            if (jsonlStatusEl) {
+                                jsonlStatusEl.textContent = '✅ 允许执行';
+                                jsonlStatusEl.style.color = '#10b981';
+                            }
+                        } catch (e) {
+                            console.error('❌ 写入JSONL失败:', e);
+                            this.checked = false;
+                        }
+                    } else {
+                        // 如果关闭，写入JSONL设置allowed=false
+                        try {
+                            await fetch(`/api/okx-trading/set-allowed-upratio0/${account.id}/top8`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    allowed: false,
+                                    reason: 'User disabled strategy',
+                                    upRatio: null
+                                })
+                            });
+                            console.log('✅ 已写入JSONL：禁止执行（涨幅前8名）');
+                            
+                            // 更新状态显示
+                            const statusEl = document.getElementById('autoTradeStatusUpRatio0Top8');
+                            if (statusEl) statusEl.textContent = '未启用';
+                            
+                            const switchStatusEl = document.getElementById('switchStatusUpRatio0Top8');
+                            if (switchStatusEl) {
+                                switchStatusEl.textContent = '🔴 未开启';
+                                switchStatusEl.style.color = '#6b7280';
+                            }
+                            
+                            // 🆕 更新JSONL执行许可状态显示
+                            const jsonlStatusEl = document.getElementById('jsonlAllowedStatusUpRatio0Top8');
+                            if (jsonlStatusEl) {
+                                jsonlStatusEl.textContent = '🚫 禁止执行';
+                                jsonlStatusEl.style.color = '#ef4444';
+                            }
+                        } catch (e) {
+                            console.error('❌ 写入JSONL失败:', e);
+                        }
+                    }
+                });
+                console.log('✅ autoTradeSwitchUpRatio0Top8 事件监听器已添加');
+            } else {
+                console.warn('⚠️ 未找到 autoTradeSwitchUpRatio0Top8 元素');
+            }
+            
+            // ✅ 上涨占比0策略B（涨幅后8名）开关事件监听
+            const autoTradeSwitchUpRatio0Bottom8El = document.getElementById('autoTradeSwitchUpRatio0Bottom8');
+            if (autoTradeSwitchUpRatio0Bottom8El) {
+                autoTradeSwitchUpRatio0Bottom8El.addEventListener('change', async function() {
+                    const account = accounts.find(acc => acc.id === currentAccount);
+                    if (!account) return;
+                    
+                    const enabled = this.checked;
+                    console.log(`[上涨占比0-涨幅后8名] 开关${enabled ? '开启' : '关闭'}`);
+                    
+                    // 更新开关状态显示
+                    const switchStatusEl = document.getElementById('switchStatusUpRatio0Bottom8');
+                    if (switchStatusEl) {
+                        switchStatusEl.textContent = enabled ? '🟢 已开启' : '🔴 未开启';
+                        switchStatusEl.style.color = enabled ? '#10b981' : '#6b7280';
+                    }
+                    
+                    // 如果开启，写入JSONL设置allowed=true
+                    if (enabled) {
+                        try {
+                            await fetch(`/api/okx-trading/set-allowed-upratio0/${account.id}/bottom8`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    allowed: true,
+                                    reason: 'User enabled strategy',
+                                    upRatio: null
+                                })
+                            });
+                            console.log('✅ 已写入JSONL：允许执行（涨幅后8名）');
+                            
+                            // 更新状态显示
+                            const statusEl = document.getElementById('autoTradeStatusUpRatio0Bottom8');
+                            if (statusEl) statusEl.textContent = '监控中';
+                            
+                            const switchStatusEl = document.getElementById('switchStatusUpRatio0Bottom8');
+                            if (switchStatusEl) {
+                                switchStatusEl.textContent = '🟢 已开启';
+                                switchStatusEl.style.color = '#10b981';
+                            }
+                            
+                            // 🆕 更新JSONL执行许可状态显示
+                            const jsonlStatusEl = document.getElementById('jsonlAllowedStatusUpRatio0Bottom8');
+                            if (jsonlStatusEl) {
+                                jsonlStatusEl.textContent = '✅ 允许执行';
+                                jsonlStatusEl.style.color = '#10b981';
+                            }
+                        } catch (e) {
+                            console.error('❌ 写入JSONL失败:', e);
+                            this.checked = false;
+                        }
+                    } else {
+                        // 如果关闭，写入JSONL设置allowed=false
+                        try {
+                            await fetch(`/api/okx-trading/set-allowed-upratio0/${account.id}/bottom8`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    allowed: false,
+                                    reason: 'User disabled strategy',
+                                    upRatio: null
+                                })
+                            });
+                            console.log('✅ 已写入JSONL：禁止执行（涨幅后8名）');
+                            
+                            // 更新状态显示
+                            const statusEl = document.getElementById('autoTradeStatusUpRatio0Bottom8');
+                            if (statusEl) statusEl.textContent = '未启用';
+                            
+                            const switchStatusEl = document.getElementById('switchStatusUpRatio0Bottom8');
+                            if (switchStatusEl) {
+                                switchStatusEl.textContent = '🔴 未开启';
+                                switchStatusEl.style.color = '#6b7280';
+                            }
+                            
+                            // 🆕 更新JSONL执行许可状态显示
+                            const jsonlStatusEl = document.getElementById('jsonlAllowedStatusUpRatio0Bottom8');
+                            if (jsonlStatusEl) {
+                                jsonlStatusEl.textContent = '🚫 禁止执行';
+                                jsonlStatusEl.style.color = '#ef4444';
+                            }
+                        } catch (e) {
+                            console.error('❌ 写入JSONL失败:', e);
+                        }
+                    }
+                });
+                console.log('✅ autoTradeSwitchUpRatio0Bottom8 事件监听器已添加');
+            } else {
+                console.warn('⚠️ 未找到 autoTradeSwitchUpRatio0Bottom8 元素');
+            }
+            
+            // ✅ 策略类型选择器事件监听
+            const autoStrategyTypeEl = document.getElementById('autoStrategyType');
+            if (autoStrategyTypeEl) {
+                autoStrategyTypeEl.addEventListener('change', function() {
+                    // 更新策略描述
+                    const strategyTarget = document.getElementById('strategyTarget');
+                    if (strategyTarget) {
+                        strategyTarget.textContent = this.value === 'top_performers' ? '涨幅前8名' : '涨幅后8名';
+                    }
+                    // 保存设置
+                    saveAutoStrategySettings();
+                });
+                console.log('✅ autoStrategyType 事件监听器已添加');
+            } else {
+                console.warn('⚠️ 未找到 autoStrategyType 元素');
+            }
         })();
-        
-        // 添加止盈止损设置的事件监听器
-        ['takeProfitThreshold', 'stopLossThreshold'].forEach(id => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.addEventListener('change', saveTakeProfitStopLossSettings);
-            }
-        });
-        
-        ['takeProfitSwitch', 'stopLossSwitch'].forEach(id => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.addEventListener('change', saveTakeProfitStopLossSettings);
-            }
-        });
-        
-        // 添加自动交易策略设置的事件监听器
-        const autoTriggerPriceEl = document.getElementById('autoTriggerPrice');
-        if (autoTriggerPriceEl) {
-            autoTriggerPriceEl.addEventListener('change', saveAutoStrategySettings);
-        }
-        
-        const autoTradeSwitchEl = document.getElementById('autoTradeSwitch');
-        if (autoTradeSwitchEl) {
-            autoTradeSwitchEl.addEventListener('change', saveAutoStrategySettings);
-        }
-        
-        // 上涨占比0策略A（涨幅前8名）开关事件监听
-        const autoTradeSwitchUpRatio0Top8El = document.getElementById('autoTradeSwitchUpRatio0Top8');
-        if (autoTradeSwitchUpRatio0Top8El) {
-            autoTradeSwitchUpRatio0Top8El.addEventListener('change', async function() {
-                const account = accounts.find(acc => acc.id === currentAccount);
-                if (!account) return;
-                
-                const enabled = this.checked;
-                console.log(`[上涨占比0-涨幅前8名] 开关${enabled ? '开启' : '关闭'}`);
-                
-                // 更新开关状态显示
-                const switchStatusEl = document.getElementById('switchStatusUpRatio0Top8');
-                if (switchStatusEl) {
-                    switchStatusEl.textContent = enabled ? '🟢 已开启' : '🔴 未开启';
-                    switchStatusEl.style.color = enabled ? '#10b981' : '#6b7280';
-                }
-                
-                // 如果开启，写入JSONL设置allowed=true
-                if (enabled) {
-                    try {
-                        await fetch(`/api/okx-trading/set-allowed-upratio0/${account.id}/top8`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                allowed: true,
-                                reason: 'User enabled strategy',
-                                upRatio: null
-                            })
-                        });
-                        console.log('✅ 已写入JSONL：允许执行（涨幅前8名）');
-                        
-                        // 更新状态显示
-                        const statusEl = document.getElementById('autoTradeStatusUpRatio0Top8');
-                        if (statusEl) statusEl.textContent = '监控中';
-                        
-                        const switchStatusEl = document.getElementById('switchStatusUpRatio0Top8');
-                        if (switchStatusEl) {
-                            switchStatusEl.textContent = '🟢 已开启';
-                            switchStatusEl.style.color = '#10b981';
-                        }
-                        
-                        // 🆕 更新JSONL执行许可状态显示
-                        const jsonlStatusEl = document.getElementById('jsonlAllowedStatusUpRatio0Top8');
-                        if (jsonlStatusEl) {
-                            jsonlStatusEl.textContent = '✅ 允许执行';
-                            jsonlStatusEl.style.color = '#10b981';
-                        }
-                    } catch (e) {
-                        console.error('❌ 写入JSONL失败:', e);
-                        this.checked = false;
-                    }
-                } else {
-                    // 如果关闭，写入JSONL设置allowed=false
-                    try {
-                        await fetch(`/api/okx-trading/set-allowed-upratio0/${account.id}/top8`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                allowed: false,
-                                reason: 'User disabled strategy',
-                                upRatio: null
-                            })
-                        });
-                        console.log('✅ 已写入JSONL：禁止执行（涨幅前8名）');
-                        
-                        // 更新状态显示
-                        const statusEl = document.getElementById('autoTradeStatusUpRatio0Top8');
-                        if (statusEl) statusEl.textContent = '未启用';
-                        
-                        const switchStatusEl = document.getElementById('switchStatusUpRatio0Top8');
-                        if (switchStatusEl) {
-                            switchStatusEl.textContent = '🔴 未开启';
-                            switchStatusEl.style.color = '#6b7280';
-                        }
-                        
-                        // 🆕 更新JSONL执行许可状态显示
-                        const jsonlStatusEl = document.getElementById('jsonlAllowedStatusUpRatio0Top8');
-                        if (jsonlStatusEl) {
-                            jsonlStatusEl.textContent = '🚫 禁止执行';
-                            jsonlStatusEl.style.color = '#ef4444';
-                        }
-                    } catch (e) {
-                        console.error('❌ 写入JSONL失败:', e);
-                    }
-                }
-            });
-        }
-        
-        // 上涨占比0策略B（涨幅后8名）开关事件监听
-        const autoTradeSwitchUpRatio0Bottom8El = document.getElementById('autoTradeSwitchUpRatio0Bottom8');
-        if (autoTradeSwitchUpRatio0Bottom8El) {
-            autoTradeSwitchUpRatio0Bottom8El.addEventListener('change', async function() {
-                const account = accounts.find(acc => acc.id === currentAccount);
-                if (!account) return;
-                
-                const enabled = this.checked;
-                console.log(`[上涨占比0-涨幅后8名] 开关${enabled ? '开启' : '关闭'}`);
-                
-                // 更新开关状态显示
-                const switchStatusEl = document.getElementById('switchStatusUpRatio0Bottom8');
-                if (switchStatusEl) {
-                    switchStatusEl.textContent = enabled ? '🟢 已开启' : '🔴 未开启';
-                    switchStatusEl.style.color = enabled ? '#10b981' : '#6b7280';
-                }
-                
-                // 如果开启，写入JSONL设置allowed=true
-                if (enabled) {
-                    try {
-                        await fetch(`/api/okx-trading/set-allowed-upratio0/${account.id}/bottom8`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                allowed: true,
-                                reason: 'User enabled strategy',
-                                upRatio: null
-                            })
-                        });
-                        console.log('✅ 已写入JSONL：允许执行（涨幅后8名）');
-                        
-                        // 更新状态显示
-                        const statusEl = document.getElementById('autoTradeStatusUpRatio0Bottom8');
-                        if (statusEl) statusEl.textContent = '监控中';
-                        
-                        const switchStatusEl = document.getElementById('switchStatusUpRatio0Bottom8');
-                        if (switchStatusEl) {
-                            switchStatusEl.textContent = '🟢 已开启';
-                            switchStatusEl.style.color = '#10b981';
-                        }
-                        
-                        // 🆕 更新JSONL执行许可状态显示
-                        const jsonlStatusEl = document.getElementById('jsonlAllowedStatusUpRatio0Bottom8');
-                        if (jsonlStatusEl) {
-                            jsonlStatusEl.textContent = '✅ 允许执行';
-                            jsonlStatusEl.style.color = '#10b981';
-                        }
-                    } catch (e) {
-                        console.error('❌ 写入JSONL失败:', e);
-                        this.checked = false;
-                    }
-                } else {
-                    // 如果关闭，写入JSONL设置allowed=false
-                    try {
-                        await fetch(`/api/okx-trading/set-allowed-upratio0/${account.id}/bottom8`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                allowed: false,
-                                reason: 'User disabled strategy',
-                                upRatio: null
-                            })
-                        });
-                        console.log('✅ 已写入JSONL：禁止执行（涨幅后8名）');
-                        
-                        // 更新状态显示
-                        const statusEl = document.getElementById('autoTradeStatusUpRatio0Bottom8');
-                        if (statusEl) statusEl.textContent = '未启用';
-                        
-                        const switchStatusEl = document.getElementById('switchStatusUpRatio0Bottom8');
-                        if (switchStatusEl) {
-                            switchStatusEl.textContent = '🔴 未开启';
-                            switchStatusEl.style.color = '#6b7280';
-                        }
-                        
-                        // 🆕 更新JSONL执行许可状态显示
-                        const jsonlStatusEl = document.getElementById('jsonlAllowedStatusUpRatio0Bottom8');
-                        if (jsonlStatusEl) {
-                            jsonlStatusEl.textContent = '🚫 禁止执行';
-                            jsonlStatusEl.style.color = '#ef4444';
-                        }
-                    } catch (e) {
-                        console.error('❌ 写入JSONL失败:', e);
-                    }
-                }
-            });
-        }
-        
-        // 策略类型选择器事件监听
-        const autoStrategyTypeEl = document.getElementById('autoStrategyType');
-        if (autoStrategyTypeEl) {
-            autoStrategyTypeEl.addEventListener('change', function() {
-                // 更新策略描述
-                const strategyTarget = document.getElementById('strategyTarget');
-                if (strategyTarget) {
-                    strategyTarget.textContent = this.value === 'top_performers' ? '涨幅前8名' : '涨幅后8名';
-                }
-                // 保存设置
-                saveAutoStrategySettings();
-            });
-        }
         
         // 请求浏览器通知权限
         if ('Notification' in window && Notification.permission === 'default') {

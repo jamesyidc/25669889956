@@ -264,6 +264,19 @@ def save_to_jsonl(data):
         print(f"[错误] 保存JSONL失败: {e}")
 
 
+def save_rsi_to_jsonl(rsi_data):
+    """保存RSI数据到独立的JSONL文件"""
+    today = datetime.now(BEIJING_TZ).strftime('%Y%m%d')
+    rsi_file = DATA_DIR / f"rsi_{today}.jsonl"
+    
+    try:
+        with open(rsi_file, 'a', encoding='utf-8') as f:
+            f.write(json.dumps(rsi_data, ensure_ascii=False) + '\n')
+        print(f"[保存] RSI数据已写入 {rsi_file}")
+    except Exception as e:
+        print(f"[错误] 保存RSI JSONL失败: {e}")
+
+
 def main():
     """主循环"""
     print("=" * 60)
@@ -320,10 +333,32 @@ def main():
             if should_collect_rsi:
                 print("[RSI] 开始采集5分钟RSI数据...")
                 rsi_values = get_all_rsi_values()
+                
+                # 确保获取到所有币种的RSI
                 if rsi_values:
-                    total_rsi = round(sum(rsi_values.values()), 2)
-                    print(f"[RSI] 27币RSI之和: {total_rsi}")
-                    last_rsi_collect_time = now
+                    missing_symbols = [s for s in SYMBOLS if s not in rsi_values]
+                    if missing_symbols:
+                        print(f"[警告] 以下币种RSI获取失败: {', '.join(missing_symbols)}")
+                    
+                    # 只有当获取到足够多的RSI数据时才计算总和（至少20个币种）
+                    if len(rsi_values) >= 20:
+                        total_rsi = round(sum(rsi_values.values()), 2)
+                        print(f"[RSI] 成功采集 {len(rsi_values)}/27 个币种，RSI之和: {total_rsi}")
+                        last_rsi_collect_time = now
+                        
+                        # 单独保存RSI数据到独立文件
+                        rsi_record = {
+                            'timestamp': int(time.time() * 1000),
+                            'beijing_time': now.strftime('%Y-%m-%d %H:%M:%S'),
+                            'rsi_values': rsi_values,
+                            'total_rsi': total_rsi,
+                            'count': len(rsi_values)
+                        }
+                        save_rsi_to_jsonl(rsi_record)
+                    else:
+                        print(f"[警告] RSI数据不足 ({len(rsi_values)}/27)，跳过本次记录")
+                        rsi_values = {}
+                        total_rsi = None
             
             if current_prices:
                 # 计算涨跌幅

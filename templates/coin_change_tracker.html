@@ -1220,47 +1220,6 @@ pm2 status                                                # 查看所有进程�
             </div>
         </div>
 
-        <!-- RSI指标图表 -->
-        <div class="grid grid-cols-1 gap-6 mb-6">
-            <div class="bg-white rounded-lg shadow-lg p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-xl font-bold">
-                        <i class="fas fa-chart-area text-purple-600 mr-2"></i>
-                        27币RSI之和曲线
-                    </h2>
-                    <div class="text-sm text-gray-600">
-                        <i class="fas fa-clock mr-1"></i>
-                        5分钟周期 RSI(14)
-                    </div>
-                </div>
-                <div class="mb-4 text-sm text-gray-600 bg-purple-50 p-3 rounded border border-purple-200">
-                    <p class="mb-2"><strong class="text-purple-700">指标说明：</strong></p>
-                    <ul class="list-disc list-inside space-y-1 ml-2">
-                        <li><strong>RSI(14)：</strong>相对强弱指标，周期为14根5分钟K线</li>
-                        <li><strong>取值范围：</strong>单个币种RSI为0-100，27币之和范围约为0-2700</li>
-                        <li><strong>超买超卖：</strong>RSI总和>1890（平均70）表示市场超买，<810（平均30）表示市场超卖</li>
-                        <li><strong>采集频率：</strong>每5分钟采集一次，与涨跌幅曲线（1分钟）不同步</li>
-                    </ul>
-                </div>
-                <!-- 参考线图例 -->
-                <div class="flex flex-wrap gap-4 mb-3 text-sm">
-                    <span class="inline-flex items-center">
-                        <span class="inline-block w-8 h-0.5 bg-red-500 mr-1" style="border-top: 2px dashed;"></span>
-                        <span class="text-red-500 font-semibold">1890 (超买线)</span>
-                    </span>
-                    <span class="inline-flex items-center">
-                        <span class="inline-block w-8 h-0.5 bg-gray-500 mr-1" style="border-top: 2px dashed;"></span>
-                        <span class="text-gray-500 font-semibold">1350 (中性线)</span>
-                    </span>
-                    <span class="inline-flex items-center">
-                        <span class="inline-block w-8 h-0.5 bg-green-500 mr-1" style="border-top: 2px dashed;"></span>
-                        <span class="text-green-500 font-semibold">810 (超卖线)</span>
-                    </span>
-                </div>
-                <div id="rsiChart" style="height: 500px;"></div>
-            </div>
-        </div>
-
         <!-- 策略筛选器 -->
         <div class="grid grid-cols-1 gap-6 mb-6">
             <!-- 流通盘6名策略 -->
@@ -1392,10 +1351,10 @@ pm2 status                                                # 查看所有进程�
         // 图表实例
         let trendChart = null;
         let rankChart = null;
-        let rsiChart = null;  // RSI图表实例
         
         // 历史数据（用于趋势图）
         let historyData = [];
+        let rsiHistoryData = [];  // RSI历史数据
         
         // 当前选择的日期
         let currentDate = new Date();
@@ -1417,18 +1376,15 @@ pm2 status                                                # 查看所有进程�
         function initCharts() {
             const trendChartDom = document.getElementById('trendChart');
             const rankChartDom = document.getElementById('rankChart');
-            const rsiChartDom = document.getElementById('rsiChart');
             
             console.log('📊 初始化图表...');
             console.log('趋势图容器:', trendChartDom, '宽度:', trendChartDom.offsetWidth, '高度:', trendChartDom.offsetHeight);
             console.log('排行榜容器:', rankChartDom, '宽度:', rankChartDom.offsetWidth, '高度:', rankChartDom.offsetHeight);
-            console.log('RSI图容器:', rsiChartDom, '宽度:', rsiChartDom.offsetWidth, '高度:', rsiChartDom.offsetHeight);
             
             trendChart = echarts.init(trendChartDom);
             rankChart = echarts.init(rankChartDom);
-            rsiChart = echarts.init(rsiChartDom);
             
-            console.log('📊 ECharts实例已创建:', {trendChart, rankChart, rsiChart});
+            console.log('📊 ECharts实例已创建:', {trendChart, rankChart});
             
             // 趋势图配置
             trendChart.setOption({
@@ -3475,9 +3431,6 @@ pm2 status                                                # 查看所有进程�
             window.addEventListener('resize', () => {
                 trendChart.resize();
                 rankChart.resize();
-                if (rsiChart) {
-                    rsiChart.resize();
-                }
             });
         };
         

@@ -1576,6 +1576,56 @@ pm2 status                                                # 查看所有进程�
             });
         }
         
+        // 加载最后一次的RSI数据（用于初始化缓存）
+        async function loadLastRSIData() {
+            try {
+                console.log('🔄 加载最后的RSI数据...');
+                const url = `/api/coin-change-tracker/rsi-history?limit=1&_t=${Date.now()}`;
+                const response = await fetch(url, {
+                    cache: 'no-store',
+                    headers: {
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
+                    }
+                });
+                const result = await response.json();
+                
+                if (result.success && result.data && result.data.length > 0) {
+                    const lastRSI = result.data[0];
+                    lastRSIData.total_rsi = lastRSI.total_rsi;
+                    lastRSIData.rsi_values = lastRSI.rsi_values || {};
+                    lastRSIData.timestamp = lastRSI.beijing_time;
+                    console.log('✅ 成功加载最后的RSI数据:', lastRSI.total_rsi);
+                    
+                    // 立即更新显示
+                    const totalRSIEl = document.getElementById('totalRSI');
+                    const rsiStatusEl = document.getElementById('rsiStatus');
+                    totalRSIEl.textContent = lastRSIData.total_rsi.toFixed(2);
+                    
+                    let status = '';
+                    let statusColor = '';
+                    if (lastRSIData.total_rsi > 1890) {
+                        status = '超买';
+                        statusColor = 'text-red-600';
+                        totalRSIEl.className = 'text-3xl font-bold text-red-600';
+                    } else if (lastRSIData.total_rsi < 810) {
+                        status = '超卖';
+                        statusColor = 'text-green-600';
+                        totalRSIEl.className = 'text-3xl font-bold text-green-600';
+                    } else {
+                        status = '中性';
+                        statusColor = 'text-gray-600';
+                        totalRSIEl.className = 'text-3xl font-bold text-gray-800';
+                    }
+                    rsiStatusEl.textContent = status;
+                    rsiStatusEl.className = `font-medium ${statusColor}`;
+                }
+            } catch (error) {
+                console.error('❌ 加载最后RSI数据失败:', error);
+            }
+        }
+        
         // 更新实时数据
         async function updateLatestData() {
             console.log('🔄 开始更新最新数据...', new Date().toLocaleTimeString());
@@ -1636,6 +1686,9 @@ pm2 status                                                # 查看所有进程�
                         lastRSIData.total_rsi = data.total_rsi;
                         lastRSIData.rsi_values = data.rsi_values || {};
                         lastRSIData.timestamp = data.beijing_time;
+                    } else if (lastRSIData.total_rsi === null) {
+                        // 如果是首次加载且没有RSI数据，尝试从历史数据中获取最后一次RSI
+                        await loadLastRSIData();
                     }
                     
                     // 更新详细表格（使用最新的或缓存的RSI数据）

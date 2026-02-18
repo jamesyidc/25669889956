@@ -1117,7 +1117,7 @@ pm2 status                                                # 查看所有进程�
         </div>
         
         <!-- 实时数据卡片 -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
             <!-- 总涨跌幅 -->
             <div class="bg-white rounded-lg shadow-lg p-6">
                 <div class="flex items-center justify-between mb-2">
@@ -1128,6 +1128,18 @@ pm2 status                                                # 查看所有进程�
                 <div class="text-sm text-gray-500 mt-2">
                     <i class="far fa-clock mr-1"></i>
                     <span id="updateTime">--</span>
+                </div>
+            </div>
+
+            <!-- RSI之和 -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-gray-600 font-medium">RSI之和</span>
+                    <i class="fas fa-chart-line text-purple-600"></i>
+                </div>
+                <div id="totalRSI" class="text-3xl font-bold text-gray-800">--</div>
+                <div class="text-sm text-gray-500 mt-2">
+                    <span id="rsiStatus" class="font-medium">--</span>
                 </div>
             </div>
 
@@ -1160,7 +1172,7 @@ pm2 status                                                # 查看所有进程�
             <div class="bg-white rounded-lg shadow-lg p-6">
                 <div class="flex items-center justify-between mb-2">
                     <span class="text-gray-600 font-medium">基准价时间</span>
-                    <i class="fas fa-calendar-alt text-purple-600"></i>
+                    <i class="fas fa-calendar-alt text-orange-600"></i>
                 </div>
                 <div id="baselineDate" class="text-2xl font-bold text-gray-800">--</div>
                 <div class="text-sm text-gray-500 mt-2">
@@ -1332,6 +1344,7 @@ pm2 status                                                # 查看所有进程�
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">基准价</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">当前价</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">涨跌幅</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">RSI</th>
                         </tr>
                     </thead>
                     <tbody id="detailTable" class="bg-white divide-y divide-gray-200">
@@ -1664,8 +1677,38 @@ pm2 status                                                # 查看所有进程�
                     // 更新单币排行榜
                     updateRankChart(data.changes);
                     
-                    // 更新详细表格
-                    updateDetailTable(data.changes);
+                    // 更新详细表格（传入RSI数据）
+                    updateDetailTable(data.changes, data.rsi_values || {});
+                    
+                    // 更新RSI之和卡片
+                    if (data.total_rsi !== undefined) {
+                        const totalRSI = data.total_rsi;
+                        const totalRSIEl = document.getElementById('totalRSI');
+                        totalRSIEl.textContent = totalRSI.toFixed(2);
+                        
+                        // 根据RSI值显示状态
+                        const rsiStatusEl = document.getElementById('rsiStatus');
+                        let status = '';
+                        let statusColor = '';
+                        if (totalRSI > 1890) {
+                            status = '超买';
+                            statusColor = 'text-red-600';
+                            totalRSIEl.className = 'text-3xl font-bold text-red-600';
+                        } else if (totalRSI < 810) {
+                            status = '超卖';
+                            statusColor = 'text-green-600';
+                            totalRSIEl.className = 'text-3xl font-bold text-green-600';
+                        } else {
+                            status = '中性';
+                            statusColor = 'text-gray-600';
+                            totalRSIEl.className = 'text-3xl font-bold text-gray-800';
+                        }
+                        rsiStatusEl.textContent = status;
+                        rsiStatusEl.className = `font-medium ${statusColor}`;
+                    } else {
+                        document.getElementById('totalRSI').textContent = '--';
+                        document.getElementById('rsiStatus').textContent = '--';
+                    }
                     
                     // 检查预警（添加）- 使用延迟调用确保函数已定义
                     if (typeof checkAlerts === 'function') {
@@ -2298,7 +2341,7 @@ pm2 status                                                # 查看所有进程�
         }
         
         // 更新详细表格
-        function updateDetailTable(changes) {
+        function updateDetailTable(changes, rsiValues = {}) {
             const tbody = document.getElementById('detailTable');
             
             // 转换为数组并排序
@@ -2315,12 +2358,28 @@ pm2 status                                                # 查看所有进程�
                 const baselinePrice = (data.baseline_price || 0).toFixed(4);
                 const currentPrice = (data.current_price || 0).toFixed(4);
                 
+                // 获取RSI值
+                const rsiValue = rsiValues[coin];
+                let rsiDisplay = '--';
+                let rsiClass = 'text-gray-600';
+                if (rsiValue !== undefined && rsiValue !== null) {
+                    rsiDisplay = rsiValue.toFixed(2);
+                    if (rsiValue > 70) {
+                        rsiClass = 'text-red-600 font-bold';
+                    } else if (rsiValue < 30) {
+                        rsiClass = 'text-green-600 font-bold';
+                    } else {
+                        rsiClass = 'text-gray-600';
+                    }
+                }
+                
                 return `
                     <tr class="hover:bg-gray-50">
                         <td class="px-6 py-4 whitespace-nowrap font-medium">${coin}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-gray-600">$${baselinePrice}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-gray-600">$${currentPrice}</td>
                         <td class="px-6 py-4 whitespace-nowrap ${changeClass} font-bold">${changePrefix}${changePct.toFixed(2)}%</td>
+                        <td class="px-6 py-4 whitespace-nowrap ${rsiClass}">${rsiDisplay}</td>
                     </tr>
                 `;
             }).join('');

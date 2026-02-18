@@ -2644,7 +2644,74 @@ pm2 status                                                # 查看所有进程�
                             symbol: 'circle',
                             symbolSize: 5,
                             connectNulls: true,
-                            zlevel: 1
+                            zlevel: 1,
+                            markPoint: {
+                                data: (() => {
+                                    // 计算RSI的最高点和最低点（排除null值）
+                                    const validRsiValues = rsiValues.filter(v => v !== null && v !== undefined);
+                                    if (validRsiValues.length === 0) return [];
+                                    
+                                    let maxRsi = -Infinity;
+                                    let minRsi = Infinity;
+                                    let maxRsiIndex = -1;
+                                    let minRsiIndex = -1;
+                                    
+                                    rsiValues.forEach((value, index) => {
+                                        if (value !== null && value !== undefined) {
+                                            if (value > maxRsi) {
+                                                maxRsi = value;
+                                                maxRsiIndex = index;
+                                            }
+                                            if (value < minRsi) {
+                                                minRsi = value;
+                                                minRsiIndex = index;
+                                            }
+                                        }
+                                    });
+                                    
+                                    const markPoints = [];
+                                    
+                                    if (maxRsiIndex >= 0) {
+                                        markPoints.push({
+                                            name: 'RSI最高',
+                                            value: maxRsi.toFixed(2),
+                                            xAxis: maxRsiIndex,
+                                            yAxis: maxRsi,
+                                            itemStyle: {
+                                                color: '#9333EA'
+                                            },
+                                            label: {
+                                                formatter: '{b}\n{c}',
+                                                fontSize: 12,
+                                                fontWeight: 'bold',
+                                                color: '#9333EA'
+                                            }
+                                        });
+                                    }
+                                    
+                                    if (minRsiIndex >= 0) {
+                                        markPoints.push({
+                                            name: 'RSI最低',
+                                            value: minRsi.toFixed(2),
+                                            xAxis: minRsiIndex,
+                                            yAxis: minRsi,
+                                            itemStyle: {
+                                                color: '#059669'
+                                            },
+                                            label: {
+                                                formatter: '{b}\n{c}',
+                                                fontSize: 12,
+                                                fontWeight: 'bold',
+                                                color: '#059669'
+                                            }
+                                        });
+                                    }
+                                    
+                                    return markPoints;
+                                })(),
+                                symbol: 'pin',
+                                symbolSize: 50
+                            }
                         }]
                     }, true, true); // notMerge=true, lazyUpdate=true
                     

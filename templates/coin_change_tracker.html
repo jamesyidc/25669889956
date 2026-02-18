@@ -3005,12 +3005,20 @@ pm2 status                                                # 查看所有进程�
                                     if (wavePeaksData && wavePeaksData.length > 0) {
                                         console.log('🔍 开始添加波峰标记点，波峰数量:', wavePeaksData.length);
                                         console.log('🔍 Times数组示例（前5个）:', times.slice(0, 5));
+                                        console.log('🔍 Times数组示例（中间5个）:', times.slice(Math.floor(times.length/2), Math.floor(times.length/2) + 5));
                                         
                                         wavePeaksData.forEach((peak, peakIdx) => {
                                             // B点 (谷底)
                                             const bTime = peak.b_point.beijing_time.split(' ')[1];
                                             const bIndex = times.indexOf(bTime);
                                             console.log(`🔍 波峰${peakIdx+1} B点: ${peak.b_point.beijing_time} -> 时间=${bTime}, 索引=${bIndex}`);
+                                            
+                                            // 如果找不到，尝试查找相似的时间
+                                            if (bIndex < 0) {
+                                                const similar = times.find(t => t && t.includes(bTime.substring(0, 5)));
+                                                console.log(`  ⚠️ 未找到精确匹配，相似时间:`, similar);
+                                            }
+                                            
                                             if (bIndex >= 0) {
                                                 points.push({
                                                     name: `波峰${peakIdx+1}-B`,

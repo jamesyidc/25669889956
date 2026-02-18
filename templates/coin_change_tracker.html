@@ -1544,8 +1544,13 @@ pm2 status                                                # 查看所有进程�
                             width: 2,
                             type: 'dashed'
                         },
+                        itemStyle: {
+                            color: '#D1D5DB'
+                        },
+                        showSymbol: true,
                         symbol: 'circle',
-                        symbolSize: 3,
+                        symbolSize: 4,
+                        connectNulls: true,
                         markLine: {
                             silent: true,
                             symbol: 'none',
@@ -1728,7 +1733,6 @@ pm2 status                                                # 查看所有进程�
                     console.log('Fetching RSI data from:', rsiUrl);
                     
                     let rsiData = [];
-                    let rsiTimes = [];
                     let rsiValues = [];
                     
                     try {
@@ -1744,17 +1748,33 @@ pm2 status                                                # 查看所有进程�
                         
                         if (rsiResult.success && rsiResult.data && rsiResult.data.length > 0) {
                             rsiData = rsiResult.data;
-                            rsiTimes = rsiData.map(d => {
+                            
+                            // 创建RSI时间戳映射表
+                            const rsiMap = {};
+                            rsiData.forEach(d => {
                                 const timeStr = d.beijing_time || '';
-                                return timeStr.split(' ')[1] || 'undefined';
+                                const time = timeStr.split(' ')[1] || '';
+                                if (time) {
+                                    rsiMap[time] = d.total_rsi;
+                                }
                             });
-                            rsiValues = rsiData.map(d => d.total_rsi || null);
-                            console.log('✅ RSI数据加载成功，数据点数:', rsiValues.length);
+                            
+                            // 将RSI值映射到涨跌幅的时间轴，如果没有对应的RSI值则使用null
+                            rsiValues = times.map(time => {
+                                return rsiMap[time] !== undefined ? rsiMap[time] : null;
+                            });
+                            
+                            console.log('✅ RSI数据加载成功，原始数据点:', rsiData.length, '映射后数据点:', rsiValues.length);
+                            console.log('✅ RSI非空数据点:', rsiValues.filter(v => v !== null).length);
                         } else {
                             console.log('⚠️ RSI数据文件不存在或为空');
+                            // 如果没有RSI数据，填充null数组
+                            rsiValues = times.map(() => null);
                         }
                     } catch (e) {
                         console.warn('⚠️ RSI数据加载失败:', e);
+                        // 出错时也填充null数组
+                        rsiValues = times.map(() => null);
                     }
                     
                     console.log('Times count:', times.length, 'Changes count:', changes.length, 'RSI count:', rsiValues.length);
@@ -2074,8 +2094,10 @@ pm2 status                                                # 查看所有进程�
                             itemStyle: {
                                 color: '#D1D5DB'
                             },
+                            showSymbol: true,
                             symbol: 'circle',
-                            symbolSize: 3,
+                            symbolSize: 4,
+                            connectNulls: true,
                             zlevel: 1,
                             markLine: {
                                 silent: true,

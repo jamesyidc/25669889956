@@ -54,6 +54,18 @@ class WavePeakDetector:
             for line in f:
                 if line.strip():
                     record = json.loads(line)
+                    
+                    # 兼容旧格式：如果没有beijing_time字段，从timestamp字段生成
+                    if 'beijing_time' not in record and 'timestamp' in record:
+                        # timestamp格式：2026-02-01T09:12:25.698836+08:00
+                        # 提取日期和时间部分
+                        timestamp_str = record['timestamp']
+                        # 去掉时区信息
+                        if '+' in timestamp_str:
+                            timestamp_str = timestamp_str.split('+')[0]
+                        # 转换为beijing_time格式：2026-02-01 09:12:25
+                        record['beijing_time'] = timestamp_str.replace('T', ' ').split('.')[0]
+                    
                     data.append(record)
         
         return data
@@ -319,13 +331,18 @@ class WavePeakDetector:
         return None
 
 def main():
-    """主函数 - 测试今天的数据"""
+    """主函数 - 测试指定日期的数据"""
     from datetime import datetime
+    import sys
     
     detector = WavePeakDetector(min_amplitude=35.0, window_minutes=15)
     
-    # 加载今天的数据
-    today = datetime.now().strftime('%Y%m%d')
+    # 从命令行参数获取日期，如果没有则使用今天
+    if len(sys.argv) > 1:
+        today = sys.argv[1]
+    else:
+        today = datetime.now().strftime('%Y%m%d')
+    
     file_path = f'/home/user/webapp/data/coin_change_tracker/coin_change_{today}.jsonl'
     
     data = detector.load_data(file_path)

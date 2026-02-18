@@ -4415,18 +4415,11 @@ data/
                 return;
             }
             
-            // 额外提示：如果余额刚好够，给个警告
+            // 余额警告记录到日志（无需确认，继续执行）
             if (balance < requiredBalance * 1.5) {
-                const warningMsg = `⚠️ 余额偏紧\n\n` +
-                    `可用余额: ${balance.toFixed(2)} USDT\n` +
-                    `预计占用保证金: ${totalMargin} USDT\n` +
-                    `剩余: ${(balance - parseFloat(totalMargin)).toFixed(2)} USDT\n\n` +
-                    `建议增加余额或降低开仓比例，避免因余额不足导致部分订单失败。\n\n` +
-                    `是否继续？`;
-                if (!confirm(warningMsg)) {
-                    console.log('[batchOrder] 用户因余额不足取消');
-                    return;
-                }
+                const warningMsg = `⚠️ 余额偏紧 - 可用余额: ${balance.toFixed(2)} USDT, 预计占用: ${totalMargin} USDT, 剩余: ${(balance - parseFloat(totalMargin)).toFixed(2)} USDT`;
+                console.warn('[batchOrder] ' + warningMsg);
+                console.log('[batchOrder] ⚠️ 余额警告已记录，继续执行...');
             }
             
             // 确认对话框

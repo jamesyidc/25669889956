@@ -3713,7 +3713,7 @@ pm2 status                                                # 查看所有进程�
             const a3VsA2 = comparisons.a3_vs_a2 || {};
             
             // 构建告警内容
-            let html = `
+            html += `
                 <div class="space-y-4">
                     <div class="bg-white p-4 rounded-lg shadow-sm">
                         <p class="text-lg font-semibold text-red-700 mb-2">
@@ -3841,7 +3841,9 @@ pm2 status                                                # 查看所有进程�
                     </div>
                 </div>
             `;
+            }  // 闭合 if (falseBreakout)
             
+            html += '</div>';  // 闭合最外层的 <div class="space-y-4">
             alertContent.innerHTML = html;
         }
         

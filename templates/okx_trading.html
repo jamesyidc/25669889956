@@ -3028,6 +3028,7 @@ data/
 
         // 当前账户
         let currentAccount = 'account_poit_main';
+        let isLoadingAccountSettings = false;  // 防止加载设置时触发保存
         
         // API请求超时控制
         async function fetchWithTimeout(url, options = {}, timeout = 5000) {
@@ -6186,6 +6187,9 @@ ${data.sMsg || result.message || ''}`);
             const account = accounts.find(acc => acc.id === currentAccount);
             if (!account) return;
             
+            // 设置加载标志，防止触发保存
+            isLoadingAccountSettings = true;
+            
             try {
                 const response = await fetch(`/api/okx-trading/auto-strategy/${account.id}`);
                 const result = await response.json();
@@ -6228,23 +6232,63 @@ ${data.sMsg || result.message || ''}`);
                 }
             } catch (e) {
                 console.warn('⚠️ 加载自动交易策略设置异常', e);
+            } finally {
+                // 恢复标志，允许后续的用户操作保存
+                isLoadingAccountSettings = false;
             }
         }
         
         // 加载追涨策略设置（涨幅前8名）
         async function loadAutoStrategySettingsTop() {
             const account = accounts.find(acc => acc.id === currentAccount);
-            if (!account) return;
+            if (!account) {
+                console.warn('⚠️ loadAutoStrategySettingsTop: 未找到当前账户');
+                return;
+            }
+            
+            console.log(`🔄 开始加载账户 ${account.name} (${account.id}) 的追涨策略配置`);
+            
+            // 设置加载标志，防止触发保存
+            isLoadingAccountSettings = true;
             
             try {
-                const response = await fetch(`/api/okx-trading/auto-strategy/${account.id}?strategy_type=top_performers`);
+                const url = `/api/okx-trading/auto-strategy/${account.id}?strategy_type=top_performers`;
+                console.log(`📡 请求URL: ${url}`);
+                
+                const response = await fetch(url);
                 const result = await response.json();
+                
+                console.log(`📦 API响应:`, result);
                 
                 if (result.success && result.settings) {
                     const settings = result.settings;
-                    document.getElementById('autoTriggerPriceTop').value = settings.triggerPrice || 68000;
-                    document.getElementById('autoTradeSwitchTop').checked = settings.enabled || false;
-                    document.getElementById('autoStrategyTypeTop').value = settings.strategyType || 'top_performers';
+                    
+                    console.log(`📋 配置详情:`, {
+                        enabled: settings.enabled,
+                        enabledType: typeof settings.enabled,
+                        triggerPrice: settings.triggerPrice,
+                        strategyType: settings.strategyType
+                    });
+                    
+                    // 更新UI元素
+                    const priceEl = document.getElementById('autoTriggerPriceTop');
+                    const switchEl = document.getElementById('autoTradeSwitchTop');
+                    const typeEl = document.getElementById('autoStrategyTypeTop');
+                    
+                    if (priceEl) {
+                        priceEl.value = settings.triggerPrice || 68000;
+                        console.log(`✅ 更新触发价格: ${priceEl.value}`);
+                    }
+                    
+                    if (switchEl) {
+                        switchEl.checked = settings.enabled;
+                        console.log(`✅ 更新开关状态: ${switchEl.checked}`);
+                    }
+                    
+                    if (typeEl) {
+                        typeEl.value = settings.strategyType || 'top_performers';
+                        console.log(`✅ 更新策略类型: ${typeEl.value}`);
+                    }
                     
                     // 更新状态显示
                     updateAutoTradeStatus(settings.enabled, settings.lastExecutedTime, 'Top');
@@ -6253,10 +6297,10 @@ ${data.sMsg || result.message || ''}`);
                     // 加载并显示当前BTC价格
                     const btcPrice = await getBTCPrice();
                     if (btcPrice) {
-                        const priceEl = document.getElementById('currentBtcPriceTop');
-                        if (priceEl) {
-                            priceEl.textContent = `$${btcPrice.toFixed(2)}`;
-                            priceEl.style.color = btcPrice > settings.triggerPrice ? '#10b981' : '#ef4444';
+                        const priceDisplayEl = document.getElementById('currentBtcPriceTop');
+                        if (priceDisplayEl) {
+                            priceDisplayEl.textContent = `$${btcPrice.toFixed(2)}`;
+                            priceDisplayEl.style.color = btcPrice > settings.triggerPrice ? '#10b981' : '#ef4444';
                         }
                     }
                     
@@ -6265,7 +6309,11 @@ ${data.sMsg || result.message || ''}`);
                     console.warn('⚠️ 加载追涨策略设置失败:', result.error);
                 }
             } catch (e) {
-                console.warn('⚠️ 加载追涨策略设置异常', e);
+                console.error('❌ 加载追涨策略设置异常', e);
+            } finally {
+                // 恢复标志，允许后续的用户操作保存
+                isLoadingAccountSettings = false;
+                console.log('✅ 账户设置加载完成，恢复保存功能');
             }
         }
         
@@ -6348,6 +6396,12 @@ ${data.sMsg || result.message || ''}`);
         // 参数：suffix - 策略后缀（空字符串表示默认策略，'Top'表示追涨策略）
         async function saveAutoStrategySettings(suffix = '') {
             console.log(`🔔 saveAutoStrategySettings${suffix ? `(${suffix})` : ''} 函数被调用`);
+            
+            // 如果正在加载账户设置，不执行保存（防止自动触发）
+            if (isLoadingAccountSettings) {
+                console.log('⏸️ 正在加载账户设置，跳过保存操作');
+                return;
+            }
             
             const account = accounts.find(acc => acc.id === currentAccount);
             console.log('📋 当前账户:', account ? account.name : '未选择');

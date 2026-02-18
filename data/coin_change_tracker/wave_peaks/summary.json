@@ -1,0 +1,64 @@
+{
+  "date_range": {
+    "start": "20260201",
+    "end": "20260218"
+  },
+  "statistics": {
+    "total_days": 18,
+    "success_days": 8,
+    "total_peaks": 16,
+    "false_breakout_days": 0,
+    "avg_peaks_per_day": 2.0
+  },
+  "daily_data": [
+    {
+      "date": "20260211",
+      "peaks_count": 1,
+      "has_false_breakout": false,
+      "data_points": 330
+    },
+    {
+      "date": "20260212",
+      "peaks_count": 3,
+      "has_false_breakout": false,
+      "data_points": 1211
+    },
+    {
+      "date": "20260213",
+      "peaks_count": 2,
+      "has_false_breakout": false,
+      "data_points": 1205
+    },
+    {
+      "date": "20260214",
+      "peaks_count": 1,
+      "has_false_breakout": false,
+      "data_points": 1080
+    },
+    {
+      "date": "20260215",
+      "peaks_count": 2,
+      "has_false_breakout": false,
+      "data_points": 1211
+    },
+    {
+      "date": "20260216",
+      "peaks_count": 4,
+      "has_false_breakout": false,
+      "data_points": 1082
+    },
+    {
+      "date": "20260217",
+      "peaks_count": 2,
+      "has_false_breakout": false,
+      "data_points": 1158
+    },
+    {
+      "date": "20260218",
+      "peaks_count": 1,
+      "has_false_breakout": false,
+      "data_points": 884
+    }
+  ],
+  "generated_at": "2026-02-18T09:33:52.501437"
+}

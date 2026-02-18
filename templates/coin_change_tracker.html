@@ -2734,6 +2734,9 @@ pm2 status                                                # 查看所有进程�
                         let wavePeaksUrl = '/api/coin-change-tracker/wave-peaks?';
                         if (date) {
                             wavePeaksUrl += `date=${formatDate(date)}&`;
+                            console.log('🔍 查询历史波峰数据，日期:', formatDate(date));
+                        } else {
+                            console.log('🔍 查询今日波峰数据（无date参数）');
                         }
                         wavePeaksUrl += `_t=${Date.now()}`;
                         
@@ -2754,6 +2757,10 @@ pm2 status                                                # 查看所有进程�
                             falseBreakout = wavePeaksResult.false_breakout;
                             currentState = wavePeaksResult.current_state;  // 保存当前状态
                             console.log('✅ 波峰数据加载成功，波峰数量:', wavePeaksData.length);
+                            console.log('📅 波峰数据日期:', wavePeaksResult.date);
+                            if (wavePeaksData.length > 0) {
+                                console.log('📍 第一个波峰:', wavePeaksData[0].b_point.beijing_time);
+                            }
                             if (falseBreakout) {
                                 console.log('⚠️ 检测到假突破信号！', falseBreakout);
                             }

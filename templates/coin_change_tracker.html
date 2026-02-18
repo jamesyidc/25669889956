@@ -3313,7 +3313,7 @@ pm2 status                                                # 查看所有进程�
                 // 同时刷新实时数据和历史数据
                 await Promise.all([
                     updateLatestData(),
-                    updateHistoryData()
+                    updateHistoryData(currentDate)  // 传递currentDate保持当前选择
                 ]);
                 
                 console.log('✅ 数据刷新完成！');
@@ -4129,7 +4129,7 @@ pm2 status                                                # 查看所有进程�
                     console.log('⏰ 定时器触发，当前日期是今天:', isToday);
                     if (isToday) {
                         updateLatestData();
-                        updateHistoryData();
+                        updateHistoryData(currentDate);  // 传递currentDate，保持当前选择的日期
                     } else {
                         console.log('⚠️ 当前日期不是今天，跳过更新');
                     }

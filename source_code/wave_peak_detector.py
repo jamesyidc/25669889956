@@ -1,17 +1,27 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-波峰检测和假突破判断模块（改进版）
-动态确认B-A-C波峰结构，B/A点需要15分钟内保持极值才确认
+波峰检测和假突破判断模块（状态机版）
+按照 B确认 → A确认 → C确认 的严格顺序检测波峰
+C点可以作为下一个波峰的B点复用
 """
 
 import json
 import os
 from datetime import datetime, timedelta
 from typing import List, Dict, Tuple, Optional
+from enum import Enum
+
+class DetectionState(Enum):
+    """波峰检测状态"""
+    LOOKING_FOR_B = 1  # 寻找B点
+    CONFIRMING_B = 2   # 确认B点（等待15分钟）
+    LOOKING_FOR_A = 3  # 寻找A点
+    CONFIRMING_A = 4   # 确认A点（等待15分钟）
+    LOOKING_FOR_C = 5  # 寻找C点
 
 class WavePeakDetector:
-    """波峰检测器（动态确认版）"""
+    """波峰检测器（状态机版）"""
     
     def __init__(self, min_amplitude: float = 35.0, window_minutes: int = 15):
         """
@@ -48,63 +58,21 @@ class WavePeakDetector:
         
         return data
     
-    def is_confirmed_minimum(self, data: List[Dict], index: int) -> bool:
-        """
-        确认是否为确认的最低点（后续15分钟内没有更低点）
-        
-        Args:
-            data: 数据列表
-            index: 候选点的索引
-            
-        Returns:
-            是否为确认的最低点
-        """
-        if index >= len(data):
-            return False
-        
-        current_value = data[index]['total_change']
-        
-        # 检查后续15分钟内是否有更低点
-        for i in range(index + 1, min(index + self.window_minutes + 1, len(data))):
-            if data[i]['total_change'] < current_value:
-                return False  # 后续有更低点，当前点不是确认的B点
-        
-        return True
-    
-    def is_confirmed_maximum(self, data: List[Dict], index: int) -> bool:
-        """
-        确认是否为确认的最高点（后续15分钟内没有更高点）
-        
-        Args:
-            data: 数据列表
-            index: 候选点的索引
-            
-        Returns:
-            是否为确认的最高点
-        """
-        if index >= len(data):
-            return False
-        
-        current_value = data[index]['total_change']
-        
-        # 检查后续15分钟内是否有更高点
-        for i in range(index + 1, min(index + self.window_minutes + 1, len(data))):
-            if data[i]['total_change'] > current_value:
-                return False  # 后续有更高点，当前点不是确认的A点
-        
-        return True
-    
     def detect_wave_peaks(self, data: List[Dict]) -> List[Dict]:
         """
-        检测波峰（B-A-C结构）- 动态确认版
+        检测波峰（B-A-C结构）- 状态机版本
         
-        算法逻辑：
-        1. 找到一个局部最低点作为B点候选
-        2. 等待15分钟，如果期间出现更低点，则重新确认B点
-        3. B点确认后，向后查找局部最高点作为A点候选
-        4. 等待15分钟，如果期间出现更高点，则重新确认A点
-        5. A点确认且振幅≥35%，查找C点（回落超过一半后反弹）
-        6. 找到C点后记录完整的B-A-C波峰
+        状态转换流程：
+        1. LOOKING_FOR_B: 找到局部最低点 → CONFIRMING_B
+        2. CONFIRMING_B: 等待15分钟确认
+           - 期间出现更低点 → 回到 LOOKING_FOR_B
+           - 15分钟后仍是最低 → B点确认 → LOOKING_FOR_A
+        3. LOOKING_FOR_A: 找到局部最高点且振幅≥35% → CONFIRMING_A
+        4. CONFIRMING_A: 等待15分钟确认
+           - 期间出现更高点 → 回到 LOOKING_FOR_A
+           - 15分钟后仍是最高 → A点确认 → LOOKING_FOR_C
+        5. LOOKING_FOR_C: 找到回落>50%后反弹的点 → 记录波峰
+           - C点成为下一个波峰的B点候选
         
         Args:
             data: 数据列表
@@ -116,116 +84,181 @@ class WavePeakDetector:
             return []
         
         wave_peaks = []
-        i = 0
+        state = DetectionState.LOOKING_FOR_B
         
-        while i < len(data) - self.window_minutes * 2:
-            # ==================== 步骤1: 查找并确认B点 ====================
-            # 找到当前位置的局部最低点
-            b_index = None
-            b_value = None
+        # 当前候选点
+        b_candidate = None
+        b_confirm_start_index = None
+        
+        a_candidate = None
+        a_confirm_start_index = None
+        
+        # 从C点继承的B点（如果有）
+        inherited_b = None
+        
+        i = 0
+        while i < len(data):
+            current_value = data[i]['total_change']
             
-            # 向前查找局部最低点（窗口内的最低值）
-            for j in range(i, min(i + self.window_minutes, len(data))):
-                if b_index is None or data[j]['total_change'] < b_value:
-                    b_index = j
-                    b_value = data[j]['total_change']
-            
-            # 检查B点是否被确认（后续15分钟内没有更低点）
-            if not self.is_confirmed_minimum(data, b_index):
-                i += 1  # B点未确认，继续向前找
-                continue
-            
-            # B点已确认
-            b_point = {
-                'index': b_index,
-                'timestamp': data[b_index]['timestamp'],
-                'beijing_time': data[b_index]['beijing_time'],
-                'value': b_value
-            }
-            
-            # ==================== 步骤2: 查找并确认A点 ====================
-            a_index = None
-            a_value = None
-            
-            # 从B点之后开始查找局部最高点
-            search_start = b_index + 1
-            search_end = min(b_index + self.window_minutes * 4, len(data))  # 在更大的范围内找A点
-            
-            for j in range(search_start, search_end):
-                if a_index is None or data[j]['total_change'] > a_value:
-                    a_index = j
-                    a_value = data[j]['total_change']
+            # ==================== 状态1: 寻找B点 ====================
+            if state == DetectionState.LOOKING_FOR_B:
+                # 如果有从上一个波峰的C点继承的B点，直接使用
+                if inherited_b is not None:
+                    b_candidate = inherited_b
+                    b_confirm_start_index = i
+                    state = DetectionState.CONFIRMING_B
+                    inherited_b = None  # 清除继承
+                    print(f"📍 使用继承的B点: {b_candidate['beijing_time']} = {b_candidate['value']:.2f}%")
+                # 否则寻找新的局部最低点
+                elif i > 0 and current_value < data[i-1]['total_change']:
+                    # 发现下降趋势，可能是B点候选
+                    b_candidate = {
+                        'index': i,
+                        'timestamp': data[i]['timestamp'],
+                        'beijing_time': data[i]['beijing_time'],
+                        'value': current_value
+                    }
+                    b_confirm_start_index = i
+                    state = DetectionState.CONFIRMING_B
+                    print(f"🔍 发现B点候选: {b_candidate['beijing_time']} = {b_candidate['value']:.2f}%")
                 
-                # 每找到一个新的高点，都要确认它是否是确认的A点
-                if a_index == j and self.is_confirmed_maximum(data, a_index):
-                    # A点确认，检查振幅
-                    amplitude = a_value - b_value
-                    
+                i += 1
+            
+            # ==================== 状态2: 确认B点 ====================
+            elif state == DetectionState.CONFIRMING_B:
+                # 检查是否出现了更低点
+                if current_value < b_candidate['value']:
+                    print(f"⚠️  B点被推翻，发现更低点: {data[i]['beijing_time']} = {current_value:.2f}%")
+                    # 重新设置B点候选
+                    b_candidate = {
+                        'index': i,
+                        'timestamp': data[i]['timestamp'],
+                        'beijing_time': data[i]['beijing_time'],
+                        'value': current_value
+                    }
+                    b_confirm_start_index = i
+                    print(f"🔍 新的B点候选: {b_candidate['beijing_time']} = {b_candidate['value']:.2f}%")
+                
+                # 检查是否已经过了确认窗口
+                if i - b_confirm_start_index >= self.window_minutes:
+                    # B点确认成功
+                    print(f"✅ B点确认: {b_candidate['beijing_time']} = {b_candidate['value']:.2f}%")
+                    a_candidate = None  # 重置A点候选
+                    state = DetectionState.LOOKING_FOR_A
+                
+                i += 1
+            
+            # ==================== 状态3: 寻找A点 ====================
+            elif state == DetectionState.LOOKING_FOR_A:
+                # 确保A点在B点之后
+                if i <= b_candidate['index']:
+                    i += 1
+                    continue
+                
+                # 检查振幅是否满足要求
+                amplitude = current_value - b_candidate['value']
+                
+                # 如果还没有A候选，或者当前值更高且振幅满足要求
+                if a_candidate is None:
                     if amplitude >= self.min_amplitude:
-                        # 振幅满足要求，A点有效
-                        break
-                    else:
-                        # 振幅不够，继续找更高的A点
-                        continue
-            
-            # 检查是否找到了有效的A点
-            if a_index is None or not self.is_confirmed_maximum(data, a_index):
-                i = b_index + 1  # A点未找到或未确认，从B点后继续
-                continue
-            
-            amplitude = a_value - b_value
-            if amplitude < self.min_amplitude:
-                i = b_index + 1  # 振幅不够，继续
-                continue
-            
-            # A点已确认且振幅足够
-            a_point = {
-                'index': a_index,
-                'timestamp': data[a_index]['timestamp'],
-                'beijing_time': data[a_index]['beijing_time'],
-                'value': a_value
-            }
-            
-            # ==================== 步骤3: 查找C点 ====================
-            # C点：A点之后下降超过振幅一半，且开始反弹的点
-            half_amplitude = amplitude / 2
-            target_decline = a_value - half_amplitude
-            
-            c_point = None
-            for j in range(a_index + 1, len(data)):
-                current_value = data[j]['total_change']
+                        a_candidate = {
+                            'index': i,
+                            'timestamp': data[i]['timestamp'],
+                            'beijing_time': data[i]['beijing_time'],
+                            'value': current_value
+                        }
+                        a_confirm_start_index = i
+                        state = DetectionState.CONFIRMING_A
+                        print(f"🔍 发现A点候选: {a_candidate['beijing_time']} = {a_candidate['value']:.2f}%, 振幅={amplitude:.2f}%")
+                elif current_value > a_candidate['value'] and amplitude >= self.min_amplitude:
+                    # 更新A候选
+                    a_candidate = {
+                        'index': i,
+                        'timestamp': data[i]['timestamp'],
+                        'beijing_time': data[i]['beijing_time'],
+                        'value': current_value
+                    }
+                    a_confirm_start_index = i
+                    print(f"🔄 更新A点候选: {a_candidate['beijing_time']} = {a_candidate['value']:.2f}%, 振幅={amplitude:.2f}%")
                 
-                # 找到下降超过一半的点
+                i += 1
+            
+            # ==================== 状态4: 确认A点 ====================
+            elif state == DetectionState.CONFIRMING_A:
+                # 检查是否出现了更高点
+                if current_value > a_candidate['value']:
+                    # 检查新的高点振幅是否仍然满足
+                    new_amplitude = current_value - b_candidate['value']
+                    if new_amplitude >= self.min_amplitude:
+                        print(f"⚠️  A点被推翻，发现更高点: {data[i]['beijing_time']} = {current_value:.2f}%")
+                        a_candidate = {
+                            'index': i,
+                            'timestamp': data[i]['timestamp'],
+                            'beijing_time': data[i]['beijing_time'],
+                            'value': current_value
+                        }
+                        a_confirm_start_index = i
+                        print(f"🔍 新的A点候选: {a_candidate['beijing_time']} = {a_candidate['value']:.2f}%, 振幅={new_amplitude:.2f}%")
+                
+                # 检查是否已经过了确认窗口
+                if i - a_confirm_start_index >= self.window_minutes:
+                    # A点确认成功
+                    amplitude = a_candidate['value'] - b_candidate['value']
+                    print(f"✅ A点确认: {a_candidate['beijing_time']} = {a_candidate['value']:.2f}%, 振幅={amplitude:.2f}%")
+                    state = DetectionState.LOOKING_FOR_C
+                
+                i += 1
+            
+            # ==================== 状态5: 寻找C点 ====================
+            elif state == DetectionState.LOOKING_FOR_C:
+                # 确保C点在A点之后
+                if i <= a_candidate['index']:
+                    i += 1
+                    continue
+                
+                # 计算目标回落值（振幅的一半）
+                amplitude = a_candidate['value'] - b_candidate['value']
+                half_amplitude = amplitude / 2
+                target_decline = a_candidate['value'] - half_amplitude
+                
+                # 检查是否已经回落超过一半
                 if current_value <= target_decline:
-                    # 检查是否止跌反升（后续有上升）
-                    if j + 1 < len(data):
-                        next_value = data[j + 1]['total_change']
-                        if next_value > current_value:
-                            c_point = {
-                                'index': j,
-                                'timestamp': data[j]['timestamp'],
-                                'beijing_time': data[j]['beijing_time'],
-                                'value': current_value
-                            }
-                            break
-            
-            # 如果找到了C点，记录这个完整的波峰
-            if c_point:
-                wave_peak = {
-                    'b_point': b_point,
-                    'a_point': a_point,
-                    'c_point': c_point,
-                    'amplitude': amplitude,
-                    'decline': a_value - c_point['value'],
-                    'decline_ratio': (a_value - c_point['value']) / amplitude * 100
-                }
-                wave_peaks.append(wave_peak)
+                    # 检查是否止跌反弹
+                    if i + 1 < len(data) and data[i + 1]['total_change'] > current_value:
+                        # 找到C点，记录完整波峰
+                        c_point = {
+                            'index': i,
+                            'timestamp': data[i]['timestamp'],
+                            'beijing_time': data[i]['beijing_time'],
+                            'value': current_value
+                        }
+                        
+                        decline = a_candidate['value'] - c_point['value']
+                        decline_ratio = (decline / amplitude) * 100
+                        
+                        wave_peak = {
+                            'b_point': b_candidate,
+                            'a_point': a_candidate,
+                            'c_point': c_point,
+                            'amplitude': amplitude,
+                            'decline': decline,
+                            'decline_ratio': decline_ratio
+                        }
+                        wave_peaks.append(wave_peak)
+                        
+                        print(f"✅ 完整波峰记录: B({b_candidate['value']:.2f}%) → A({a_candidate['value']:.2f}%) → C({c_point['value']:.2f}%)")
+                        print(f"   振幅={amplitude:.2f}%, 回调={decline:.2f}% ({decline_ratio:.1f}%)")
+                        
+                        # C点作为下一个波峰的B点候选
+                        inherited_b = c_point
+                        print(f"♻️  C点将作为下一个波峰的B点候选")
+                        
+                        # 重置状态，开始寻找下一个波峰
+                        state = DetectionState.LOOKING_FOR_B
+                        b_candidate = None
+                        a_candidate = None
                 
-                # 跳到C点之后继续查找下一个波峰
-                i = c_point['index'] + 1
-            else:
-                # 没找到C点，从A点后继续
-                i = a_index + 1
+                i += 1
         
         return wave_peaks
     
@@ -279,24 +312,31 @@ def main():
     data = detector.load_data(file_path)
     
     print('=' * 80)
-    print('📊 波峰检测分析（动态确认版）')
+    print('📊 波峰检测分析（状态机版 - B→A→C严格顺序）')
     print('=' * 80)
     print(f"\n📅 日期: {today}")
     print(f"📈 数据点数: {len(data)}")
     print(f"⚙️  参数设置:")
     print(f"   - 最小振幅: {detector.min_amplitude}%")
     print(f"   - 确认窗口: {detector.window_minutes}分钟")
+    print(f"\n🔄 检测逻辑:")
+    print(f"   1. 先找到B点 → 等待15分钟确认")
+    print(f"   2. B点确认后 → 开始找A点 → 等待15分钟确认")
+    print(f"   3. A点确认后 → 开始找C点")
+    print(f"   4. C点找到后 → 作为下一个波峰的B点候选")
+    
+    print(f"\n{'=' * 80}")
+    print('🔍 开始检测...')
+    print('=' * 80)
     
     # 检测波峰
     wave_peaks = detector.detect_wave_peaks(data)
     
-    print(f"\n🏔️  检测到波峰数: {len(wave_peaks)}")
+    print(f"\n{'=' * 80}")
+    print(f"🏔️  检测到波峰数: {len(wave_peaks)}")
+    print('=' * 80)
     
     if len(wave_peaks) > 0:
-        print(f"\n{'=' * 80}")
-        print('🏔️  波峰详情（B-A-C结构）')
-        print('=' * 80)
-        
         for i, peak in enumerate(wave_peaks, 1):
             print(f"\n波峰 {i}:")
             print(f"  B点（谷底）: {peak['b_point']['beijing_time']} | 涨跌幅: {peak['b_point']['value']:.2f}%")

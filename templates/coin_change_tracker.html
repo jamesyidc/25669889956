@@ -1516,7 +1516,7 @@ pm2 status                                                # 查看所有进程�
                         },
                         axisLine: {
                             lineStyle: {
-                                color: '#D1D5DB'
+                                color: '#9CA3AF'
                             }
                         },
                         splitLine: {
@@ -1553,70 +1553,17 @@ pm2 status                                                # 查看所有进程�
                         smooth: true,
                         data: [],
                         lineStyle: {
-                            color: '#D1D5DB',
+                            color: '#9CA3AF',
                             width: 2,
                             type: 'dashed'
                         },
                         itemStyle: {
-                            color: '#D1D5DB'
+                            color: '#9CA3AF'
                         },
                         showSymbol: true,
                         symbol: 'circle',
-                        symbolSize: 4,
-                        connectNulls: true,
-                        markLine: {
-                            silent: true,
-                            symbol: 'none',
-                            label: {
-                                show: true,
-                                position: 'end',
-                                formatter: '{b}'
-                            },
-                            data: [
-                                {
-                                    name: '超买线 (平均70)',
-                                    yAxis: 1890,
-                                    lineStyle: {
-                                        color: '#EF4444',
-                                        type: 'dashed',
-                                        width: 1,
-                                        opacity: 0.6
-                                    },
-                                    label: {
-                                        color: '#EF4444',
-                                        fontSize: 11
-                                    }
-                                },
-                                {
-                                    name: '中性线 (平均50)',
-                                    yAxis: 1350,
-                                    lineStyle: {
-                                        color: '#6B7280',
-                                        type: 'dashed',
-                                        width: 1,
-                                        opacity: 0.6
-                                    },
-                                    label: {
-                                        color: '#6B7280',
-                                        fontSize: 11
-                                    }
-                                },
-                                {
-                                    name: '超卖线 (平均30)',
-                                    yAxis: 810,
-                                    lineStyle: {
-                                        color: '#10B981',
-                                        type: 'dashed',
-                                        width: 1,
-                                        opacity: 0.6
-                                    },
-                                    label: {
-                                        color: '#10B981',
-                                        fontSize: 11
-                                    }
-                                }
-                            ]
-                        }
+                        symbolSize: 5,
+                        connectNulls: true
                     }
                 ]
             });
@@ -1954,7 +1901,7 @@ pm2 status                                                # 查看所有进程�
                                 },
                                 axisLine: {
                                     lineStyle: {
-                                        color: '#D1D5DB'
+                                        color: '#9CA3AF'
                                     }
                                 },
                                 splitLine: {
@@ -2132,69 +2079,16 @@ pm2 status                                                # 查看所有进程�
                             lineStyle: {
                                 width: 2,
                                 type: 'dashed',
-                                color: '#D1D5DB'
+                                color: '#9CA3AF'
                             },
                             itemStyle: {
-                                color: '#D1D5DB'
+                                color: '#9CA3AF'
                             },
                             showSymbol: true,
                             symbol: 'circle',
-                            symbolSize: 4,
+                            symbolSize: 5,
                             connectNulls: true,
-                            zlevel: 1,
-                            markLine: {
-                                silent: true,
-                                symbol: 'none',
-                                label: {
-                                    show: true,
-                                    position: 'end',
-                                    formatter: '{b}'
-                                },
-                                data: [
-                                    {
-                                        name: '超买线 (平均70)',
-                                        yAxis: 1890,
-                                        lineStyle: {
-                                            color: '#EF4444',
-                                            type: 'dashed',
-                                            width: 1,
-                                            opacity: 0.6
-                                        },
-                                        label: {
-                                            color: '#EF4444',
-                                            fontSize: 11
-                                        }
-                                    },
-                                    {
-                                        name: '中性线 (平均50)',
-                                        yAxis: 1350,
-                                        lineStyle: {
-                                            color: '#6B7280',
-                                            type: 'dashed',
-                                            width: 1,
-                                            opacity: 0.6
-                                        },
-                                        label: {
-                                            color: '#6B7280',
-                                            fontSize: 11
-                                        }
-                                    },
-                                    {
-                                        name: '超卖线 (平均30)',
-                                        yAxis: 810,
-                                        lineStyle: {
-                                            color: '#10B981',
-                                            type: 'dashed',
-                                            width: 1,
-                                            opacity: 0.6
-                                        },
-                                        label: {
-                                            color: '#10B981',
-                                            fontSize: 11
-                                        }
-                                    }
-                                ]
-                            }
+                            zlevel: 1
                         }]
                     }, true, true); // notMerge=true, lazyUpdate=true
                     

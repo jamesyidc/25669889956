@@ -16455,6 +16455,115 @@ def set_strategy_allowed(account_id, strategy_type):
             'traceback': traceback.format_exc()
         })
 
+@app.route('/api/okx-trading/check-allowed-takeprofit/<account_id>', methods=['GET'])
+def check_takeprofit_allowed(account_id):
+    """检查指定账户的止盈策略是否允许执行（从JSONL读取）
+    用于RSI止盈和盈利金额止盈
+    """
+    try:
+        import json
+        import os
+        from datetime import datetime
+        
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        jsonl_dir = os.path.join(current_dir, 'data', 'okx_auto_strategy')
+        os.makedirs(jsonl_dir, exist_ok=True)
+        
+        # 使用统一的止盈JSONL文件
+        jsonl_file = os.path.join(jsonl_dir, f'{account_id}_takeprofit_execution.jsonl')
+        
+        # 如果文件不存在，返回默认不允许
+        if not os.path.exists(jsonl_file):
+            return jsonify({
+                'success': True,
+                'allowed': False,
+                'reason': 'No execution record found',
+                'lastRecord': None
+            })
+        
+        # 读取最后一条记录
+        last_record = None
+        with open(jsonl_file, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+            if lines:
+                last_line = lines[-1].strip()
+                if last_line:
+                    last_record = json.loads(last_line)
+        
+        if not last_record:
+            return jsonify({
+                'success': True,
+                'allowed': False,
+                'reason': 'Empty execution file',
+                'lastRecord': None
+            })
+        
+        # 返回最后一条记录的allowed状态
+        return jsonify({
+            'success': True,
+            'allowed': last_record.get('allowed', False),
+            'reason': 'Read from JSONL',
+            'lastRecord': last_record
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        })
+
+@app.route('/api/okx-trading/set-allowed-takeprofit/<account_id>', methods=['POST'])
+def set_takeprofit_allowed(account_id):
+    """设置指定账户的止盈策略执行允许状态（写入JSONL）
+    用于RSI止盈和盈利金额止盈
+    """
+    try:
+        import json
+        import os
+        from datetime import datetime
+        
+        data = request.get_json()
+        allowed = bool(data.get('allowed', False))
+        reason = data.get('reason', 'Manual update')
+        takeprofit_type = data.get('takeprofitType', 'unknown')  # 'rsi' 或 'profit'
+        
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        jsonl_dir = os.path.join(current_dir, 'data', 'okx_auto_strategy')
+        os.makedirs(jsonl_dir, exist_ok=True)
+        
+        # 使用统一的止盈JSONL文件
+        jsonl_file = os.path.join(jsonl_dir, f'{account_id}_takeprofit_execution.jsonl')
+        
+        # 创建新记录
+        record = {
+            'timestamp': datetime.now().isoformat(),
+            'time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'account_id': account_id,
+            'takeprofit_type': takeprofit_type,  # rsi 或 profit
+            'allowed': allowed,
+            'reason': reason,
+            'rsi_value': data.get('rsiValue'),
+            'profit_value': data.get('profitValue')
+        }
+        
+        # 追加到JSONL文件
+        with open(jsonl_file, 'a', encoding='utf-8') as f:
+            f.write(json.dumps(record, ensure_ascii=False) + '\n')
+        
+        return jsonify({
+            'success': True,
+            'message': f'Take profit execution allowed status set to {allowed}',
+            'record': record
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        })
+
 @app.route('/api/okx-trading/check-allowed-upratio0/<account_id>/<strategy_type>', methods=['GET'])
 def check_upratio0_strategy_allowed(account_id, strategy_type):
     """检查上涨占比0策略是否允许执行（从JSONL读取）

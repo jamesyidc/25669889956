@@ -4138,6 +4138,10 @@ pm2 status                                                # 查看所有进程�
             const detailsBox = document.getElementById('wavePeakDetailsBox');
             const detailsContent = document.getElementById('wavePeakDetailsContent');
             
+            console.log('🔍 updateWavePeakDetails 被调用');
+            console.log('  wavePeaksData:', wavePeaksData);
+            console.log('  currentState:', currentState);
+            
             // 如果没有波峰数据、没有进行中的波峰、也没有候选点，隐藏详情框
             if ((!wavePeaksData || wavePeaksData.length === 0) && 
                 (!currentState || (!currentState.incomplete_peak && !currentState.b_candidate && !currentState.a_candidate))) {

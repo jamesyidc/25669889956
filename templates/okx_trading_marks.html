@@ -1383,8 +1383,9 @@
             
             console.log('📈 API返回:', result);
             
-            if (!result.success && result.data.length === 0) {
-                throw new Error(result.message || '获取趋势数据失败');
+            // 检查数据是否有效
+            if (!result.data || result.data.length === 0) {
+                throw new Error(result.message || '获取趋势数据失败：无数据');
             }
             
             // 转换数据格式 - 注意：使用 total_change 作为累计涨跌幅

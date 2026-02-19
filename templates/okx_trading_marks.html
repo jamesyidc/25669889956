@@ -1233,7 +1233,7 @@
             return `${year}-${month}-${day}`;
         }
 
-        // 加载数据 - 高性能版本（并行加载 + 缓存 + 进度提示）
+        // 加载数据 - 高性能版本（并行加载 + 缓存 + 详细进度提示）
         async function loadData() {
             try {
                 showLoading();
@@ -1241,21 +1241,31 @@
                 const loadStart = performance.now();
                 const currentDateStr = formatDate(currentDate);
                 
+                // 步骤1: 初始化（0-10%）
+                updateLoadingProgress(1, 5, '正在初始化图表环境...');
+                await new Promise(resolve => setTimeout(resolve, 100));
+                updateLoadingProgress(1, 10, '图表环境初始化完成');
+                
                 // 高性能策略：并行加载所有数据，并使用缓存
                 console.log('📦 检查缓存中...');
+                updateLoadingProgress(2, 15, '正在检查本地缓存...');
                 
                 // 检查缓存
                 const cachedTrend = getTradingCachedData('trendData', currentDateStr);
                 const cachedTrades = getTradingCachedData('tradesData', currentDateStr);
                 const cachedAngles = getTradingCachedData('angleData', currentDateStr);
                 
-                // 并行加载所有需要的数据（最大化并发）
+                // 步骤2-4: 并行加载所有需要的数据（15-70%）
                 console.log('📡 并行加载三类数据...');
+                updateLoadingProgress(2, 20, '正在加载趋势数据（27币种）...');
+                
                 const [trendResult, tradesResult, angleResult] = await Promise.allSettled([
                     cachedTrend ? Promise.resolve(cachedTrend) : fetchTrendData(),
                     cachedTrades ? Promise.resolve(cachedTrades) : fetchTradesData(),
                     cachedAngles ? Promise.resolve(cachedAngles) : fetchAngleData()
                 ]);
+                
+                updateLoadingProgress(3, 50, '趋势数据加载完成，正在加载交易记录...');
                 
                 // 处理趋势数据
                 let trendData = [];
@@ -1263,8 +1273,10 @@
                     trendData = trendResult.value;
                     if (!cachedTrend) setTradingCachedData('trendData', trendData, currentDateStr);
                     console.log('✅ 趋势数据:', trendData.length, '个点');
+                    updateLoadingProgress(2, 35, `趋势数据加载成功（${trendData.length}个数据点）`);
                 } else {
                     console.error('❌ 趋势数据加载失败:', trendResult.reason);
+                    updateLoadingProgress(2, 35, '⚠️ 趋势数据加载失败，继续加载其他数据...');
                 }
                 
                 // 处理交易数据
@@ -1273,8 +1285,10 @@
                     tradesData = tradesResult.value;
                     if (!cachedTrades) setTradingCachedData('tradesData', tradesData, currentDateStr);
                     console.log('✅ 交易数据:', tradesData.trades.length, '笔');
+                    updateLoadingProgress(3, 55, `交易数据加载成功（${tradesData.trades.length}笔交易）`);
                 } else {
                     console.error('❌ 交易数据加载失败:', tradesResult.reason);
+                    updateLoadingProgress(3, 55, '⚠️ 交易数据加载失败，继续加载其他数据...');
                 }
                 
                 // 处理角度数据
@@ -1283,9 +1297,33 @@
                     angleData = angleResult.value;
                     if (!cachedAngles) setTradingCachedData('angleData', angleData, currentDateStr);
                     console.log('✅ 角度数据:', angleData.length, '个角度');
+                    updateLoadingProgress(4, 70, `角度数据加载成功（${angleData.length}个角度标记）`);
                 } else {
                     console.error('❌ 角度数据加载失败:', angleResult.reason);
+                    updateLoadingProgress(4, 70, '⚠️ 角度数据加载失败，继续处理...');
                 }
+                
+                // 步骤5: 渲染图表（70-90%）
+                updateLoadingProgress(5, 75, '正在处理交易数据...');
+                
+                // 合并交易（4分钟内）
+                const mergedTrades = mergeTrades(tradesData.trades, 4 * 60 * 1000);
+                console.log('✅ 合并后:', mergedTrades.length, '笔');
+                updateLoadingProgress(5, 80, `交易数据处理完成（合并为${mergedTrades.length}笔）`);
+                
+                // 更新统计
+                updateStats(tradesData.stats, mergedTrades.length);
+                
+                // 渲染图表（包含角度标记和交易评价）
+                updateLoadingProgress(5, 85, '正在渲染图表...');
+                renderChart(trendData, mergedTrades, angleData);
+                updateLoadingProgress(5, 90, '图表渲染完成');
+                
+                // 渲染交易列表
+                renderTradeList(mergedTrades);
+                
+                // 步骤6: 设置交互事件（90-100%）
+                updateLoadingProgress(6, 95, '正在设置交互事件...');
                 
                 // 后台懒加载交易评价（不阻塞页面显示）
                 setTimeout(() => {
@@ -1294,22 +1332,16 @@
                     });
                 }, 100);
                 
-                // 合并交易（4分钟内）
-                const mergedTrades = mergeTrades(tradesData.trades, 4 * 60 * 1000);
-                console.log('✅ 合并后:', mergedTrades.length, '笔');
-                
-                // 更新统计
-                updateStats(tradesData.stats, mergedTrades.length);
-                
-                // 渲染图表（包含角度标记和交易评价）
-                renderChart(trendData, mergedTrades, angleData);
-                
-                // 渲染交易列表
-                renderTradeList(mergedTrades);
-                
                 const loadEnd = performance.now();
-                console.log(`✅ 数据加载完成，耗时: ${((loadEnd - loadStart) / 1000).toFixed(2)}秒`);
-                hideLoading();
+                const loadTime = ((loadEnd - loadStart) / 1000).toFixed(2);
+                console.log(`✅ 数据加载完成，耗时: ${loadTime}秒`);
+                
+                updateLoadingProgress(6, 100, `加载完成！耗时 ${loadTime} 秒`);
+                
+                // 延迟隐藏加载界面，让用户看到100%完成状态
+                setTimeout(() => {
+                    hideLoading();
+                }, 500);
             } catch (e) {
                 console.error('❌ 加载数据失败:', e);
                 showError('加载数据失败: ' + e.message);
@@ -2156,12 +2188,226 @@
             container.innerHTML = html;
         }
 
+        // 创建加载进度界面
+        function createLoadingOverlay() {
+            const overlay = document.createElement('div');
+            overlay.id = 'loadingOverlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.75);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                backdrop-filter: blur(5px);
+                animation: fadeIn 0.3s ease-in-out;
+            `;
+            
+            overlay.innerHTML = `
+                <div style="
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    padding: 40px 50px;
+                    border-radius: 20px;
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+                    min-width: 500px;
+                    max-width: 600px;
+                    color: white;
+                    animation: slideUp 0.4s ease-out;
+                ">
+                    <h2 style="margin: 0 0 20px 0; font-size: 24px; font-weight: 600; text-align: center;">
+                        <i class="fas fa-chart-line" style="margin-right: 10px;"></i>
+                        数据加载中
+                    </h2>
+                    
+                    <!-- 进度条 -->
+                    <div style="
+                        background: rgba(255, 255, 255, 0.2);
+                        border-radius: 10px;
+                        height: 30px;
+                        margin-bottom: 20px;
+                        overflow: hidden;
+                        position: relative;
+                    ">
+                        <div id="progressBar" style="
+                            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+                            height: 100%;
+                            width: 0%;
+                            border-radius: 10px;
+                            transition: width 0.3s ease-out;
+                            box-shadow: 0 0 20px rgba(79, 172, 254, 0.5);
+                        "></div>
+                        <div id="progressText" style="
+                            position: absolute;
+                            top: 50%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                            font-weight: 600;
+                            font-size: 14px;
+                            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+                        ">0%</div>
+                    </div>
+                    
+                    <!-- 加载步骤列表 -->
+                    <div id="loadingSteps" style="
+                        background: rgba(0, 0, 0, 0.2);
+                        border-radius: 10px;
+                        padding: 20px;
+                        font-size: 14px;
+                    ">
+                        <div id="step1" class="loading-step" style="opacity: 0.5;">
+                            <i class="fas fa-circle" style="font-size: 8px; margin-right: 10px; color: #888;"></i>
+                            <span>📊 初始化图表环境...</span>
+                        </div>
+                        <div id="step2" class="loading-step" style="opacity: 0.5; margin-top: 12px;">
+                            <i class="fas fa-circle" style="font-size: 8px; margin-right: 10px; color: #888;"></i>
+                            <span>📈 加载趋势数据（27币种涨跌幅）...</span>
+                        </div>
+                        <div id="step3" class="loading-step" style="opacity: 0.5; margin-top: 12px;">
+                            <i class="fas fa-circle" style="font-size: 8px; margin-right: 10px; color: #888;"></i>
+                            <span>💼 加载交易历史（开仓/平仓记录）...</span>
+                        </div>
+                        <div id="step4" class="loading-step" style="opacity: 0.5; margin-top: 12px;">
+                            <i class="fas fa-circle" style="font-size: 8px; margin-right: 10px; color: #888;"></i>
+                            <span>📐 加载角度标记（K线形态识别）...</span>
+                        </div>
+                        <div id="step5" class="loading-step" style="opacity: 0.5; margin-top: 12px;">
+                            <i class="fas fa-circle" style="font-size: 8px; margin-right: 10px; color: #888;"></i>
+                            <span>🎨 渲染图表（数据可视化）...</span>
+                        </div>
+                        <div id="step6" class="loading-step" style="opacity: 0.5; margin-top: 12px;">
+                            <i class="fas fa-circle" style="font-size: 8px; margin-right: 10px; color: #888;"></i>
+                            <span>⚙️ 设置交互事件（点击、右键操作）...</span>
+                        </div>
+                    </div>
+                    
+                    <div id="loadingStatus" style="
+                        margin-top: 15px;
+                        text-align: center;
+                        font-size: 13px;
+                        opacity: 0.8;
+                    ">
+                        正在准备数据...
+                    </div>
+                </div>
+            `;
+            
+            // 添加动画样式
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @keyframes slideUp {
+                    from {
+                        transform: translateY(30px);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateY(0);
+                        opacity: 1;
+                    }
+                }
+                .loading-step.active {
+                    opacity: 1 !important;
+                }
+                .loading-step.active i {
+                    color: #4facfe !important;
+                    animation: pulse 1s infinite;
+                }
+                .loading-step.completed {
+                    opacity: 1 !important;
+                }
+                .loading-step.completed i {
+                    color: #00f2fe !important;
+                }
+                @keyframes pulse {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0.5; }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            return overlay;
+        }
+        
+        // 更新加载进度
+        function updateLoadingProgress(step, percentage, status) {
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const loadingStatus = document.getElementById('loadingStatus');
+            const stepElement = document.getElementById(`step${step}`);
+            
+            if (progressBar) {
+                progressBar.style.width = percentage + '%';
+                progressText.textContent = Math.round(percentage) + '%';
+            }
+            
+            if (loadingStatus) {
+                loadingStatus.textContent = status;
+            }
+            
+            // 更新步骤状态
+            if (stepElement) {
+                // 标记当前步骤为活动状态
+                stepElement.classList.add('active');
+                
+                // 标记之前的步骤为已完成
+                for (let i = 1; i < step; i++) {
+                    const prevStep = document.getElementById(`step${i}`);
+                    if (prevStep) {
+                        prevStep.classList.remove('active');
+                        prevStep.classList.add('completed');
+                        const icon = prevStep.querySelector('i');
+                        if (icon) {
+                            icon.className = 'fas fa-check-circle';
+                        }
+                    }
+                }
+            }
+        }
+        
         function showLoading() {
-            document.getElementById('tradeListContent').innerHTML = '<div class="loading">加载中...</div>';
+            // 移除旧的加载界面（如果存在）
+            const oldOverlay = document.getElementById('loadingOverlay');
+            if (oldOverlay) {
+                oldOverlay.remove();
+            }
+            
+            // 创建新的加载界面
+            const overlay = createLoadingOverlay();
+            document.body.appendChild(overlay);
+            
+            // 同时更新交易列表区域
+            const tradeList = document.getElementById('tradeListContent');
+            if (tradeList) {
+                tradeList.innerHTML = '<div class="loading">数据加载中...</div>';
+            }
         }
 
         function hideLoading() {
-            // 由renderTradeList处理
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                // 添加淡出动画
+                overlay.style.animation = 'fadeOut 0.3s ease-out';
+                setTimeout(() => {
+                    overlay.remove();
+                }, 300);
+            }
+            
+            // 添加淡出动画样式
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes fadeOut {
+                    from { opacity: 1; }
+                    to { opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
         }
 
         function showError(message) {

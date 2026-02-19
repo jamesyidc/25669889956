@@ -2880,8 +2880,34 @@ data/
                         <div style="font-size: 11px; color: #92400e; margin-top: 6px;">
                             当27币RSI之和超过此值时自动平仓全部持仓（范围: 810-2700）
                         </div>
+                        <!-- 当前RSI显示 -->
+                        <div style="margin-top: 8px; padding: 8px; background: rgba(251, 191, 36, 0.2); border-radius: 4px; border-left: 3px solid #f59e0b;">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <span style="font-size: 11px; color: #92400e;">📈 当前RSI：</span>
+                                <span id="currentRSIDisplay" style="font-size: 16px; font-weight: 700; color: #92400e;">--</span>
+                            </div>
+                            <div style="margin-top: 4px; height: 8px; background: rgba(251, 191, 36, 0.2); border-radius: 4px; overflow: hidden;">
+                                <div id="rsiProgressBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #10b981 0%, #f59e0b 50%, #ef4444 100%); transition: width 0.3s ease;"></div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 9px; color: #92400e; margin-top: 2px;">
+                                <span>810</span>
+                                <span>1755 (中性)</span>
+                                <span>2700</span>
+                            </div>
+                        </div>
                         <div style="margin-top: 8px; padding: 6px; background: rgba(251, 191, 36, 0.15); border-radius: 4px; font-size: 10px; color: #92400e;">
-                            💡 <strong>说明：</strong>使用JSONL执行许可机制。触发后自动设置为不允许执行，需手动重新启用。RSI数据来源：coin-change-tracker页面的27币RSI之和。
+                            💡 <strong>说明：</strong>使用JSONL执行许可机制。触发后自动设置为不允许执行，需手动重新启用。RSI数据来源：coin-change-tracker页面的27币RSI之和。<strong style="color: #dc2626;">注意：系统会检查所有已启用RSI止盈的账户！</strong>
+                        </div>
+                        
+                        <!-- 多账户RSI监控状态 -->
+                        <div id="multiAccountRSIStatus" style="margin-top: 10px; padding: 8px; background: rgba(59, 130, 246, 0.05); border-radius: 6px; border: 1px solid #60a5fa; display: none;">
+                            <div style="font-size: 11px; font-weight: 600; color: #1e40af; margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
+                                <span>👥 多账户RSI监控状态</span>
+                                <span style="font-size: 9px; background: #dbeafe; padding: 2px 6px; border-radius: 4px;">实时更新</span>
+                            </div>
+                            <div id="accountRSIStatusList" style="display: flex; flex-direction: column; gap: 4px;">
+                                <!-- 动态填充 -->
+                            </div>
                         </div>
                     </div>
                     
@@ -3966,23 +3992,7 @@ data/
         
         async function checkRSITakeProfit() {
             try {
-                // 检查是否启用RSI止盈
-                const rsiSwitch = document.getElementById('rsiTakeProfitSwitch');
-                if (!rsiSwitch || !rsiSwitch.checked) return;
-                
-                const account = accounts.find(acc => acc.id === currentAccount);
-                if (!account) return;
-                
-                // 检查JSONL执行许可
-                const allowedResponse = await fetch(`/api/okx-trading/check-allowed-takeprofit/${account.id}`);
-                const allowedResult = await allowedResponse.json();
-                
-                if (!allowedResult.success || !allowedResult.allowed) {
-                    console.log('RSI止盈：执行未许可，跳过检查');
-                    return;
-                }
-                
-                // 获取RSI数据
+                // 获取RSI数据（用于显示当前值）
                 const rsiResponse = await fetch('/api/coin-change-tracker/latest');
                 const rsiResult = await rsiResponse.json();
                 
@@ -3992,106 +4002,225 @@ data/
                 }
                 
                 const totalRSI = rsiResult.data.total_rsi || 0;
-                const rsiThreshold = parseFloat(document.getElementById('rsiTakeProfitThreshold').value) || 1900;
                 
-                console.log(`[RSI止盈监控] 当前RSI: ${totalRSI.toFixed(2)}, 阈值: ${rsiThreshold}`);
-                
-                // 检查是否达到阈值
-                if (totalRSI >= rsiThreshold) {
-                    const now = Date.now();
-                    
-                    // 防止短时间内重复触发
-                    if (lastRSICheckValue === totalRSI || now - lastRSITriggerTime < RSI_CHECK_COOLDOWN) {
-                        console.log('RSI止盈：冷却期内或相同RSI值，跳过');
-                        return;
+                // 更新UI显示当前RSI
+                const rsiDisplay = document.getElementById('currentRSIDisplay');
+                const rsiProgressBar = document.getElementById('rsiProgressBar');
+                if (rsiDisplay) {
+                    rsiDisplay.textContent = totalRSI.toFixed(2);
+                    // 计算进度条百分比（810-2700范围）
+                    const percentage = ((totalRSI - 810) / (2700 - 810)) * 100;
+                    if (rsiProgressBar) {
+                        rsiProgressBar.style.width = `${Math.max(0, Math.min(100, percentage))}%`;
                     }
-                    
-                    lastRSICheckValue = totalRSI;
-                    lastRSITriggerTime = now;
-                    
-                    console.log(`🎯 [RSI止盈] 触发！RSI=${totalRSI.toFixed(2)} >= ${rsiThreshold}`);
-                    
-                    // 立即设置为不允许执行，防止重复触发
-                    await fetch(`/api/okx-trading/set-allowed-takeprofit/${account.id}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            allowed: false,
-                            reason: `RSI止盈已触发并执行，RSI=${totalRSI.toFixed(2)}`,
-                            takeprofitType: 'rsi',
-                            rsiValue: totalRSI
-                        })
-                    });
-                    
-                    // 执行一键平仓（获取平仓结果）
-                    const closeResult = await executeRSICloseAllPositions();
-                    
-                    // 自动关闭RSI止盈开关
-                    rsiSwitch.checked = false;
-                    await saveTakeProfitStopLossSettings(true);
-                    
-                    // 构建详细的通知消息（包含平仓结果）
-                    let message = `🎯 RSI止盈触发！\n账户：${account.name}\nRSI之和：${totalRSI.toFixed(2)}\n阈值：${rsiThreshold}\n\n`;
-                    
-                    if (closeResult.success) {
-                        message += `✅ 平仓完成\n总持仓：${closeResult.totalPositions} 个\n成功平仓：${closeResult.closedCount} 个\n失败：${closeResult.failedCount} 个`;
-                        
-                        // 如果有重试信息
-                        if (closeResult.retryCount > 0) {
-                            message += `\n第二轮重试：${closeResult.retrySuccess}/${closeResult.retryCount} 成功`;
-                        }
-                        
-                        // 显示失败详情
-                        if (closeResult.failedCount > 0 && closeResult.results) {
-                            message += '\n\n失败详情：';
-                            closeResult.results.filter(r => r.status === 'failed' || r.status === 'error').forEach(r => {
-                                message += `\n• ${r.instId}: ${r.message}`;
-                            });
-                        }
-                    } else {
-                        message += `❌ 平仓失败：${closeResult.message || closeResult.error || '未知错误'}`;
-                    }
-                    
-                    // 浏览器通知
-                    if ('Notification' in window && Notification.permission === 'granted') {
-                        new Notification('🎯 RSI止盈触发', {
-                            body: `账户：${account.name}\nRSI：${totalRSI.toFixed(2)}\n成功平仓：${closeResult.closedCount || 0} 个`,
-                            icon: '/static/favicon.ico',
-                            requireInteraction: true
-                        });
-                    }
-                    
-                    // Telegram通知（包含完整结果）
-                    await fetch('/api/telegram/send-message', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ message })
-                    });
-                    
-                    console.log('✅ RSI止盈执行完成', closeResult);
                 }
+                
+                // 收集所有账户的RSI监控状态（用于UI显示）
+                const accountStatuses = [];
+                
+                // 遍历所有账户，检查是否启用了RSI止盈
+                for (const account of accounts) {
+                    try {
+                        // 获取该账户的止盈止损设置
+                        const settingsResponse = await fetch(`/api/okx-trading/tpsl-settings/${account.id}`);
+                        const settingsResult = await settingsResponse.json();
+                        
+                        if (!settingsResult.success) continue;
+                        
+                        const settings = settingsResult.settings;
+                        const rsiEnabled = settings.rsiTakeProfitEnabled || false;
+                        const rsiThreshold = parseFloat(settings.rsiTakeProfitThreshold) || 1900;
+                        
+                        // 收集账户状态信息（无论是否启用）
+                        const accountStatus = {
+                            name: account.name,
+                            id: account.id,
+                            enabled: rsiEnabled,
+                            threshold: rsiThreshold,
+                            allowed: false,
+                            lastTriggerTime: null,
+                            lastTriggerRSI: null
+                        };
+                        
+                        // 如果未启用RSI止盈，记录状态后跳过
+                        if (!rsiEnabled) {
+                            console.log(`[${account.name}] RSI止盈未启用，跳过`);
+                            accountStatuses.push(accountStatus);
+                            continue;
+                        }
+                        
+                        console.log(`[${account.name}] RSI止盈监控：当前RSI=${totalRSI.toFixed(2)}, 阈值=${rsiThreshold}`);
+                        
+                        // 检查JSONL执行许可
+                        const allowedResponse = await fetch(`/api/okx-trading/check-allowed-takeprofit/${account.id}`);
+                        const allowedResult = await allowedResponse.json();
+                        
+                        accountStatus.allowed = allowedResult.allowed || false;
+                        if (allowedResult.data && allowedResult.data.time) {
+                            accountStatus.lastTriggerTime = allowedResult.data.time;
+                            accountStatus.lastTriggerRSI = allowedResult.data.rsi_value;
+                        }
+                        
+                        if (!allowedResult.success || !allowedResult.allowed) {
+                            console.log(`[${account.name}] RSI止盈：执行未许可，跳过检查`);
+                            accountStatuses.push(accountStatus);
+                            continue;
+                        }
+                        
+                        accountStatuses.push(accountStatus);
+                        
+                        // 检查是否达到阈值
+                        if (totalRSI >= rsiThreshold) {
+                            const now = Date.now();
+                            
+                            // 防止短时间内重复触发
+                            const lastTriggerKey = `lastRSITrigger_${account.id}`;
+                            const lastTriggerTime = window[lastTriggerKey] || 0;
+                            const lastTriggerValue = window[`lastRSIValue_${account.id}`] || 0;
+                            
+                            if (lastTriggerValue === totalRSI || now - lastTriggerTime < RSI_CHECK_COOLDOWN) {
+                                console.log(`[${account.name}] RSI止盈：冷却期内或相同RSI值，跳过`);
+                                continue;
+                            }
+                            
+                            window[lastTriggerKey] = now;
+                            window[`lastRSIValue_${account.id}`] = totalRSI;
+                            
+                            console.log(`🎯 [${account.name}] RSI止盈触发！RSI=${totalRSI.toFixed(2)} >= ${rsiThreshold}`);
+                            
+                            // 立即设置为不允许执行，防止重复触发
+                            await fetch(`/api/okx-trading/set-allowed-takeprofit/${account.id}`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    allowed: false,
+                                    reason: `RSI止盈已触发并执行，RSI=${totalRSI.toFixed(2)}`,
+                                    takeprofitType: 'rsi',
+                                    rsiValue: totalRSI
+                                })
+                            });
+                            
+                            // 执行一键平仓（获取平仓结果）
+                            const closeResult = await executeRSICloseForAccount(account);
+                            
+                            // 构建详细的通知消息（包含平仓结果）
+                            let message = `🎯 RSI止盈触发！\n账户：${account.name}\nRSI之和：${totalRSI.toFixed(2)}\n阈值：${rsiThreshold}\n\n`;
+                            
+                            if (closeResult.success) {
+                                message += `✅ 平仓完成\n总持仓：${closeResult.totalPositions} 个\n成功平仓：${closeResult.closedCount} 个\n失败：${closeResult.failedCount} 个`;
+                                
+                                // 如果有重试信息
+                                if (closeResult.retryCount > 0) {
+                                    message += `\n第二轮重试：${closeResult.retrySuccess}/${closeResult.retryCount} 成功`;
+                                }
+                                
+                                // 显示失败详情
+                                if (closeResult.failedCount > 0 && closeResult.results) {
+                                    message += '\n\n失败详情：';
+                                    closeResult.results.filter(r => r.status === 'failed' || r.status === 'error').forEach(r => {
+                                        message += `\n• ${r.instId}: ${r.message}`;
+                                    });
+                                }
+                            } else {
+                                message += `❌ 平仓失败：${closeResult.message || closeResult.error || '未知错误'}`;
+                            }
+                            
+                            // 浏览器通知
+                            if ('Notification' in window && Notification.permission === 'granted') {
+                                new Notification('🎯 RSI止盈触发', {
+                                    body: `账户：${account.name}\nRSI：${totalRSI.toFixed(2)}\n成功平仓：${closeResult.closedCount || 0} 个`,
+                                    icon: '/static/favicon.ico',
+                                    requireInteraction: true
+                                });
+                            }
+                            
+                            // Telegram通知（包含完整结果）
+                            await fetch('/api/telegram/send-message', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ message })
+                            });
+                            
+                            console.log(`✅ [${account.name}] RSI止盈执行完成`, closeResult);
+                            
+                            // 弹窗显示结果
+                            alert(message);
+                            
+                            // 如果是当前账户，需要刷新数据
+                            if (account.id === currentAccount) {
+                                await refreshAccountData();
+                            }
+                        }
+                    } catch (accountError) {
+                        console.error(`❌ [${account.name}] RSI止盈检查失败`, accountError);
+                    }
+                }
+                
+                // 更新多账户RSI监控状态UI
+                updateMultiAccountRSIStatusUI(accountStatuses, totalRSI);
+                
             } catch (e) {
                 console.error('❌ RSI止盈监控失败', e);
             }
         }
-
-        // RSI止盈专用平仓函数（返回结果并显示弹窗）
-        async function executeRSICloseAllPositions() {
-            console.log('[executeRSICloseAllPositions] RSI止盈触发，开始平仓所有持仓');
+        
+        // 更新多账户RSI监控状态UI
+        function updateMultiAccountRSIStatusUI(accountStatuses, currentRSI) {
+            const statusContainer = document.getElementById('multiAccountRSIStatus');
+            const statusList = document.getElementById('accountRSIStatusList');
             
-            const account = accounts.find(acc => acc.id === currentAccount);
-            if (!account) {
-                const errorResult = { success: false, error: '未找到账户信息' };
-                alert('❌ ' + errorResult.error);
-                return errorResult;
+            if (!statusContainer || !statusList) return;
+            
+            // 如果没有任何账户启用RSI止盈，隐藏整个面板
+            const enabledAccounts = accountStatuses.filter(a => a.enabled);
+            if (enabledAccounts.length === 0) {
+                statusContainer.style.display = 'none';
+                return;
             }
+            
+            // 显示面板并更新内容
+            statusContainer.style.display = 'block';
+            
+            statusList.innerHTML = accountStatuses.map(status => {
+                if (!status.enabled) return ''; // 只显示已启用的账户
+                
+                const isAboveThreshold = currentRSI >= status.threshold;
+                const statusIcon = status.allowed ? (isAboveThreshold ? '🔴' : '🟢') : '⏸️';
+                const statusText = status.allowed ? (isAboveThreshold ? '达到阈值！' : '监控中') : '已触发';
+                const statusColor = status.allowed ? (isAboveThreshold ? '#dc2626' : '#10b981') : '#6b7280';
+                
+                let triggerInfo = '';
+                if (!status.allowed && status.lastTriggerTime) {
+                    triggerInfo = `<div style="font-size: 9px; color: #6b7280; margin-top: 2px;">
+                        最后触发: ${status.lastTriggerTime} (RSI: ${status.lastTriggerRSI ? status.lastTriggerRSI.toFixed(2) : 'N/A'})
+                    </div>`;
+                }
+                
+                return `
+                    <div style="padding: 6px 8px; background: rgba(255,255,255,0.5); border-radius: 4px; border-left: 3px solid ${statusColor};">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="flex: 1;">
+                                <span style="font-size: 11px; font-weight: 600; color: #1e293b;">${statusIcon} ${status.name}</span>
+                                <span style="font-size: 10px; color: #64748b; margin-left: 6px;">阈值: ${status.threshold}</span>
+                            </div>
+                            <div style="text-align: right;">
+                                <span style="font-size: 10px; font-weight: 600; color: ${statusColor};">${statusText}</span>
+                            </div>
+                        </div>
+                        ${triggerInfo}
+                    </div>
+                `;
+            }).filter(html => html !== '').join('');
+        }
+
+        // RSI止盈专用平仓函数（针对特定账户）
+        async function executeRSICloseForAccount(account) {
+            console.log(`[executeRSICloseForAccount] ${account.name} RSI止盈触发，开始平仓所有持仓`);
             
             try {
                 const response = await fetch('/api/okx-trading/close-all-positions', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         apiKey: account.apiKey,
                         apiSecret: account.apiSecret,
@@ -4100,45 +4229,26 @@ data/
                     })
                 });
                 
-                const result = await response.json();
-                console.log('[executeRSICloseAllPositions] API响应:', result);
-                
-                if (result.success) {
-                    // 构建弹窗消息
-                    let message = `✅ RSI止盈平仓完成！\n\n总持仓：${result.totalPositions} 个\n成功平仓：${result.closedCount} 个\n失败：${result.failedCount} 个`;
-                    
-                    // 如果有重试信息，显示重试结果
-                    if (result.retryCount > 0) {
-                        message += `\n\n第二轮重试：${result.retrySuccess}/${result.retryCount} 成功`;
-                    }
-                    
-                    // 显示详细的失败信息
-                    if (result.failedCount > 0) {
-                        message += '\n\n失败详情：';
-                        result.results.filter(r => r.status === 'failed' || r.status === 'error').forEach(r => {
-                            message += `\n• ${r.instId}: ${r.message}`;
-                        });
-                    }
-                    
-                    // 显示弹窗
-                    alert(message);
-                    
-                    // 刷新账户数据
-                    await refreshAccountData();
-                    
-                    return result;
-                } else {
-                    const errorMsg = `❌ RSI止盈平仓失败：${result.message || result.error || '未知错误'}`;
-                    alert(errorMsg);
-                    return result;
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    return {
+                        success: false,
+                        error: `HTTP ${response.status}: ${errorText}`
+                    };
                 }
+                
+                const result = await response.json();
+                return result;
             } catch (error) {
-                console.error('[executeRSICloseAllPositions] RSI止盈平仓异常:', error);
-                const errorResult = { success: false, error: error.message };
-                alert(`❌ RSI止盈平仓异常：${error.message}`);
-                return errorResult;
+                console.error(`❌ [${account.name}] 平仓请求失败`, error);
+                return {
+                    success: false,
+                    error: error.message || '未知错误'
+                };
             }
         }
+
+        // RSI止盈专用平仓函数（返回结果并显示弹窗）
 
         // 一键平仓所有持仓
         async function closeAllPositions() {

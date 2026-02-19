@@ -4587,13 +4587,17 @@ data/
             
             console.log('[batchOrderTop8] 常用币种涨幅前8:', top8Symbols.map(s => `${s.name} (${s.change}%)`));
             
-            // 计算每个币的保证金占用
-            const marginPerCoin = (balance * percentPerCoin / 100).toFixed(2);
+            // 计算每个币的保证金占用（添加5U上限保护）
+            const maxOrderSize = 5; // 单笔最大5 USDT保护机制
+            const marginPerCoin = Math.min(
+                balance * percentPerCoin / 100,
+                maxOrderSize
+            ).toFixed(2);
             const totalMargin = (marginPerCoin * 8).toFixed(2);
             const contractValuePerCoin = (parseFloat(marginPerCoin) * 10).toFixed(2);
             const totalContractValue = (parseFloat(contractValuePerCoin) * 8).toFixed(2);
             
-            console.log(`[batchOrderTop8] 余额检查: 可用=${balance.toFixed(2)}, 每币保证金=${marginPerCoin}, 总保证金=${totalMargin}`);
+            console.log(`[batchOrderTop8] 余额检查: 可用=${balance.toFixed(2)}, 每币保证金=${marginPerCoin} (上限${maxOrderSize}U), 总保证金=${totalMargin}`);
             
             // 检查余额是否足够
             const requiredBalance = parseFloat(totalMargin) * 1.2;
@@ -4761,13 +4765,17 @@ data/
             
             console.log('[batchOrderBottom8] 常用币种涨幅后8:', bottom8Symbols.map(s => `${s.name} (${s.change}%)`));
             
-            // 计算每个币的保证金占用
-            const marginPerCoin = (balance * percentPerCoin / 100).toFixed(2);
+            // 计算每个币的保证金占用（添加5U上限保护）
+            const maxOrderSize = 5; // 单笔最大5 USDT保护机制
+            const marginPerCoin = Math.min(
+                balance * percentPerCoin / 100,
+                maxOrderSize
+            ).toFixed(2);
             const totalMargin = (marginPerCoin * 8).toFixed(2);
             const contractValuePerCoin = (parseFloat(marginPerCoin) * 10).toFixed(2);
             const totalContractValue = (parseFloat(contractValuePerCoin) * 8).toFixed(2);
             
-            console.log(`[batchOrderBottom8] 余额检查: 可用=${balance.toFixed(2)}, 每币保证金=${marginPerCoin}, 总保证金=${totalMargin}`);
+            console.log(`[batchOrderBottom8] 余额检查: 可用=${balance.toFixed(2)}, 每币保证金=${marginPerCoin} (上限${maxOrderSize}U), 总保证金=${totalMargin}`);
             
             // 检查余额是否足够
             const requiredBalance = parseFloat(totalMargin) * 1.2;

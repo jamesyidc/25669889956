@@ -8434,7 +8434,7 @@ ${data.sMsg || result.message || ''}`);
                 console.log(`📊 开始执行余额1%策略: ${type === 'top8' ? '涨幅前8' : '涨幅后8'} - ${direction === 'long' ? '做多' : '做空'}`);
                 
                 // 获取当前账户
-                const account = getCurrentAccount();
+                const account = accounts.find(acc => acc.id === currentAccount);
                 if (!account) {
                     alert('❌ 请先选择账户');
                     return;

@@ -9,7 +9,7 @@
 import json
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 import time
 
@@ -23,7 +23,7 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 def get_today_file(data_type):
     """获取今天的数据文件路径"""
-    today = datetime.now().strftime('%Y%m%d')
+    today = datetime.now(timezone(timedelta(hours=8))).strftime('%Y%m%d')
     if data_type == 'coin_change':
         return COIN_CHANGE_DIR / f'coin_change_{today}.jsonl'
     elif data_type == 'rsi':
@@ -152,7 +152,7 @@ def calculate_sentiment():
         # 构建结果
         result = {
             'timestamp': int(time.time() * 1000),
-            'beijing_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'beijing_time': datetime.now(timezone(timedelta(hours=8))).strftime('%Y-%m-%d %H:%M:%S'),
             
             # 27币涨跌幅数据
             'coin_data': {
@@ -260,19 +260,20 @@ def main():
         try:
             if not first_run:
                 # 等待15分钟（从第二次开始）
-                next_time = datetime.now().replace(second=0, microsecond=0)
+                beijing_tz = timezone(timedelta(hours=8))
+                next_time = datetime.now(beijing_tz).replace(second=0, microsecond=0)
                 next_time = next_time.replace(minute=(next_time.minute // 15 + 1) * 15 % 60)
                 if next_time.minute == 0:
                     next_time = next_time.replace(hour=next_time.hour + 1)
                 
-                wait_seconds = (next_time - datetime.now()).total_seconds()
+                wait_seconds = (next_time - datetime.now(beijing_tz)).total_seconds()
                 print(f"⏳ 下次采集时间: {next_time.strftime('%H:%M:%S')}")
                 print(f"💤 等待 {int(wait_seconds)} 秒...\n")
                 
                 time.sleep(wait_seconds)
             
             print(f"\n{'='*60}")
-            print(f"开始采集 - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            print(f"开始采集 - {datetime.now(timezone(timedelta(hours=8))).strftime('%Y-%m-%d %H:%M:%S')}")
             print(f"{'='*60}")
             
             # 计算市场情绪

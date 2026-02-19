@@ -7566,163 +7566,25 @@ ${data.sMsg || result.message || ''}`);
             return null;
         }
         
-        // 执行上涨占比0策略（通用函数）
+        // 执行上涨占比0策略（通用函数）- 直接调用手动批量开仓
         async function executeUpRatio0Strategy(account, upRatio, strategyType) {
             try {
                 const strategyName = strategyType === 'top_8' ? '涨幅前8名' : '涨幅后8名';
                 console.log(`📊 开始执行上涨占比0-${strategyName}策略...`);
+                console.log(`📊 直接调用手动批量开仓函数...`);
                 
-                // 1. 获取常用币列表（15个）
-                if (!favoriteSymbols || favoriteSymbols.length === 0) {
-                    console.error('❌ 常用币列表为空');
-                    return { success: false, error: '常用币列表为空' };
-                }
+                // 获取账户配置的仓位百分比，默认1.5%
+                const positionSizePercent = account.positionSize || 1.5;
                 
-                console.log('常用币列表 (15个):', favoriteSymbols);
-                
-                // 2. 获取涨跌幅数据
-                const changeResponse = await fetch('/api/coin-change-tracker/latest');
-                const changeResult = await changeResponse.json();
-                
-                if (!changeResult.success || !changeResult.data || !changeResult.data.changes) {
-                    console.error('❌ 获取涨跌幅数据失败');
-                    return { success: false, error: '获取涨跌幅数据失败' };
-                }
-                
-                const changes = changeResult.data.changes;
-                
-                // 3. 筛选常用币的涨跌幅数据
-                const favoriteChanges = favoriteSymbols
-                    .map(sym => {
-                        const coinName = sym.replace('-USDT-SWAP', '');
-                        const change = changes[coinName];
-                        if (change) {
-                            return {
-                                symbol: sym,
-                                name: coinName,
-                                changePct: change.change_pct
-                            };
-                        }
-                        return null;
-                    })
-                    .filter(item => item !== null);
-                
-                console.log(`筛选后的常用币涨跌幅 (${favoriteChanges.length}个):`, favoriteChanges);
-                
-                // 4. 排序并选取目标币种
-                let targetCoins;
+                // 直接调用手动批量开仓函数（已经有5U上限保护）
+                let result;
                 if (strategyType === 'top_8') {
-                    // 涨幅前8名：按涨跌幅降序排列，取前8
-                    targetCoins = favoriteChanges
-                        .sort((a, b) => b.changePct - a.changePct)
-                        .slice(0, 8);
-                    console.log('涨幅前8名:', targetCoins);
+                    result = await batchOrderTop8('long', positionSizePercent);
                 } else {
-                    // 涨幅后8名：按涨跌幅升序排列，取前8
-                    targetCoins = favoriteChanges
-                        .sort((a, b) => a.changePct - b.changePct)
-                        .slice(0, 8);
-                    console.log('涨幅后8名:', targetCoins);
+                    result = await batchOrderBottom8('long', positionSizePercent);
                 }
                 
-                if (targetCoins.length < 8) {
-                    console.warn(`⚠️ 可用币种不足8个，仅${targetCoins.length}个`);
-                }
-                
-                // 5. 获取账户信息（使用总权益计算仓位）
-                const balanceResponse = await fetch('/api/okx-trading/account-info', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        apiKey: account.apiKey,
-                        apiSecret: account.apiSecret,
-                        passphrase: account.passphrase
-                    })
-                });
-                
-                const balanceResult = await balanceResponse.json();
-                if (!balanceResult.success || !balanceResult.data) {
-                    console.error('❌ 获取账户信息失败');
-                    return { success: false, error: '获取账户信息失败' };
-                }
-                
-                const totalEquity = balanceResult.data.totalEquity;
-                const availableBalance = balanceResult.data.availableBalance;
-                console.log(`💰 账户总权益: ${totalEquity.toFixed(2)} USDT`);
-                console.log(`💰 账户可用余额: ${availableBalance.toFixed(2)} USDT`);
-                
-                // 6. 读取策略配置中的仓位百分比，如果没有则使用默认值1.5%
-                const positionSizePercent = account.positionSize || 1.5; // 默认1.5%
-                const maxOrderSize = 5; // 单笔最大下单金额（保护机制）
-                const positionSize = Math.min(
-                    availableBalance * (positionSizePercent / 100),  // 使用可用余额 × 配置百分比
-                    maxOrderSize                                      // 不超过5 USDT
-                );
-                console.log(`📊 每个币种开仓金额: ${positionSize.toFixed(2)} USDT (可用余额${availableBalance.toFixed(2)} × ${positionSizePercent}%, 上限${maxOrderSize}U)`);
-                
-                // 7. 依次下单
-                const successCoins = [];
-                const failedCoins = [];
-                
-                for (const coin of targetCoins) {
-                    try {
-                        console.log(`📤 正在为 ${coin.name} 下多单，开仓金额 ${positionSize.toFixed(2)} USDT，10倍杠杆...`);
-                        
-                        const orderResponse = await fetch('/api/okx-trading/place-order', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                apiKey: account.apiKey,
-                                apiSecret: account.apiSecret,
-                                passphrase: account.passphrase,
-                                symbol: coin.symbol,
-                                side: 'buy',  // 多单
-                                amount: positionSize,
-                                leverage: 10,
-                                orderType: 'market',
-                                accountId: account.id
-                            })
-                        });
-                        
-                        const orderResult = await orderResponse.json();
-                        
-                        if (orderResult.success) {
-                            successCoins.push({
-                                name: coin.name,
-                                change: coin.changePct,
-                                orderId: orderResult.orderId
-                            });
-                            console.log(`✅ ${coin.name} 下单成功`);
-                        } else {
-                            failedCoins.push({
-                                name: coin.name,
-                                change: coin.changePct,
-                                error: orderResult.error
-                            });
-                            console.error(`❌ ${coin.name} 下单失败:`, orderResult.error);
-                        }
-                        
-                        // 每次下单后等待500ms，避免频繁请求
-                        await new Promise(resolve => setTimeout(resolve, 500));
-                    } catch (error) {
-                        failedCoins.push({
-                            name: coin.name,
-                            change: coin.changePct,
-                            error: error.message
-                        });
-                        console.error(`❌ ${coin.name} 下单异常:`, error);
-                    }
-                }
-                
-                return {
-                    success: true,
-                    totalCount: targetCoins.length,
-                    successCount: successCoins.length,
-                    failedCount: failedCoins.length,
-                    successCoins: successCoins,
-                    failedCoins: failedCoins,
-                    targetCoins: targetCoins
-                };
+                return result;
             } catch (error) {
                 console.error('❌ 执行上涨占比0策略失败:', error);
                 return { success: false, error: error.message };
@@ -7747,198 +7609,25 @@ ${data.sMsg || result.message || ''}`);
             return null;
         }
         
-        // 执行自动开单（支持涨幅后8名和涨幅前8名两种策略）
+        // 执行自动开单（支持涨幅后8名和涨幅前8名两种策略）- 直接调用手动批量开仓
         async function executeAutoTrade(account, btcPrice, triggerPrice, strategyType = 'bottom_performers') {
             try {
                 const strategyName = strategyType === 'top_performers' ? '涨幅前8名' : '涨幅后8名';
                 console.log(`📊 开始执行${strategyName}策略...`);
+                console.log(`📊 直接调用手动批量开仓函数...`);
                 
-                // 1. 获取常用币列表（15个）
-                if (!favoriteSymbols || favoriteSymbols.length === 0) {
-                    console.error('❌ 常用币列表为空');
-                    return { success: false, error: '常用币列表为空' };
-                }
+                // 获取账户配置的仓位百分比，默认1.5%
+                const positionSizePercent = account.positionSize || 1.5;
                 
-                console.log('常用币列表 (15个):', favoriteSymbols);
-                
-                // 2. 获取行情数据
-                const marketsResponse = await fetch('/api/okx-trading/market-tickers');
-                const marketsResult = await marketsResponse.json();
-                
-                if (!marketsResult.success || !marketsResult.data) {
-                    console.error('❌ 获取行情数据失败');
-                    return { success: false, error: '获取行情数据失败' };
-                }
-                
-                // 3. 筛选常用币的行情数据
-                const favoriteMarkets = marketsResult.data.filter(t => 
-                    favoriteSymbols.includes(t.symbol)
-                );
-                
-                console.log(`找到 ${favoriteMarkets.length} 个常用币的行情数据`);
-                
-                // 4. 按涨跌幅排序
-                let targetCoins;
+                // 直接调用手动批量开仓函数（已经有5U上限保护）
+                let result;
                 if (strategyType === 'top_performers') {
-                    // 涨幅前8名：按涨跌幅降序排列，取前8
-                    targetCoins = favoriteMarkets
-                        .sort((a, b) => b.change24h - a.change24h)
-                        .slice(0, 8);
-                    console.log('📈 涨幅前8名币种（买入强势币种）:');
+                    result = await batchOrderTop8('long', positionSizePercent);
                 } else {
-                    // 涨幅后8名：按涨跌幅升序排列，取前8
-                    targetCoins = favoriteMarkets
-                        .sort((a, b) => a.change24h - b.change24h)
-                        .slice(0, 8);
-                    console.log('📉 涨幅后8名币种（买入弱势币种）:');
+                    result = await batchOrderBottom8('long', positionSizePercent);
                 }
                 
-                const bottom8 = targetCoins;  // 保持变量名兼容
-                
-                targetCoins.forEach((coin, index) => {
-                    console.log(`  ${index + 1}. ${coin.name} (${coin.symbol}) - 涨跌幅: ${coin.change24h}%`);
-                });
-                
-                // 5. 获取账户余额
-                const balanceResponse = await fetch('/api/okx-trading/account-info', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        apiKey: account.apiKey,
-                        apiSecret: account.apiSecret,
-                        passphrase: account.passphrase
-                    })
-                });
-                
-                const balanceResult = await balanceResponse.json();
-                if (!balanceResult.success || !balanceResult.data) {
-                    console.error('❌ 获取账户余额失败');
-                    return { success: false, error: '获取账户余额失败' };
-                }
-                
-                // 🔥 修复：使用总权益而不是可用余额来计算仓位
-                const totalEquity = balanceResult.data.totalEquity;
-                const availableBalance = balanceResult.data.availableBalance;
-                console.log(`💰 账户总权益: ${totalEquity.toFixed(2)} USDT`);
-                console.log(`💰 账户可用余额: ${availableBalance.toFixed(2)} USDT`);
-                
-                // 6. 对每个币种开多单
-                const results = [];
-                const successCoins = [];
-                const failedCoins = [];
-                
-                for (const coin of bottom8) {
-                    try {
-                        // 🔥 从配置读取仓位百分比，如果没有则使用默认值1.5%
-                        const positionSizePercent = account.positionSize || 1.5; // 默认1.5%
-                        const maxOrderSize = 5; // 单笔最大下单金额
-                        const positionUSDT = Math.min(
-                            totalEquity * (positionSizePercent / 100),  // 使用总权益 × 配置百分比
-                            maxOrderSize          // 不超过5 USDT
-                        );
-                        
-                        console.log(`\n准备开单: ${coin.name}`);
-                        console.log(`  币种: ${coin.symbol}`);
-                        console.log(`  当前价格: $${coin.price}`);
-                        console.log(`  仓位金额: ${positionUSDT.toFixed(2)} USDT (上限${maxOrderSize}U)`);
-                        console.log(`  杠杆: 10x`);
-                        
-                        // 获取合约规格（每张合约价值）
-                        const contractInfo = await getContractInfo(coin.symbol);
-                        if (!contractInfo) {
-                            console.error(`  ❌ 无法获取 ${coin.name} 的合约信息`);
-                            failedCoins.push({ name: coin.name, error: '获取合约信息失败' });
-                            continue;
-                        }
-                        
-                        // 计算张数：positionUSDT / (价格 * 合约面值)
-                        // 使用10倍杠杆，实际需要的保证金是 positionUSDT / 10
-                        const size = Math.floor(positionUSDT * 10 / (coin.price * contractInfo.ctVal));
-                        
-                        if (size < 1) {
-                            console.warn(`  ⚠️ ${coin.name} 计算张数不足1张，跳过`);
-                            failedCoins.push({ name: coin.name, error: '仓位不足1张' });
-                            continue;
-                        }
-                        
-                        console.log(`  开仓张数: ${size} 张`);
-                        
-                        // 下单
-                        const orderResponse = await fetch('/api/okx-trading/place-order', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                apiKey: account.apiKey,
-                                apiSecret: account.apiSecret,
-                                passphrase: account.passphrase,
-                                instId: coin.symbol,
-                                tdMode: 'cross', // 全仓模式
-                                side: 'buy',
-                                posSide: 'long',
-                                ordType: 'market',
-                                sz: size.toString(),
-                                lever: '10'
-                            })
-                        });
-                        
-                        const orderResult = await orderResponse.json();
-                        
-                        if (orderResult.success) {
-                            console.log(`  ✅ ${coin.name} 开多单成功！`);
-                            successCoins.push({ name: coin.name, size: size, price: coin.price });
-                            results.push({ coin: coin.name, success: true });
-                        } else {
-                            console.error(`  ❌ ${coin.name} 开单失败:`, orderResult.error);
-                            failedCoins.push({ name: coin.name, error: orderResult.error });
-                            results.push({ coin: coin.name, success: false, error: orderResult.error });
-                        }
-                        
-                        // 延迟100ms，避免频率限制
-                        await new Promise(resolve => setTimeout(resolve, 100));
-                        
-                    } catch (e) {
-                        console.error(`  ❌ ${coin.name} 开单异常:`, e);
-                        failedCoins.push({ name: coin.name, error: e.message });
-                        results.push({ coin: coin.name, success: false, error: e.message });
-                    }
-                }
-                
-                // 7. 汇总结果
-                const successCount = successCoins.length;
-                const totalCount = bottom8.length;
-                
-                console.log('\n📊 执行结果汇总:');
-                console.log(`  成功: ${successCount}/${totalCount}`);
-                console.log(`  成功币种:`, successCoins.map(c => c.name).join(', '));
-                if (failedCoins.length > 0) {
-                    console.log(`  失败币种:`, failedCoins.map(c => c.name).join(', '));
-                }
-                
-                // 准备币种详情（根据策略类型）
-                const coinsDetail = bottom8.map(coin => ({
-                    name: coin.name,
-                    symbol: coin.symbol,
-                    change: coin.change24h,
-                    price: coin.price
-                }));
-                
-                // 根据策略类型返回不同的字段名
-                const resultData = {
-                    success: successCount > 0,
-                    successCount: successCount,
-                    totalCount: totalCount,
-                    successCoins: successCoins,
-                    failedCoins: failedCoins,
-                    results: results
-                };
-                
-                if (strategyType === 'top_performers') {
-                    resultData.top8Coins = coinsDetail;
-                } else {
-                    resultData.bottom8Coins = coinsDetail;
-                }
-                
-                return resultData;
+                return result;
                 
             } catch (e) {
                 console.error('❌ 执行自动开单异常:', e);

@@ -210,13 +210,7 @@
             </div>
         </div>
 
-        <!-- 重大事件监控系统 -->
-        <div class="settings-card">
-            <h2>🚨 重大事件监控系统（9个事件）</h2>
-            <div id="majorEventsToggles">
-                <!-- 将通过JavaScript动态填充 -->
-            </div>
-        </div>
+        <!-- major-events监控系统已停用 (2026-02-19) -->
 
         <!-- 其他系统 -->
         <div class="settings-card">
@@ -235,16 +229,7 @@
 
         // 系统描述映射
         const systemDescriptions = {
-            // 重大事件 (使用实际的事件键名)
-            'events.general_top_escape': '📉 2h见顶信号≥100，建议逃顶',
-            'events.strong_top_escape': '🔥 2h见顶信号≥120，强烈逃顶信号',
-            'events.strong_short_liquidation': '💥 爆仓金额≥2500万，10分钟内持续新高',
-            'events.weak_short_liquidation': '💥 爆仓金额≥2500万，但未持续新高',
-            'events.red_to_green_mark': '🔄 多空盈利标记从红色转绿色，市场转弱',
-            'events.green_to_red_mark': '🔄 多空盈利标记从绿色转红色，市场转强',
-            'events.extreme_rally_pullback': '📈 总涨跌幅≥50且SAR偏空≥20个币种',
-            'events.extreme_drop_rebound': '📉 总涨跌幅≤-50且SAR偏多≥7个币种',
-            'events.super_liquidation_drop': '🌊 1h爆仓≥1.5亿后主跌，极端信号',
+            // major-events系统已停用 (2026-02-19)
             
             // 其他系统
             'extreme_tracking': '🎯 来源：extreme_value_tracker.py | 27个币种极值突破提醒（中度/重度跳幅）',
@@ -272,21 +257,7 @@
 
         // 渲染开关
         function renderToggles() {
-            // 渲染重大事件开关
-            const majorEventsContainer = document.getElementById('majorEventsToggles');
-            majorEventsContainer.innerHTML = '';
-            
-            // 支持两种数据格式：major_events 或 events
-            const majorEvents = config.major_events || config.events || {};
-            Object.keys(majorEvents).forEach(eventKey => {
-                const event = majorEvents[eventKey];
-                const item = createToggleItem(
-                    `events.${eventKey}`,
-                    event.name,
-                    event.enabled
-                );
-                majorEventsContainer.appendChild(item);
-            });
+            // major-events系统已停用，跳过相关渲染
 
             // 渲染其他系统开关
             const otherSystemsContainer = document.getElementById('otherSystemsToggles');
@@ -364,13 +335,7 @@
                     const checked = input.checked;
                     
                     if (keys.length === 2 && keys[0] === 'events') {
-                        // 重大事件（使用events字段）
-                        if (config.events && config.events[keys[1]]) {
-                            config.events[keys[1]].enabled = checked;
-                        } else if (config.major_events && config.major_events[keys[1]]) {
-                            // 兼容旧格式
-                            config.major_events[keys[1]].enabled = checked;
-                        }
+                        // major-events系统已停用，跳过
                     } else {
                         // 其他系统
                         if (config[keys[0]]) {

@@ -22163,7 +22163,6 @@ def get_telegram_notification_config():
         else:
             # 默认配置
             config = {
-                "major_events": {},
                 "extreme_tracking": {"enabled": True, "name": "极值追踪系统"},
                 "support_resistance": {"enabled": True, "name": "支撑压力线系统"},
                 "alert_system": {"enabled": True, "name": "计次预警系统"},

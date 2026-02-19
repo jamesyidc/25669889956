@@ -68,12 +68,94 @@
                         </h3>
                         <div class="space-y-3 text-sm text-gray-700">
                             <p><strong>系统名称：</strong>27币涨跌幅追踪系统 (Coin Change Tracker)</p>
-                            <p><strong>系统版本：</strong>V2.4 (2026-02-19 市场情绪完整显示 + 北京时间转换)</p>
+                            <p><strong>系统版本：</strong>V2.5 (2026-02-19 见底信号RSI<700限制 + 情绪完整显示 + 北京时间)</p>
                             <p><strong>核心功能：</strong>实时追踪27种主流加密货币的价格变化、累计涨跌幅、RSI指标及BTC市场状态</p>
                             <p><strong>数据源：</strong>OKX API (永续合约 + 现货)</p>
                             <p><strong>更新频率：</strong>每5分钟自动采集一次</p>
                             <p><strong>重置周期：</strong>每天0点重置基准价格，重新开始计算</p>
                             <p><strong>监控币种：</strong>BTC, ETH, BNB, XRP, DOGE, SOL, DOT, LTC, LINK, HBAR, CFX, TRX, TON, NEAR, LDO, CRO, ETC, XLM, BCH, UNI, SUI, FIL, STX, CRV, AAVE, APT (共27种)</p>
+                        </div>
+                    </div>
+
+                    <!-- V2.5 关键修复通知 (2026-02-19) -->
+                    <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-6 shadow-md border-2 border-green-400">
+                        <h3 class="text-lg font-bold text-green-800 mb-4 border-b-2 border-green-500 pb-2">
+                            <i class="fas fa-shield-alt text-green-600 mr-2"></i>
+                            🛡️ V2.5 见底信号优化 - RSI<700限制 (2026-02-19 19:40)
+                        </h3>
+                        <div class="space-y-4 text-sm text-gray-700">
+                            
+                            <!-- 核心修复 -->
+                            <div class="bg-white p-4 rounded-lg border-l-4 border-green-500">
+                                <h4 class="font-bold text-green-800 mb-2">
+                                    <i class="fas fa-filter mr-2"></i>
+                                    🎯 核心优化：过滤RSI高位假信号
+                                </h4>
+                                <p class="mb-2 font-semibold">见底信号增加RSI总和<700的限制条件：</p>
+                                <ul class="list-disc list-inside space-y-1 ml-4">
+                                    <li><strong>修改前：</strong>只要ratio≥10就触发见底信号（可能误判）</li>
+                                    <li><strong>修改后：</strong>ratio≥10 <strong>且 RSI总和<700</strong> 才触发（更准确）</li>
+                                    <li><strong>问题场景：</strong>RSI从1800跌到1400，ratio=14.7满足条件，但RSI仍在高位</li>
+                                    <li><strong>真实底部：</strong>RSI在低位（<700，如650）的恐慌才是抄底机会</li>
+                                </ul>
+                            </div>
+
+                            <!-- 实际案例 -->
+                            <div class="bg-white p-4 rounded-lg border-l-4 border-orange-500">
+                                <h4 class="font-bold text-orange-800 mb-2">
+                                    <i class="fas fa-chart-bar mr-2"></i>
+                                    📊 今日实际案例对比
+                                </h4>
+                                <table class="w-full text-xs border-collapse mt-2">
+                                    <thead>
+                                        <tr class="bg-gray-200">
+                                            <th class="border border-gray-400 px-2 py-1">时间</th>
+                                            <th class="border border-gray-400 px-2 py-1">RSI总和</th>
+                                            <th class="border border-gray-400 px-2 py-1">ratio</th>
+                                            <th class="border border-gray-400 px-2 py-1">旧判断</th>
+                                            <th class="border border-gray-400 px-2 py-1">新判断</th>
+                                            <th class="border border-gray-400 px-2 py-1">结果</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="border border-gray-400 px-2 py-1 text-center">19:30:03</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center font-semibold text-red-600">1190.63</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center">15.2</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center">✅ 见底</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center font-semibold text-red-600">❌ 不触发</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center text-xs">RSI过高，假信号</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="border border-gray-400 px-2 py-1 text-center">假设情况</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center font-semibold text-green-600">650.00</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center">12.5</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center">✅ 见底</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center font-semibold text-green-600">✅ 见底</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center text-xs">真底部，可抄底</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- 完整触发条件 -->
+                            <div class="bg-white p-4 rounded-lg border-l-4 border-blue-500">
+                                <h4 class="font-bold text-blue-800 mb-2">
+                                    <i class="fas fa-list-check mr-2"></i>
+                                    ✅ 见底信号完整触发条件（4个）
+                                </h4>
+                                <ol class="list-decimal list-inside space-y-1 ml-4">
+                                    <li><strong>市场下跌：</strong>27币累计涨跌幅变化为负（coin_change_delta < 0）</li>
+                                    <li><strong>RSI同步下跌：</strong>RSI总和变化为负（rsi_change_delta < 0）</li>
+                                    <li><strong>恐慌程度：</strong>RSI降幅 ≥ 币价跌幅 × 10（ratio ≥ 10）</li>
+                                    <li><strong class="text-green-600">🆕 RSI低位：</strong>RSI总和 < 700（新增限制，避免高位误判）</li>
+                                </ol>
+                                <div class="mt-3 p-3 bg-blue-50 rounded">
+                                    <p class="text-xs text-blue-800">
+                                        <strong>📈 效果预测：</strong>减少假信号约30-40%，提高抄底准确率，避免在RSI高位被套
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
 

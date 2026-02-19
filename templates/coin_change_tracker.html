@@ -94,7 +94,7 @@
                                 <p class="mb-2 font-semibold">不再简化为"偏多/偏空"，显示完整情绪信号：</p>
                                 <ul class="list-disc list-inside space-y-1 ml-4">
                                     <li><strong>⚠️ 见顶信号：</strong>红色高亮 - RSI涨幅>10×币价涨幅，贪婪过度，可能回调</li>
-                                    <li><strong>🔥 见底信号：</strong>绿色高亮 - RSI降幅>10×币价跌幅，恐慌过度，可能反弹</li>
+                                    <li><strong>🔥 见底信号：</strong>绿色高亮 - RSI降幅>10×币价跌幅 <strong>且RSI总和<700</strong>，恐慌过度，可能反弹</li>
                                     <li><strong>🚀 底部背离：</strong>绿色高亮 - 下跌中RSI反涨，抄底信号</li>
                                     <li><strong>⛔ 顶部背离：</strong>红色高亮 - 上涨中RSI反跌，逃顶信号</li>
                                     <li><strong>偏多/偏空：</strong>常规信号，对应颜色显示</li>
@@ -152,6 +152,52 @@
                                             </tr>
                                         </tbody>
                                     </table>
+                                </div>
+                            </div>
+
+                            <!-- 优化3: 见底信号增加RSI限制 -->
+                            <div class="bg-white p-4 rounded-lg border-l-4 border-green-500">
+                                <h4 class="font-bold text-green-800 mb-2">
+                                    <i class="fas fa-chart-line mr-2"></i>
+                                    3️⃣ 见底信号增加RSI总和<700限制
+                                </h4>
+                                <p class="mb-2 font-semibold">过滤高位假信号，提高底部判断准确性：</p>
+                                <ul class="list-disc list-inside space-y-1 ml-4">
+                                    <li><strong>新增条件：</strong>见底信号触发时必须RSI总和<700</li>
+                                    <li><strong>问题场景：</strong>RSI高位（如1190）时ratio满足但不是真底部</li>
+                                    <li><strong>真实底部：</strong>RSI低位（如650以下）的恐慌才是抄底机会</li>
+                                    <li><strong>完整条件：</strong>市场下跌 + RSI降幅≥币价跌幅×10 + RSI总和<700</li>
+                                </ul>
+                                <div class="mt-3 p-3 bg-green-50 rounded">
+                                    <p class="font-semibold text-green-800">📊 对比示例：</p>
+                                    <table class="w-full text-xs mt-2 border-collapse">
+                                        <thead>
+                                            <tr class="bg-gray-200">
+                                                <th class="border border-gray-400 px-2 py-1">场景</th>
+                                                <th class="border border-gray-400 px-2 py-1">RSI总和</th>
+                                                <th class="border border-gray-400 px-2 py-1">ratio</th>
+                                                <th class="border border-gray-400 px-2 py-1">旧判断</th>
+                                                <th class="border border-gray-400 px-2 py-1">新判断</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td class="border border-gray-400 px-2 py-1">真底部</td>
+                                                <td class="border border-gray-400 px-2 py-1 text-center font-semibold text-green-600">650</td>
+                                                <td class="border border-gray-400 px-2 py-1 text-center">12.5</td>
+                                                <td class="border border-gray-400 px-2 py-1 text-center">✅ 见底</td>
+                                                <td class="border border-gray-400 px-2 py-1 text-center font-semibold text-green-600">✅ 见底</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="border border-gray-400 px-2 py-1">假信号</td>
+                                                <td class="border border-gray-400 px-2 py-1 text-center font-semibold text-red-600">1190</td>
+                                                <td class="border border-gray-400 px-2 py-1 text-center">15.2</td>
+                                                <td class="border border-gray-400 px-2 py-1 text-center">✅ 见底</td>
+                                                <td class="border border-gray-400 px-2 py-1 text-center font-semibold text-red-600">❌ 不触发</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <p class="mt-2 text-xs text-green-700">💡 <strong>效果：</strong>避免在RSI高位误判底部，减少假信号，提高交易准确率</p>
                                 </div>
                             </div>
                         </div>

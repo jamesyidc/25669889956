@@ -1090,10 +1090,25 @@
             passphrase: 'Tencent@123'
         };
 
-        // 初始化
-        window.onload = function() {
-            initChart();
-            loadTodayData();
+        // 初始化 - 优化版本（显示加载进度）
+        window.onload = async function() {
+            console.log('🚀 OKX Trading Marks 页面初始化开始...');
+            const startTime = performance.now();
+            
+            try {
+                // 第1步：初始化图表骨架
+                initChart();
+                console.log('✅ 图表初始化完成');
+                
+                // 第2步：加载今天的数据
+                await loadTodayData();
+                
+                const endTime = performance.now();
+                console.log(`✅ 页面初始化完成，总耗时: ${((endTime - startTime) / 1000).toFixed(2)}秒`);
+            } catch (error) {
+                console.error('❌ 页面初始化失败:', error);
+                showError('页面初始化失败: ' + error.message);
+            }
         };
 
         // 初始化图表
@@ -1120,22 +1135,22 @@
             }
         }
 
-        // 加载今天的数据
-        function loadTodayData() {
+        // 加载今天的数据 - 优化版本
+        async function loadTodayData() {
             currentDate = new Date();
             updateDateDisplay();
-            loadData();
+            await loadData();
         }
 
-        // 前一天
-        function previousDay() {
+        // 前一天 - 优化版本
+        async function previousDay() {
             currentDate.setDate(currentDate.getDate() - 1);
             updateDateDisplay();
-            loadData();
+            await loadData();
         }
 
-        // 后一天
-        function nextDay() {
+        // 后一天 - 优化版本
+        async function nextDay() {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             const nextDate = new Date(currentDate);
@@ -1144,7 +1159,7 @@
             if (nextDate <= today) {
                 currentDate = nextDate;
                 updateDateDisplay();
-                loadData();
+                await loadData();
             }
         }
 
@@ -1173,23 +1188,32 @@
             return `${year}-${month}-${day}`;
         }
 
-        // 加载数据
+        // 加载数据 - 优化版本（添加进度提示）
         async function loadData() {
             try {
                 showLoading();
                 console.log('🔄 加载日期:', formatDate(currentDate));
+                const loadStart = performance.now();
                 
-                // 并行加载趋势数据、交易数据、角度数据和交易评价
-                const [trendData, tradesData, angleData] = await Promise.all([
-                    fetchTrendData(),
-                    fetchTradesData(),
-                    fetchAngleData(),
-                    loadTradeRatings()  // 加载交易评价
-                ]);
-                
+                // 优先加载趋势数据（最重要）
+                console.log('📈 1/3 正在加载趋势数据...');
+                const trendData = await fetchTrendData();
                 console.log('✅ 趋势数据:', trendData.length, '个点');
+                
+                // 并行加载交易和角度数据
+                console.log('📈 2/3 正在加载交易数据和角度数据...');
+                const [tradesData, angleData] = await Promise.all([
+                    fetchTradesData(),
+                    fetchAngleData()
+                ]);
                 console.log('✅ 交易数据:', tradesData.trades.length, '笔');
                 console.log('✅ 角度数据:', angleData.length, '个角度');
+                
+                // 后台加载交易评价（不阻塞显示）
+                console.log('📈 3/3 正在加载交易评价...');
+                loadTradeRatings().catch(err => {
+                    console.warn('⚠️ 交易评价加载失败:', err);
+                });
                 
                 // 合并交易（4分钟内）
                 const mergedTrades = mergeTrades(tradesData.trades, 4 * 60 * 1000);
@@ -1204,6 +1228,8 @@
                 // 渲染交易列表
                 renderTradeList(mergedTrades);
                 
+                const loadEnd = performance.now();
+                console.log(`✅ 数据加载完成，耗时: ${((loadEnd - loadStart) / 1000).toFixed(2)}秒`);
                 hideLoading();
             } catch (e) {
                 console.error('❌ 加载数据失败:', e);

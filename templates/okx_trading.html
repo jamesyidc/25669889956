@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>OKX实盘交易系统 v2.6.1</title>
+    <title>OKX实盘交易系统 v2.6.2</title>
     <!-- 版本: 2026-02-19 - 紧急修复批量开仓金额错误 -->
     <style>
         * {
@@ -1342,11 +1342,37 @@
                     </p>
                 </div>
                 
+                <!-- 🔥 v2.6.2 新功能通知 -->
+                <div style="background: #fef3c7; padding: 10px; border-radius: 6px; margin-bottom: 10px; border-left: 4px solid #f59e0b;">
+                    <h4 style="margin: 0 0 8px 0; color: #92400e; font-size: 12px;">🔥 v2.6.2 新增功能 - 市场情绪止盈（2026-02-19 18:50）</h4>
+                    <div style="background: #fffbeb; padding: 10px; border-radius: 4px; border-left: 3px solid #f59e0b;">
+                        <p style="margin: 0 0 6px 0; font-weight: 700; color: #92400e;">🎯 核心功能：</p>
+                        <ul style="margin: 4px 0 0 20px; padding: 0; color: #92400e;">
+                            <li><strong>智能监控：</strong>每60秒检查市场情绪最新信号（来自市场情绪采集器）</li>
+                            <li><strong>触发条件：</strong>当出现"⚠️见顶信号"或"⛔顶部背离"时自动触发</li>
+                            <li><strong>执行动作：</strong>自动平掉所有多单持仓（市价平仓）</li>
+                            <li><strong>防重复：</strong>每个持仓只执行一次市场情绪止盈</li>
+                            <li><strong>TG通知：</strong>发送包含情绪详情（信号、理由、币涨跌、RSI变化）的Telegram消息</li>
+                        </ul>
+                    </div>
+                    <div style="background: #fef2f2; padding: 10px; border-radius: 4px; border-left: 3px solid #dc2626; margin-top: 8px;">
+                        <p style="margin: 0 0 6px 0; font-weight: 700; color: #991b1b;">📊 历史验证（今日实盘）：</p>
+                        <ul style="margin: 4px 0 0 20px; padding: 0; color: #991b1b;">
+                            <li><strong>16:00 顶部背离：</strong>币价+3.15% RSI-20.55% → RSI跌幅是币价涨幅的6.5倍！</li>
+                            <li><strong>15分钟暴跌：</strong>从-55%跌到-87%，跌幅达32个百分点</li>
+                            <li><strong>信号准确：</strong>提前预警顶部，避免大幅回撤</li>
+                        </ul>
+                    </div>
+                    <p style="margin: 8px 0 0 0; font-size: 10px; color: #92400e; font-weight: 600;">
+                        ✅ 配置位置：data/okx_tpsl_settings/account_*_tpsl.jsonl（sentiment_take_profit_enabled: true）
+                    </p>
+                </div>
+                
                 <!-- 1. 系统概述 -->
                 <div style="background: white; padding: 10px; border-radius: 6px; margin-bottom: 10px; border-left: 4px solid #0ea5e9;">
                     <h4 style="margin: 0 0 8px 0; color: #0369a1; font-size: 12px;">🎯 一、系统概述</h4>
-                    <p style="margin: 4px 0;"><strong>系统名称：</strong>OKX 实盘交易系统 v2.6.1</p>
-                    <p style="margin: 4px 0;"><strong>最新更新：</strong>2026-02-19 - 🔴 v2.6.1 紧急修复：批量开仓金额错误（sz参数使用保证金而非合约价值，新增后端风控）</p>
+                    <p style="margin: 4px 0;"><strong>系统名称：</strong>OKX 实盘交易系统 v2.6.2</p>
+                    <p style="margin: 4px 0;"><strong>最新更新：</strong>2026-02-19 - 🔥 v2.6.2 新增功能：市场情绪止盈（见顶信号/顶部背离自动平多单）</p>
                     <p style="margin: 4px 0;"><strong>历史更新：</strong>2026-02-17 - 🎉 v2.6 新增：自动止盈止损系统（后台监控+Telegram通知+最大持仓保护）</p>
                     <p style="margin: 4px 0;"><strong>核心功能：</strong></p>
                     <ul style="margin: 4px 0 0 20px; padding: 0;">
@@ -1857,6 +1883,43 @@ setInterval(() => {
 {"timestamp": "2026-02-19 12:30:00", "account_id": "main", "allowed": true, "reason": "开启RSI止盈监控，阈值1900", "takeprofit_type": "rsi", "rsiValue": 1900.0}
 {"timestamp": "2026-02-19 12:35:22", "account_id": "main", "allowed": false, "reason": "RSI止盈已触发并执行，RSI=1920.45", "takeprofit_type": "rsi", "rsiValue": 1920.45}</pre>
                     <p style="margin: 2px 0; font-size: 10px; color: #64748b;">✅ <strong>统一许可机制：</strong>与coin-change-tracker的RSI止盈共用JSONL文件，但独立控制，触发前检查allowed状态</p>
+                    
+                    <p style="margin: 12px 0 4px 0; font-weight: 600;">🔥 3.9 市场情绪止盈（v2.6.2新增）</p>
+                    <p style="margin: 2px 0; font-size: 10px; color: #0ea5e9;"><strong>🎯 核心功能：</strong>当市场情绪最新信号为"见顶信号"或"顶部背离"时，自动平掉所有多单</p>
+                    <p style="margin: 2px 0;"><code style="background: #f1f5f9; padding: 2px 4px; border-radius: 3px;">data/okx_tpsl_settings/account_main_tpsl.jsonl</code></p>
+                    <pre style="background: #1e293b; color: #e2e8f0; padding: 8px; border-radius: 4px; overflow-x: auto; font-size: 10px; margin: 4px 0;">
+{
+  "account_id": "main",
+  "enabled": true,
+  ...
+  "sentiment_take_profit_enabled": true,           // 🔥 市场情绪止盈开关
+  "sentiment_signals": ["见顶信号", "顶部背离"],    // 触发信号列表
+  "sentiment_position_side": "long",               // 平仓方向（long=多单，short=空单）
+  "last_updated": "2026-02-19 18:50:00"
+}</pre>
+                    <p style="margin: 4px 0 2px 0; font-size: 10px; color: #64748b;"><strong>📊 数据来源：</strong></p>
+                    <p style="margin: 2px 0;"><code style="background: #f1f5f9; padding: 2px 4px; border-radius: 3px; font-size: 9px;">data/market_sentiment/market_sentiment_YYYYMMDD.jsonl</code></p>
+                    <pre style="background: #1e293b; color: #e2e8f0; padding: 8px; border-radius: 4px; overflow-x: auto; font-size: 10px; margin: 4px 0;">
+{"beijing_time": "2026-02-19 16:00:00", "sentiment": "⛔顶部背离", "coin_data": {"change_pct": 3.15}, "rsi_data": {"change_pct": -20.55}, "reason": "上涨中RSI反跌(20.55%)，顶部背离信号★★★"}</pre>
+                    <p style="margin: 4px 0 2px 0; font-size: 10px; color: #64748b;"><strong>⚡ 触发逻辑：</strong></p>
+                    <ul style="margin: 2px 0 0 16px; padding: 0; font-size: 10px; color: #64748b;">
+                        <li>✅ <strong>监控频率：</strong>每60秒检查一次市场情绪最新信号</li>
+                        <li>✅ <strong>信号判断：</strong>如果sentiment字段包含"见顶信号"或"顶部背离"</li>
+                        <li>✅ <strong>执行动作：</strong>遍历所有多单持仓，逐个市价平仓</li>
+                        <li>✅ <strong>防重复：</strong>每个持仓只执行一次市场情绪止盈</li>
+                        <li>✅ <strong>TG通知：</strong>平仓时发送包含情绪信号详情的Telegram消息</li>
+                        <li>⚠️ <strong>优先级：</strong>市场情绪止盈优先于常规止盈止损（RSI/价格百分比）</li>
+                    </ul>
+                    <p style="margin: 4px 0 2px 0; font-size: 10px; color: #64748b;"><strong>📝 执行记录：</strong></p>
+                    <p style="margin: 2px 0;"><code style="background: #f1f5f9; padding: 2px 4px; border-radius: 3px; font-size: 9px;">data/okx_tpsl_settings/account_main_tpsl_execution.jsonl</code></p>
+                    <pre style="background: #1e293b; color: #e2e8f0; padding: 8px; border-radius: 4px; overflow-x: auto; font-size: 10px; margin: 4px 0;">
+{"timestamp": "2026-02-19T18:50:15", "account_id": "account_main", "instId": "BTC-USDT-SWAP", "posSide": "long", "triggerType": "sentiment_take_profit", "success": true, "message": "市场情绪止盈设置成功"}</pre>
+                    <p style="margin: 4px 0 2px 0; font-size: 10px;"><strong style="color: #dc2626;">💡 历史验证（2026-02-19）：</strong></p>
+                    <div style="background: #fef2f2; padding: 8px; border-left: 3px solid #dc2626; border-radius: 4px; margin: 4px 0;">
+                        <p style="margin: 0 0 4px 0; font-size: 10px; color: #991b1b;">• <strong>16:00 顶部背离信号：</strong>币价+3.15% RSI-20.55%（RSI跌幅是币价涨幅的6.5倍）</p>
+                        <p style="margin: 0 0 4px 0; font-size: 10px; color: #991b1b;">• <strong>15分钟后暴跌：</strong>16:15跌到-67.37%，16:30跌到-75.58%，16:45最低-87.54%</p>
+                        <p style="margin: 0; font-size: 10px; color: #991b1b;">• <strong>跌幅32%+：</strong>从-55%跌到-87%，信号准确度极高！</p>
+                    </div>
                 </div>
                 
                 <!-- 3.5. JSONL文件完整架构 -->

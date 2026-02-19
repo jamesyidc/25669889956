@@ -1361,10 +1361,8 @@
                 
                 updateLoadingProgress(6, 100, `加载完成！耗时 ${loadTime} 秒`);
                 
-                // 立即隐藏加载界面（缩短延迟）
-                setTimeout(() => {
-                    safeHideLoading();
-                }, 100);
+                // 立即隐藏加载界面（不再等待）
+                safeHideLoading();
             } catch (e) {
                 console.error('❌ 加载数据失败:', e);
                 // 即使出错也要隐藏加载界面
@@ -2422,6 +2420,54 @@
         }
 
         function hideLoading() {
+            try {
+                console.log('🔄 hideLoading 被调用');
+                
+                // 方法1: 立即移除所有可能的加载界面元素（不等动画）
+                const overlays = document.querySelectorAll('#loadingOverlay, [id^="loadingOverlay"]');
+                console.log('📍 找到加载界面元素数量:', overlays.length);
+                
+                overlays.forEach((overlay, index) => {
+                    console.log(`🗑️  移除第${index + 1}个加载界面`);
+                    overlay.remove();
+                });
+                
+                // 方法2: 确保body没有overflow:hidden样式
+                document.body.style.overflow = '';
+                
+                console.log('✅ 加载界面已强制移除（共' + overlays.length + '个）');
+            } catch (e) {
+                console.error('❌ hideLoading 执行失败:', e);
+                // 最后的保险: 直接清除所有绝对定位的全屏元素
+                try {
+                    const allFixed = document.querySelectorAll('[style*="position: fixed"], [style*="position:fixed"]');
+                    allFixed.forEach(el => {
+                        if (el.id && el.id.includes('loading')) {
+                            console.log('🔥 强制移除:', el.id);
+                            el.remove();
+                        }
+                    });
+                } catch (e2) {
+                    console.error('❌ 强制清理也失败:', e2);
+                }
+            }
+        }
+        
+        // 添加一个最后的保险机制：页面完全加载后5秒内如果还有loading overlay就强制移除
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const remainingOverlays = document.querySelectorAll('#loadingOverlay, [id^="loadingOverlay"]');
+                if (remainingOverlays.length > 0) {
+                    console.warn('⚠️ 检测到残留加载界面，强制清理');
+                    remainingOverlays.forEach(overlay => overlay.remove());
+                    document.body.style.overflow = '';
+                    console.log('✅ 残留加载界面已清理');
+                }
+            }, 5000);  // 5秒后检查
+        });
+        
+        // 旧的hideLoading保留（向后兼容）
+        function hideLoadingOld() {
             try {
                 const overlay = document.getElementById('loadingOverlay');
                 console.log('🔄 hideLoading 被调用, overlay存在:', !!overlay);

@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>OKX实盘交易系统 v2.6.3</title>
+    <title>OKX实盘交易系统 v2.6.4</title>
     <!-- 版本: 2026-02-19 - 紧急修复批量开仓金额错误 -->
     <style>
         * {
@@ -1363,6 +1363,40 @@
                     </p>
                 </div>
                 
+                <!-- 🎉 v2.6.4 重大修复通知 -->
+                <div style="background: #dbeafe; padding: 10px; border-radius: 6px; margin-bottom: 10px; border-left: 4px solid #3b82f6;">
+                    <h4 style="margin: 0 0 8px 0; color: #1e40af; font-size: 12px;">🎉 v2.6.4 市场情绪止盈完整功能上线（2026-02-19 19:30）</h4>
+                    <div style="background: #eff6ff; padding: 10px; border-radius: 4px; border-left: 3px solid #3b82f6;">
+                        <p style="margin: 0 0 6px 0; font-weight: 700; color: #1e40af;">🔧 三大核心修复：</p>
+                        <ul style="margin: 4px 0 0 20px; padding: 0; color: #1e40af;">
+                            <li><strong>问题1 - 开关保存失败：</strong>后端API未处理sentimentTakeProfitEnabled字段 → 已修复（app.py保存/读取接口）</li>
+                            <li><strong>问题2 - 执行逻辑缺失：</strong>触发价格计算失败，返回"无法计算触发价格"错误 → 已修复（新增市价平仓方法）</li>
+                            <li><strong>问题3 - 持仓限制阻止：</strong>5U限制导致大额持仓被跳过 → 已修复（提前检查情绪止盈，无视持仓大小）</li>
+                        </ul>
+                    </div>
+                    <div style="background: #f0fdf4; padding: 10px; border-radius: 4px; border-left: 3px solid #10b981; margin-top: 8px;">
+                        <p style="margin: 0 0 6px 0; font-weight: 700; color: #065f46;">✅ 验证结果（实盘测试）：</p>
+                        <ul style="margin: 4px 0 0 20px; padding: 0; color: #065f46;">
+                            <li><strong>触发条件：</strong>2026-02-19 19:15:03 见顶信号（RSI涨28.71% vs 币价涨0.94%，30.6倍贪婪）</li>
+                            <li><strong>执行结果：</strong>8个多单全部市价平仓成功（LDO、FIL、APT、CRV、TAO、CRO、LINK、SOL）</li>
+                            <li><strong>大单验证：</strong>TAO-USDT-SWAP 3805U成功平仓（不受5U限制）</li>
+                            <li><strong>Telegram：</strong>每个平仓单独发送通知，包含情绪信号详情</li>
+                        </ul>
+                    </div>
+                    <div style="background: #fef2f2; padding: 10px; border-radius: 4px; border-left: 3px solid #ef4444; margin-top: 8px;">
+                        <p style="margin: 0 0 6px 0; font-weight: 700; color: #991b1b;">⚠️ 重要说明：</p>
+                        <ul style="margin: 4px 0 0 20px; padding: 0; color: #991b1b; font-size: 11px;">
+                            <li><strong>市价平仓：</strong>情绪止盈立即市价平仓，不设置条件单（与常规止盈不同）</li>
+                            <li><strong>只平多单：</strong>仅平pos_side='long'的持仓，不会误平空单</li>
+                            <li><strong>无视限制：</strong>不受5U开仓限制影响，任何大小的持仓都会平掉</li>
+                            <li><strong>开关独立：</strong>每个账户独立配置，UI开关状态会正确同步到后端</li>
+                        </ul>
+                    </div>
+                    <p style="margin: 8px 0 0 0; font-size: 10px; color: #1e40af; font-weight: 600;">
+                        📌 相关提交：d5d43f6(API修复) + 8e9eebb(市价平仓) + a51fa86(移除限制) + 1a6580c(提前检查)
+                    </p>
+                </div>
+                
                 <!-- 🔥 v2.6.2 新功能通知 -->
                 <div style="background: #fef3c7; padding: 10px; border-radius: 6px; margin-bottom: 10px; border-left: 4px solid #f59e0b;">
                     <h4 style="margin: 0 0 8px 0; color: #92400e; font-size: 12px;">🔥 v2.6.2 新增功能 - 市场情绪止盈（2026-02-19 18:50）</h4>
@@ -1392,9 +1426,15 @@
                 <!-- 1. 系统概述 -->
                 <div style="background: white; padding: 10px; border-radius: 6px; margin-bottom: 10px; border-left: 4px solid #0ea5e9;">
                     <h4 style="margin: 0 0 8px 0; color: #0369a1; font-size: 12px;">🎯 一、系统概述</h4>
-                    <p style="margin: 4px 0;"><strong>系统名称：</strong>OKX 实盘交易系统 v2.6.3</p>
-                    <p style="margin: 4px 0;"><strong>最新更新：</strong>2026-02-19 - 🔧 v2.6.3 修复：移除止盈止损的5U持仓限制检查（止盈止损不受开仓金额限制）</p>
-                    <p style="margin: 4px 0;"><strong>历史更新：</strong>2026-02-19 - 🔥 v2.6.2 新增：市场情绪止盈（见顶信号/顶部背离自动平多单）</p>
+                    <p style="margin: 4px 0;"><strong>系统名称：</strong>OKX 实盘交易系统 v2.6.4</p>
+                    <p style="margin: 4px 0;"><strong>最新更新：</strong>2026-02-19 - 🔧 v2.6.4 修复：市场情绪止盈完整功能上线（保存、执行、市价平仓）</p>
+                    <p style="margin: 4px 0;"><strong>历史更新：</strong></p>
+                    <ul style="margin: 4px 0 0 20px; padding: 0; font-size: 11px;">
+                        <li>2026-02-19 v2.6.3 - 移除止盈止损的5U持仓限制</li>
+                        <li>2026-02-19 v2.6.2 - 新增市场情绪止盈功能</li>
+                        <li>2026-02-19 v2.6.1 - 修复批量下单金额错误</li>
+                        <li>2026-02-17 v2.6.0 - 自动止盈止损系统上线</li>
+                    </ul>
                     <p style="margin: 4px 0;"><strong>核心功能：</strong></p>
                     <ul style="margin: 4px 0 0 20px; padding: 0;">
                         <li>多账户管理（主账户、fangfang12、poit、marks）</li>

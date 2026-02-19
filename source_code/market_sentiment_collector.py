@@ -22,14 +22,9 @@ COIN_CHANGE_DIR = BASE_DIR / 'data' / 'coin_change_tracker'
 # 确保数据目录存在
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-# 导入Telegram配置
-sys.path.insert(0, str(BASE_DIR / 'config'))
-try:
-    from telegram_config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
-except ImportError:
-    TELEGRAM_BOT_TOKEN = ""
-    TELEGRAM_CHAT_ID = ""
-    print("⚠️  未找到Telegram配置文件，通知功能将不可用")
+# 🔴 Telegram配置（硬编码）
+TELEGRAM_BOT_TOKEN = "8437045462:AAFePnwdC21cqeWhZISMQHGGgjmroVqE2H0"
+TELEGRAM_CHAT_ID = "-1003227444260"
 
 def get_today_file(data_type):
     """获取今天的数据文件路径"""

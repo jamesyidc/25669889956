@@ -24477,11 +24477,14 @@ def api_backup_delete():
 
 @app.route('/api/market-sentiment/latest', methods=['GET'])
 def api_market_sentiment_latest():
-    """获取最新的市场情绪数据"""
+    """获取最新的市场情绪数据（支持limit参数返回多条）"""
     try:
         from datetime import datetime
         from pathlib import Path
         import json
+        
+        # 获取limit参数（默认1条）
+        limit = int(request.args.get('limit', 1))
         
         # 构建今天的JSONL文件路径
         today = datetime.now().strftime('%Y%m%d')
@@ -24493,7 +24496,7 @@ def api_market_sentiment_latest():
                 'error': f'今日数据文件不存在: {jsonl_path}'
             }), 404
         
-        # 读取最后一行（最新数据）
+        # 读取文件
         with open(jsonl_path, 'r', encoding='utf-8') as f:
             lines = f.readlines()
             if not lines:
@@ -24502,12 +24505,26 @@ def api_market_sentiment_latest():
                     'error': '数据文件为空'
                 }), 404
             
-            last_data = json.loads(lines[-1])
-        
-        return jsonify({
-            'success': True,
-            'data': last_data
-        })
+            # 根据limit返回最后N条记录
+            if limit == 1:
+                # 单条记录返回对象
+                last_data = json.loads(lines[-1])
+                return jsonify({
+                    'success': True,
+                    'data': last_data
+                })
+            else:
+                # 多条记录返回数组
+                records = []
+                start_idx = max(0, len(lines) - limit)
+                for line in lines[start_idx:]:
+                    records.append(json.loads(line.strip()))
+                
+                return jsonify({
+                    'success': True,
+                    'data': records,
+                    'count': len(records)
+                })
         
     except Exception as e:
         import traceback

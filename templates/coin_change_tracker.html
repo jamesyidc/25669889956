@@ -34,10 +34,14 @@
                 <div class="flex items-center space-x-4">
                     <span class="text-sm text-gray-600">
                         <i class="far fa-clock mr-1"></i>
-                        1分钟周期
+                        5分钟采集周期
+                    </span>
+                    <span id="autoRefreshTimer" class="text-sm text-gray-600">
+                        <i class="fas fa-sync-alt mr-1"></i>
+                        <span id="nextRefreshTime">下次刷新: 15:00</span>
                     </span>
                     <span class="text-sm text-gray-600">
-                        <i class="fas fa-sync-alt mr-1"></i>
+                        <i class="fas fa-redo mr-1"></i>
                         每天0点重置
                     </span>
                 </div>
@@ -5847,52 +5851,191 @@ pm2 status                                                # 查看所有进程�
             let refreshCounter = 0;
             
             function startAutoRefresh() {
-                console.log('🚀 启动自动刷新，间隔: 30秒（高性能版）');
-                // 改为每30秒更新实时数据（减少服务器压力）
+                console.log('🚀 启动自动刷新，间隔: 15分钟（与数据采集周期同步）');
+                // 每15分钟更新一次（与后台数据采集周期一致：每5分钟采集，但每15分钟全量更新）
                 autoRefreshInterval = setInterval(async () => {
                     const isToday = formatDate(currentDate) === formatDate(new Date());
                     if (isToday) {
                         refreshCounter++;
-                        console.log(`⏰ 自动刷新 #${refreshCounter}: 开始更新数据...`);
+                        const now = new Date();
+                        const timeStr = now.toLocaleTimeString('zh-CN', {hour12: false});
+                        console.log(`⏰ 自动刷新 #${refreshCounter} (${timeStr}): 开始更新所有数据...`);
+                        
                         try {
-                            // 优化策略：
-                            // 1. 实时数据每次都刷新（最重要）
-                            // 2. 市场情绪每2次刷新一次（15分钟采集一次，30秒刷新没必要）
-                            // 3. 历史数据每4次刷新一次（减少服务器负载）
+                            // 每15分钟全量刷新所有数据（与数据采集周期同步）
+                            // 这样可以确保用户看到的是最新的完整数据
+                            console.log('📊 刷新实时数据...');
+                            await updateLatestData();
                             
-                            // 检查缓存，避免重复请求
-                            const cachedLatest = getCachedData('latestData');
-                            if (!cachedLatest) {
-                                await updateLatestData();
-                            }
+                            console.log('📊 刷新市场情绪数据...');
+                            await loadMarketSentiment();
                             
-                            // 每2次刷新一次市场情绪
-                            if (refreshCounter % 2 === 0) {
-                                const cachedSentiment = getCachedData('sentiment');
-                                if (!cachedSentiment) {
-                                    await loadMarketSentiment();
-                                }
-                            }
+                            console.log('📊 刷新历史数据...');
+                            await updateHistoryData(currentDate);
                             
-                            // 每4次刷新一次历史数据（约2分钟）
-                            if (refreshCounter % 4 === 0) {
-                                const cachedHistory = getCachedData('historyData');
-                                if (!cachedHistory) {
-                                    await updateHistoryData(currentDate);
-                                }
-                            }
+                            console.log(`✅ 自动刷新 #${refreshCounter} 完成 (${timeStr})`);
                             
-                            console.log(`✅ 自动刷新 #${refreshCounter} 完成`);
+                            // 显示刷新成功提示（可选）
+                            showRefreshNotification();
                         } catch (error) {
                             console.error('❌ 自动刷新失败:', error);
+                            showRefreshErrorNotification();
                         }
                     } else {
                         console.log('⚠️ 当前日期不是今天，跳过更新');
                     }
-                }, 30000); // 改为30秒
+                }, 900000); // 15分钟 = 900000毫秒
             }
             
             startAutoRefresh();
+            
+            // 启动刷新倒计时显示
+            startRefreshCountdown();
+            
+            // 刷新倒计时显示函数
+            function startRefreshCountdown() {
+                let nextRefreshTime = Date.now() + 900000; // 15分钟后
+                
+                function updateCountdown() {
+                    const now = Date.now();
+                    const remaining = nextRefreshTime - now;
+                    
+                    if (remaining <= 0) {
+                        // 重置倒计时
+                        nextRefreshTime = Date.now() + 900000;
+                    }
+                    
+                    const minutes = Math.floor(remaining / 60000);
+                    const seconds = Math.floor((remaining % 60000) / 1000);
+                    
+                    const timerElement = document.getElementById('nextRefreshTime');
+                    if (timerElement) {
+                        if (minutes > 0) {
+                            timerElement.textContent = `下次刷新: ${minutes}分${seconds}秒`;
+                        } else {
+                            timerElement.textContent = `下次刷新: ${seconds}秒`;
+                        }
+                        
+                        // 最后10秒变红色提醒
+                        const parentSpan = document.getElementById('autoRefreshTimer');
+                        if (remaining <= 10000 && parentSpan) {
+                            parentSpan.className = 'text-sm text-red-600 font-semibold';
+                        } else if (parentSpan) {
+                            parentSpan.className = 'text-sm text-gray-600';
+                        }
+                    }
+                }
+                
+                // 每秒更新一次倒计时
+                updateCountdown();
+                setInterval(updateCountdown, 1000);
+            }
+            
+            // 刷新成功提示
+            function showRefreshNotification() {
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 80px;
+                    right: 20px;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    padding: 15px 25px;
+                    border-radius: 10px;
+                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+                    z-index: 9999;
+                    font-size: 14px;
+                    font-weight: 500;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    animation: slideInRight 0.3s ease-out;
+                `;
+                
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('zh-CN', {hour12: false});
+                
+                notification.innerHTML = `
+                    <i class="fas fa-check-circle" style="font-size: 18px;"></i>
+                    <span>数据已自动更新 (${timeStr})</span>
+                `;
+                
+                document.body.appendChild(notification);
+                
+                // 3秒后自动消失
+                setTimeout(() => {
+                    notification.style.animation = 'slideOutRight 0.3s ease-in';
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 300);
+                }, 3000);
+                
+                // 添加动画样式
+                if (!document.getElementById('refreshNotificationStyle')) {
+                    const style = document.createElement('style');
+                    style.id = 'refreshNotificationStyle';
+                    style.textContent = `
+                        @keyframes slideInRight {
+                            from {
+                                transform: translateX(400px);
+                                opacity: 0;
+                            }
+                            to {
+                                transform: translateX(0);
+                                opacity: 1;
+                            }
+                        }
+                        @keyframes slideOutRight {
+                            from {
+                                transform: translateX(0);
+                                opacity: 1;
+                            }
+                            to {
+                                transform: translateX(400px);
+                                opacity: 0;
+                            }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+            }
+            
+            // 刷新失败提示
+            function showRefreshErrorNotification() {
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 80px;
+                    right: 20px;
+                    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+                    color: white;
+                    padding: 15px 25px;
+                    border-radius: 10px;
+                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+                    z-index: 9999;
+                    font-size: 14px;
+                    font-weight: 500;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    animation: slideInRight 0.3s ease-out;
+                `;
+                
+                notification.innerHTML = `
+                    <i class="fas fa-exclamation-circle" style="font-size: 18px;"></i>
+                    <span>数据更新失败，请检查网络连接</span>
+                `;
+                
+                document.body.appendChild(notification);
+                
+                // 5秒后自动消失
+                setTimeout(() => {
+                    notification.style.animation = 'slideOutRight 0.3s ease-in';
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 300);
+                }, 5000);
+            }
             
             // 每天0点2分自动刷新页面（处理跨日期数据）
             function scheduleAutoPageRefresh() {

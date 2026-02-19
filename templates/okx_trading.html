@@ -5317,8 +5317,8 @@ data/
                         side: direction === 'long' ? 'buy' : 'sell',
                         posSide: direction,
                         ordType: 'market',
-                        sz: marginPerCoin,  // 🔴 修复：使用保证金而不是合约价值
-                        maxOrderSize: maxOrderSize,  // 🔴 新增：传递单笔限额用于后端风控检查
+                        sz: contractValuePerCoin,  // ✅ 传递合约价值（保证金 × 杠杆）
+                        maxOrderSize: contractValuePerCoin,  // ✅ 风控检查也使用合约价值
                         lever: '10'
                     };
                     
@@ -5413,20 +5413,22 @@ data/
             console.log('[batchOrderTop8] 常用币种涨幅前8:', top8Symbols.map(s => `${s.name} (${s.change}%)`));
             
             // 计算每个币的保证金占用（从账户配置读取上限）
-            const maxOrderSize = account.maxOrderSize || 5; // 单笔最大金额，默认5 USDT
+            const maxOrderSize = account.maxOrderSize || 5; // 单笔保证金上限，默认5 USDT
             const calculatedMargin = balance * percentPerCoin / 100;
             const marginPerCoin = Math.min(calculatedMargin, maxOrderSize).toFixed(2);
+            const contractValuePerCoin = (parseFloat(marginPerCoin) * 10).toFixed(2);  // 合约价值 = 保证金 × 杠杆
             const totalMargin = (marginPerCoin * 8).toFixed(2);
-            const contractValuePerCoin = (parseFloat(marginPerCoin) * 10).toFixed(2);
             const totalContractValue = (parseFloat(contractValuePerCoin) * 8).toFixed(2);
             
             console.log(`[batchOrderTop8] 💰 保证金计算详情:`);
             console.log(`  • 可用余额: ${balance.toFixed(2)} USDT`);
             console.log(`  • 百分比: ${percentPerCoin}%`);
             console.log(`  • 计算保证金: ${balance.toFixed(2)} × ${percentPerCoin}% = ${calculatedMargin.toFixed(2)} USDT`);
-            console.log(`  • 单笔上限: ${maxOrderSize} USDT`);
+            console.log(`  • 单笔保证金上限: ${maxOrderSize} USDT`);
             console.log(`  • 实际保证金: Math.min(${calculatedMargin.toFixed(2)}, ${maxOrderSize}) = ${marginPerCoin} USDT`);
+            console.log(`  • 合约价值(10x): ${marginPerCoin} × 10 = ${contractValuePerCoin} USDT`);
             console.log(`  • 总保证金: ${marginPerCoin} × 8 = ${totalMargin} USDT`);
+            console.log(`  • 总合约价值: ${contractValuePerCoin} × 8 = ${totalContractValue} USDT`);
             
             // 检查余额是否足够
             const requiredBalance = parseFloat(totalMargin) * 1.2;
@@ -5510,8 +5512,8 @@ data/
                         side: direction === 'long' ? 'buy' : 'sell',
                         posSide: direction,
                         ordType: 'market',
-                        sz: marginPerCoin,  // 🔴 修复：使用保证金而不是合约价值
-                        maxOrderSize: maxOrderSize,  // 🔴 新增：传递单笔限额用于后端风控检查
+                        sz: contractValuePerCoin,  // ✅ 传递合约价值（保证金 × 杠杆）
+                        maxOrderSize: contractValuePerCoin,  // ✅ 风控检查也使用合约价值
                         lever: '10'
                     };
                     
@@ -5603,20 +5605,22 @@ data/
             console.log('[batchOrderBottom8] 常用币种涨幅后8:', bottom8Symbols.map(s => `${s.name} (${s.change}%)`));
             
             // 计算每个币的保证金占用（从账户配置读取上限）
-            const maxOrderSize = account.maxOrderSize || 5; // 单笔最大金额，默认5 USDT
+            const maxOrderSize = account.maxOrderSize || 5; // 单笔保证金上限，默认5 USDT
             const calculatedMargin = balance * percentPerCoin / 100;
             const marginPerCoin = Math.min(calculatedMargin, maxOrderSize).toFixed(2);
+            const contractValuePerCoin = (parseFloat(marginPerCoin) * 10).toFixed(2);  // 合约价值 = 保证金 × 杠杆
             const totalMargin = (marginPerCoin * 8).toFixed(2);
-            const contractValuePerCoin = (parseFloat(marginPerCoin) * 10).toFixed(2);
             const totalContractValue = (parseFloat(contractValuePerCoin) * 8).toFixed(2);
             
             console.log(`[batchOrderBottom8] 💰 保证金计算详情:`);
             console.log(`  • 可用余额: ${balance.toFixed(2)} USDT`);
             console.log(`  • 百分比: ${percentPerCoin}%`);
             console.log(`  • 计算保证金: ${balance.toFixed(2)} × ${percentPerCoin}% = ${calculatedMargin.toFixed(2)} USDT`);
-            console.log(`  • 单笔上限: ${maxOrderSize} USDT`);
+            console.log(`  • 单笔保证金上限: ${maxOrderSize} USDT`);
             console.log(`  • 实际保证金: Math.min(${calculatedMargin.toFixed(2)}, ${maxOrderSize}) = ${marginPerCoin} USDT`);
+            console.log(`  • 合约价值(10x): ${marginPerCoin} × 10 = ${contractValuePerCoin} USDT`);
             console.log(`  • 总保证金: ${marginPerCoin} × 8 = ${totalMargin} USDT`);
+            console.log(`  • 总合约价值: ${contractValuePerCoin} × 8 = ${totalContractValue} USDT`);
             
             // 检查余额是否足够
             const requiredBalance = parseFloat(totalMargin) * 1.2;
@@ -5721,8 +5725,8 @@ data/
                         side: direction === 'long' ? 'buy' : 'sell',
                         posSide: direction,
                         ordType: 'market',
-                        sz: marginPerCoin,  // 🔴 修复：使用保证金而不是合约价值
-                        maxOrderSize: maxOrderSize,  // 🔴 新增：传递单笔限额用于后端风控检查
+                        sz: contractValuePerCoin,  // ✅ 传递合约价值（保证金 × 杠杆）
+                        maxOrderSize: contractValuePerCoin,  // ✅ 风控检查也使用合约价值
                         lever: '10'
                     };
                     

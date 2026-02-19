@@ -3774,36 +3774,120 @@ data/
                         })
                     });
                     
-                    // 执行一键平仓
-                    await closeAllPositions();
+                    // 执行一键平仓（获取平仓结果）
+                    const closeResult = await executeRSICloseAllPositions();
                     
                     // 自动关闭RSI止盈开关
                     rsiSwitch.checked = false;
                     await saveTakeProfitStopLossSettings(true);
                     
-                    // 发送通知
-                    const message = `🎯 RSI止盈触发！\n账户：${account.name}\nRSI之和：${totalRSI.toFixed(2)}\n阈值：${rsiThreshold}\n已执行一键平仓`;
+                    // 构建详细的通知消息（包含平仓结果）
+                    let message = `🎯 RSI止盈触发！\n账户：${account.name}\nRSI之和：${totalRSI.toFixed(2)}\n阈值：${rsiThreshold}\n\n`;
+                    
+                    if (closeResult.success) {
+                        message += `✅ 平仓完成\n总持仓：${closeResult.totalPositions} 个\n成功平仓：${closeResult.closedCount} 个\n失败：${closeResult.failedCount} 个`;
+                        
+                        // 如果有重试信息
+                        if (closeResult.retryCount > 0) {
+                            message += `\n第二轮重试：${closeResult.retrySuccess}/${closeResult.retryCount} 成功`;
+                        }
+                        
+                        // 显示失败详情
+                        if (closeResult.failedCount > 0 && closeResult.results) {
+                            message += '\n\n失败详情：';
+                            closeResult.results.filter(r => r.status === 'failed' || r.status === 'error').forEach(r => {
+                                message += `\n• ${r.instId}: ${r.message}`;
+                            });
+                        }
+                    } else {
+                        message += `❌ 平仓失败：${closeResult.message || closeResult.error || '未知错误'}`;
+                    }
                     
                     // 浏览器通知
                     if ('Notification' in window && Notification.permission === 'granted') {
                         new Notification('🎯 RSI止盈触发', {
-                            body: message,
+                            body: `账户：${account.name}\nRSI：${totalRSI.toFixed(2)}\n成功平仓：${closeResult.closedCount || 0} 个`,
                             icon: '/static/favicon.ico',
                             requireInteraction: true
                         });
                     }
                     
-                    // Telegram通知
+                    // Telegram通知（包含完整结果）
                     await fetch('/api/telegram/send-message', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ message })
                     });
                     
-                    console.log('✅ RSI止盈执行完成');
+                    console.log('✅ RSI止盈执行完成', closeResult);
                 }
             } catch (e) {
                 console.error('❌ RSI止盈监控失败', e);
+            }
+        }
+
+        // RSI止盈专用平仓函数（返回结果并显示弹窗）
+        async function executeRSICloseAllPositions() {
+            console.log('[executeRSICloseAllPositions] RSI止盈触发，开始平仓所有持仓');
+            
+            const account = accounts.find(acc => acc.id === currentAccount);
+            if (!account) {
+                const errorResult = { success: false, error: '未找到账户信息' };
+                alert('❌ ' + errorResult.error);
+                return errorResult;
+            }
+            
+            try {
+                const response = await fetch('/api/okx-trading/close-all-positions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        apiKey: account.apiKey,
+                        apiSecret: account.apiSecret,
+                        passphrase: account.passphrase,
+                        accountId: account.id
+                    })
+                });
+                
+                const result = await response.json();
+                console.log('[executeRSICloseAllPositions] API响应:', result);
+                
+                if (result.success) {
+                    // 构建弹窗消息
+                    let message = `✅ RSI止盈平仓完成！\n\n总持仓：${result.totalPositions} 个\n成功平仓：${result.closedCount} 个\n失败：${result.failedCount} 个`;
+                    
+                    // 如果有重试信息，显示重试结果
+                    if (result.retryCount > 0) {
+                        message += `\n\n第二轮重试：${result.retrySuccess}/${result.retryCount} 成功`;
+                    }
+                    
+                    // 显示详细的失败信息
+                    if (result.failedCount > 0) {
+                        message += '\n\n失败详情：';
+                        result.results.filter(r => r.status === 'failed' || r.status === 'error').forEach(r => {
+                            message += `\n• ${r.instId}: ${r.message}`;
+                        });
+                    }
+                    
+                    // 显示弹窗
+                    alert(message);
+                    
+                    // 刷新账户数据
+                    await refreshAccountData();
+                    
+                    return result;
+                } else {
+                    const errorMsg = `❌ RSI止盈平仓失败：${result.message || result.error || '未知错误'}`;
+                    alert(errorMsg);
+                    return result;
+                }
+            } catch (error) {
+                console.error('[executeRSICloseAllPositions] RSI止盈平仓异常:', error);
+                const errorResult = { success: false, error: error.message };
+                alert(`❌ RSI止盈平仓异常：${error.message}`);
+                return errorResult;
             }
         }
 

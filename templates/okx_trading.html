@@ -1780,6 +1780,250 @@ setInterval(() => {
                     <p style="margin: 2px 0;"><code style="background: #f1f5f9; padding: 2px 4px; border-radius: 3px;">data/sar_jsonl/BTC.jsonl</code></p>
                     <pre style="background: #1e293b; color: #e2e8f0; padding: 8px; border-radius: 4px; overflow-x: auto; font-size: 10px; margin: 4px 0;">
 {"time": "2026-02-13T02:00:00", "close": 66550, "sar": 65200, "signal": "做多", "bias": 2.07}</pre>
+                    
+                    <p style="margin: 8px 0 4px 0; font-weight: 600;">🆕 3.8 RSI止盈设置与执行许可（v2.7新增）</p>
+                    <p style="margin: 2px 0;"><code style="background: #f1f5f9; padding: 2px 4px; border-radius: 3px;">data/okx_tpsl_settings/account_main_tpsl.jsonl</code></p>
+                    <pre style="background: #1e293b; color: #e2e8f0; padding: 8px; border-radius: 4px; overflow-x: auto; font-size: 10px; margin: 4px 0;">
+{
+  "account_id": "main",
+  "enabled": true,
+  "take_profit_enabled": false,
+  "take_profit_threshold": 50.0,
+  "stop_loss_enabled": false,
+  "stop_loss_threshold": -30.0,
+  "rsi_take_profit_enabled": true,     // RSI止盈开关
+  "rsi_take_profit_threshold": 1900.0, // RSI阈值（810-2700）
+  "max_position_value_usdt": 5.0,
+  "last_updated": "2026-02-19 12:00:00"
+}</pre>
+                    <p style="margin: 2px 0;"><code style="background: #f1f5f9; padding: 2px 4px; border-radius: 3px;">data/okx_auto_strategy/account_main_takeprofit_execution.jsonl</code></p>
+                    <pre style="background: #1e293b; color: #e2e8f0; padding: 8px; border-radius: 4px; overflow-x: auto; font-size: 10px; margin: 4px 0;">
+{"timestamp": "2026-02-19 12:30:00", "account_id": "main", "allowed": true, "reason": "开启RSI止盈监控，阈值1900", "takeprofit_type": "rsi", "rsiValue": 1900.0}
+{"timestamp": "2026-02-19 12:35:22", "account_id": "main", "allowed": false, "reason": "RSI止盈已触发并执行，RSI=1920.45", "takeprofit_type": "rsi", "rsiValue": 1920.45}</pre>
+                    <p style="margin: 2px 0; font-size: 10px; color: #64748b;">✅ <strong>统一许可机制：</strong>与coin-change-tracker的RSI止盈共用JSONL文件，但独立控制，触发前检查allowed状态</p>
+                </div>
+                
+                <!-- 3.5. JSONL文件完整架构 -->
+                <div style="background: white; padding: 10px; border-radius: 6px; margin-bottom: 10px; border-left: 4px solid #ec4899;">
+                    <h4 style="margin: 0 0 8px 0; color: #be123c; font-size: 12px;">🗂️ 三.五、JSONL文件完整架构（重要）</h4>
+                    
+                    <div style="margin: 4px 0; padding: 8px; background: #fef2f2; border-left: 3px solid #dc2626; border-radius: 4px;">
+                        <p style="margin: 0 0 4px 0; font-weight: 600; color: #991b1b; font-size: 10px;">📌 为什么需要详细记录JSONL架构？</p>
+                        <ul style="margin: 2px 0 0 16px; padding: 0; font-size: 10px; color: #7f1d1d;">
+                            <li><strong>复杂性最高：</strong>OKX交易系统是整个系统中最复杂的模块</li>
+                            <li><strong>文件众多：</strong>4个账户 × 多种策略 = 数十个JSONL文件</li>
+                            <li><strong>依赖关系复杂：</strong>功能之间有调用关系、许可关系</li>
+                            <li><strong>易出错：</strong>不清楚依赖关系容易导致修改时出现混乱</li>
+                            <li><strong>维护困难：</strong>没有文档难以理解每个文件的作用</li>
+                        </ul>
+                    </div>
+                    
+                    <p style="margin: 8px 0 4px 0; font-weight: 600; font-size: 11px;">📊 JSONL文件分类表</p>
+                    <table style="width: 100%; font-size: 9px; border-collapse: collapse; margin: 4px 0;">
+                        <thead>
+                            <tr style="background: #f1f5f9;">
+                                <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: left;">分类</th>
+                                <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: left;">文件命名格式</th>
+                                <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: center;">数量</th>
+                                <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: left;">功能说明</th>
+                                <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: left;">相关API</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="background: #dbeafe;">
+                                <td style="padding: 4px; border: 1px solid #cbd5e1; font-weight: 600;">策略配置</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;"><code>account_{id}.json</code><br><code>account_{id}_top.json</code></td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center;">8</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">BTC价格触发策略配置（前8/后8）<br>包含：enabled, triggerPrice, positionSize, maxOrderSize</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">/api/okx-trading/auto-strategy/{id}</td>
+                            </tr>
+                            <tr style="background: #dcfce7;">
+                                <td style="padding: 4px; border: 1px solid #cbd5e1; font-weight: 600;">BTC策略许可</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;"><code>account_{id}_btc_{type}_execution.jsonl</code></td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center;">8</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">BTC价格触发执行许可（防重复）<br>type = top_performers / bottom_performers</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">/api/okx-trading/check-allowed/{id}/{type}<br>/api/okx-trading/set-allowed/{id}/{type}</td>
+                            </tr>
+                            <tr style="background: #fef3c7;">
+                                <td style="padding: 4px; border: 1px solid #cbd5e1; font-weight: 600;">上涨占比0许可</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;"><code>account_{id}_upratio0_{type}_execution.jsonl</code></td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center;">8</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">上涨占比0触发执行许可（防重复）<br>type = top8 / bottom8</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">/api/okx-trading/check-allowed-upratio0/{id}/{type}<br>/api/okx-trading/set-allowed-upratio0/{id}/{type}</td>
+                            </tr>
+                            <tr style="background: #fed7aa;">
+                                <td style="padding: 4px; border: 1px solid #cbd5e1; font-weight: 600;">RSI止盈许可</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;"><code>account_{id}_takeprofit_execution.jsonl</code></td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center;">4</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">RSI止盈执行许可（防重复）<br>包含：allowed, takeprofitType, rsiValue</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">/api/okx-trading/check-allowed-takeprofit/{id}<br>/api/okx-trading/set-allowed-takeprofit/{id}</td>
+                            </tr>
+                            <tr style="background: #fce7f3;">
+                                <td style="padding: 4px; border: 1px solid #cbd5e1; font-weight: 600;">止盈止损配置</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;"><code>account_{id}_tpsl.jsonl</code></td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center;">4</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">止盈止损阈值与RSI止盈配置<br>包含：take_profit_threshold, stop_loss_threshold, rsi_take_profit_threshold</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">/api/okx-trading/tpsl-settings/{id}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1; font-weight: 600;">策略历史</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;"><code>account_{id}_history.jsonl</code><br><code>account_{id}_tpsl_history.jsonl</code></td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center;">8</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">策略配置修改历史记录<br>每次修改追加一条记录</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <p style="margin: 8px 0 4px 0; font-weight: 600; font-size: 11px;">🔗 功能依赖关系图</p>
+                    <pre style="background: #1e293b; color: #e2e8f0; padding: 8px; border-radius: 4px; overflow-x: auto; font-size: 9px; margin: 4px 0; line-height: 1.8;">
+<span style="color: #22c55e;">┌─────────────────────────────────────────────────────────────────────┐</span>
+<span style="color: #22c55e;">│  1️⃣ BTC价格触发策略（涨幅前8名/后8名）                              │</span>
+<span style="color: #22c55e;">└─────────────────────────────────────────────────────────────────────┘</span>
+   📄 配置文件: account_{id}.json / account_{id}_top.json
+   ├─ 字段: enabled, triggerPrice, positionSize, maxOrderSize
+   ├─ API读取: GET /api/okx-trading/auto-strategy/{id}?strategy_type=...
+   └─ API保存: POST /api/okx-trading/auto-strategy/{id}
+   
+   📝 执行许可: account_{id}_btc_{type}_execution.jsonl
+   ├─ 读取API: GET /api/okx-trading/check-allowed/{id}/{type}
+   ├─ 写入API: POST /api/okx-trading/set-allowed/{id}/{type}
+   ├─ 触发时机: 前端每60秒检查BTC价格
+   ├─ 执行函数: checkAndExecuteAutoStrategy()
+   └─ 下单复用: batchOrderTop8() / batchOrderBottom8()
+
+<span style="color: #f59e0b;">┌─────────────────────────────────────────────────────────────────────┐</span>
+<span style="color: #f59e0b;">│  2️⃣ 上涨占比0触发策略（涨幅前8名/后8名）                            │</span>
+<span style="color: #f59e0b;">└─────────────────────────────────────────────────────────────────────┘</span>
+   📝 执行许可: account_{id}_upratio0_{top8|bottom8}_execution.jsonl
+   ├─ 读取API: GET /api/okx-trading/check-allowed-upratio0/{id}/{type}
+   ├─ 写入API: POST /api/okx-trading/set-allowed-upratio0/{id}/{type}
+   ├─ 触发时机: 前端每60秒检查上涨占比
+   ├─ 触发条件: 上涨占比=0% 且 不在0:00-0:30
+   ├─ 执行函数: checkAndExecuteUpRatio0Top8() / checkAndExecuteUpRatio0Bottom8()
+   ├─ 下单复用: batchOrderTop8() / batchOrderBottom8()
+   └─ 数据来源: /api/coin-change-tracker/latest (total_change, changes)
+
+<span style="color: #ec4899;">┌─────────────────────────────────────────────────────────────────────┐</span>
+<span style="color: #ec4899;">│  3️⃣ RSI止盈功能（OKX Trading页面）                                  │</span>
+<span style="color: #ec4899;">└─────────────────────────────────────────────────────────────────────┘</span>
+   📄 配置文件: account_{id}_tpsl.jsonl
+   ├─ 字段: rsi_take_profit_enabled, rsi_take_profit_threshold
+   ├─ API读取: GET /api/okx-trading/tpsl-settings/{id}
+   └─ API保存: POST /api/okx-trading/tpsl-settings/{id}
+   
+   📝 执行许可: account_{id}_takeprofit_execution.jsonl
+   ├─ 读取API: GET /api/okx-trading/check-allowed-takeprofit/{id}
+   ├─ 写入API: POST /api/okx-trading/set-allowed-takeprofit/{id}
+   ├─ 触发时机: 前端每60秒检查RSI
+   ├─ 执行函数: checkRSITakeProfit()
+   ├─ 平仓函数: executeRSICloseAllPositions()
+   ├─ 平仓API: POST /api/okx-trading/close-all-positions
+   └─ 数据来源: /api/coin-change-tracker/latest (total_rsi)
+
+<span style="color: #a855f7;">┌─────────────────────────────────────────────────────────────────────┐</span>
+<span style="color: #a855f7;">│  4️⃣ RSI止盈功能（Coin Change Tracker页面）                          │</span>
+<span style="color: #a855f7;">└─────────────────────────────────────────────────────────────────────┘</span>
+   📝 执行许可: account_{id}_takeprofit_execution.jsonl (与OKX Trading共用)
+   ├─ 读取API: GET /api/okx-trading/check-allowed-takeprofit/{id}
+   ├─ 写入API: POST /api/okx-trading/set-allowed-takeprofit/{id}
+   ├─ 配置存储: localStorage (rsiTakeProfitConfig)
+   ├─ 触发时机: 前端每10秒检查RSI
+   ├─ 执行函数: checkRSITakeProfit()
+   ├─ 平仓API: POST /api/okx-trading/close-position (逐个平仓)
+   └─ 数据来源: 页面内部计算的total_rsi
+
+<span style="color: #06b6d4;">┌─────────────────────────────────────────────────────────────────────┐</span>
+<span style="color: #06b6d4;">│  5️⃣ 账户级止盈止损（旧版，基于总未实现盈亏）                        │</span>
+<span style="color: #06b6d4;">└─────────────────────────────────────────────────────────────────────┘</span>
+   📄 配置文件: account_{id}_tpsl.jsonl
+   ├─ 字段: take_profit_threshold, stop_loss_threshold
+   ├─ 触发时机: 前端加载持仓时检查
+   ├─ 执行函数: checkTakeProfitStopLoss(unrealizedPnl)
+   └─ 平仓函数: showTakeProfitAlert() / showStopLossAlert() → closeAllPositions()
+</pre>
+                    
+                    <p style="margin: 8px 0 4px 0; font-weight: 600; font-size: 11px;">📋 账户与文件对应表（4个账户）</p>
+                    <table style="width: 100%; font-size: 9px; border-collapse: collapse; margin: 4px 0;">
+                        <thead>
+                            <tr style="background: #f1f5f9;">
+                                <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: left;">账户ID</th>
+                                <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: left;">BTC策略配置</th>
+                                <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: left;">BTC执行许可</th>
+                                <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: left;">上涨占比0许可</th>
+                                <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: left;">止盈止损配置</th>
+                                <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: left;">RSI止盈许可</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;"><strong>main</strong></td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">account_main.json<br>account_main_top.json</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">*_btc_top_performers_execution.jsonl<br>*_btc_bottom_performers_execution.jsonl</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">*_upratio0_top8_execution.jsonl<br>*_upratio0_bottom8_execution.jsonl</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">account_main_tpsl.jsonl</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">account_main_takeprofit_execution.jsonl</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;"><strong>fangfang12</strong></td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">account_fangfang12.json<br>account_fangfang12_top.json</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">account_fangfang12_btc_*_execution.jsonl</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">account_fangfang12_upratio0_*_execution.jsonl</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">account_fangfang12_tpsl.jsonl</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">account_fangfang12_takeprofit_execution.jsonl</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;"><strong>poit</strong></td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">account_poit.json<br>account_poit_top.json</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">account_poit_btc_*_execution.jsonl</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">account_poit_upratio0_*_execution.jsonl</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">account_poit_tpsl.jsonl</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">account_poit_takeprofit_execution.jsonl</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;"><strong>marks</strong></td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">account_marks.json<br>account_marks_top.json</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">account_marks_btc_*_execution.jsonl</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">account_marks_upratio0_*_execution.jsonl</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">account_marks_tpsl.jsonl</td>
+                                <td style="padding: 4px; border: 1px solid #cbd5e1;">account_marks_takeprofit_execution.jsonl</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p style="margin: 2px 0; font-size: 9px; color: #64748b;">* 表示 account_前缀，完整文件名见上方详细列表</p>
+                    
+                    <p style="margin: 8px 0 4px 0; font-weight: 600; font-size: 11px;">⚙️ 前端页面定时任务汇总</p>
+                    <pre style="background: #1e293b; color: #e2e8f0; padding: 8px; border-radius: 4px; overflow-x: auto; font-size: 9px; margin: 4px 0; line-height: 1.8;">
+<span style="color: #fbbf24;">// OKX Trading 页面 (templates/okx_trading.html)</span>
+setInterval(() => {
+    refreshAccountData();              // 刷新账户余额与持仓
+    loadPendingOrders();               // 加载委托订单
+    loadTradingLogs();                 // 加载交易日志
+    updateTotalChangeOKX();            // 更新总涨跌幅
+    <span style="color: #22c55e;">checkAndExecuteAutoStrategy();</span>      // ✅ 检查BTC价格触发策略
+    <span style="color: #f59e0b;">checkAndExecuteUpRatio0Top8();</span>      // ✅ 检查上涨占比0-涨幅前8名
+    <span style="color: #f59e0b;">checkAndExecuteUpRatio0Bottom8();</span>   // ✅ 检查上涨占比0-涨幅后8名
+    <span style="color: #ec4899;">checkRSITakeProfit();</span>               // ✅ 检查RSI止盈
+}, 60000);  // 每60秒执行一次
+
+<span style="color: #a855f7;">// Coin Change Tracker 页面 (templates/coin_change_tracker.html)</span>
+setInterval(() => {
+    loadCoinChangeData();              // 加载27币涨跌幅数据
+    <span style="color: #ec4899;">checkRSITakeProfit();</span>               // ✅ 检查RSI止盈（与OKX Trading独立）
+}, 10000);  // 每10秒执行一次
+</pre>
+                    
+                    <div style="margin: 8px 0; padding: 6px; background: #fef2f2; border-left: 3px solid #dc2626; border-radius: 4px; font-size: 9px;">
+                        <p style="margin: 0 0 2px 0; font-weight: 600; color: #991b1b;">⚠️ 修改代码时的注意事项</p>
+                        <ul style="margin: 2px 0 0 16px; padding: 0; color: #7f1d1d;">
+                            <li><strong>API路由修改：</strong>如果修改API路径，需同步修改前端调用和上表中的API列</li>
+                            <li><strong>JSONL文件重命名：</strong>需同时修改后端API逻辑和前端调用</li>
+                            <li><strong>新增功能：</strong>优先复用现有API，避免创建重复功能</li>
+                            <li><strong>策略互斥：</strong>不同策略使用不同的JSONL执行许可文件，避免冲突</li>
+                            <li><strong>账户隔离：</strong>所有配置和执行许可必须按账户ID独立存储</li>
+                            <li><strong>防重复机制：</strong>每个策略都必须有JSONL执行许可检查，防止重复执行</li>
+                        </ul>
+                    </div>
                 </div>
                 
                 <!-- 4. API接口 -->

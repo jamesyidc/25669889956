@@ -15093,6 +15093,155 @@ def get_okx_account_balance():
             'traceback': traceback.format_exc()
         })
 
+@app.route('/api/okx-trading/account-balance/<account_id>', methods=['GET'])
+def get_okx_account_balance_by_id(account_id):
+    """通过account_id获取OKX账户余额"""
+    try:
+        import hmac
+        import base64
+        from datetime import datetime, timezone
+        import requests
+        import json
+        import os
+        
+        # 读取账户配置
+        config_path = os.path.join(os.path.dirname(__file__), 'okx_accounts.json')
+        
+        if os.path.exists(config_path):
+            with open(config_path, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+                accounts = config.get('accounts', [])
+        else:
+            # 硬编码账户列表
+            accounts = [
+                {
+                    "id": "account_main",
+                    "name": "主账户",
+                    "apiKey": "b0c18f2d-e014-4ae8-9c3c-cb02161de4db",
+                    "apiSecret": "92F864C599B2CE2EC5186AD14C8B4110",
+                    "passphrase": "Tencent@123"
+                },
+                {
+                    "id": "account_fangfang12",
+                    "name": "fangfang12",
+                    "apiKey": "e5867a9a-93b7-476f-81ce-093c3aacae0d",
+                    "apiSecret": "4624EE63A9BF3F84250AC71C9A37F47D",
+                    "passphrase": "Tencent@123"
+                },
+                {
+                    "id": "account_anchor",
+                    "name": "锚点账户",
+                    "apiKey": "0b05a729-40eb-4809-b3eb-eb2de75b7e9e",
+                    "apiSecret": "4E4DA8BE3B18D01AA07185A006BF9F8E",
+                    "passphrase": "Tencent@123"
+                },
+                {
+                    "id": "account_poit_main",
+                    "name": "POIT (子账户)",
+                    "apiKey": "8650e46c-059b-431d-93cf-55f8c79babdb",
+                    "apiSecret": "4C2BD2AC6A08615EA7F36A6251857FCE",
+                    "passphrase": "Wu666666."
+                }
+            ]
+        
+        # 查找指定账户
+        account = None
+        for acc in accounts:
+            if acc['id'] == account_id:
+                account = acc
+                break
+        
+        if not account:
+            return jsonify({
+                'success': False,
+                'error': f'账户不存在: {account_id}'
+            })
+        
+        api_key = account.get('apiKey', '')
+        secret_key = account.get('apiSecret', '')
+        passphrase = account.get('passphrase', '')
+        
+        if not api_key or not secret_key or not passphrase:
+            return jsonify({
+                'success': False,
+                'error': 'API凭证不完整'
+            })
+        
+        # OKX API配置
+        base_url = 'https://www.okx.com'
+        request_path = '/api/v5/account/balance'
+        method = 'GET'
+        
+        # 生成签名
+        timestamp = datetime.now(timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
+        message = timestamp + method + request_path
+        mac = hmac.new(
+            bytes(secret_key, encoding='utf8'),
+            bytes(message, encoding='utf-8'),
+            digestmod='sha256'
+        )
+        signature = base64.b64encode(mac.digest()).decode()
+        
+        # 请求头
+        headers = {
+            'OK-ACCESS-KEY': api_key,
+            'OK-ACCESS-SIGN': signature,
+            'OK-ACCESS-TIMESTAMP': timestamp,
+            'OK-ACCESS-PASSPHRASE': passphrase,
+            'Content-Type': 'application/json'
+        }
+        
+        # 发送请求
+        response = requests.get(base_url + request_path, headers=headers, timeout=10)
+        result = response.json()
+        
+        if result.get('code') == '0' and result.get('data'):
+            # 获取USDT余额
+            balances = result['data']
+            usdt_balance = 0.0
+            
+            for acc_data in balances:
+                details = acc_data.get('details', [])
+                for detail in details:
+                    if detail.get('ccy') == 'USDT':
+                        # 只使用可用余额(不包含冻结的保证金)
+                        available = float(detail.get('availBal', 0))
+                        usdt_balance += available
+            
+            return jsonify({
+                'success': True,
+                'data': {
+                    'accountId': account_id,
+                    'accountName': account.get('name', ''),
+                    'balance': round(usdt_balance, 2),
+                    'availableBalance': round(usdt_balance, 2),
+                    'currency': 'USDT'
+                }
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': result.get('msg', '获取余额失败'),
+                'code': result.get('code', 'unknown')
+            })
+            
+    except requests.exceptions.Timeout:
+        return jsonify({
+            'success': False,
+            'error': 'API请求超时'
+        })
+    except requests.exceptions.RequestException as e:
+        return jsonify({
+            'success': False,
+            'error': f'网络请求失败: {str(e)}'
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        })
+
 @app.route('/api/okx-trading/account-info', methods=['POST'])
 def get_okx_account_info():
     """获取OKX账户详细信息(权益、保证金、盈亏等)"""

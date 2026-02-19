@@ -2654,11 +2654,20 @@ pm2 status                                                # 查看所有进程�
                             <div class="text-sm font-semibold text-gray-700 mb-3 flex items-center justify-between">
                                 <span>
                                     <i class="fas fa-history text-purple-600 mr-1"></i>
-                                    市场情绪历史记录（最近10条）
+                                    市场情绪历史记录
+                                    <span class="text-xs text-gray-500 ml-2">(显示最近 <span id="sentimentLimit">20</span> 条)</span>
                                 </span>
-                                <span class="text-xs text-gray-500">
-                                    🔥 见底信号 | ⚠️ 见顶信号 | 每15分钟检查
-                                </span>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-xs text-gray-500">
+                                        🔥 见底信号 | ⚠️ 见顶信号 | 每15分钟检查
+                                    </span>
+                                    <select id="sentimentLimitSelect" onchange="changeSentimentLimit()" class="text-xs border border-gray-300 rounded px-2 py-1">
+                                        <option value="10">10条</option>
+                                        <option value="20" selected>20条</option>
+                                        <option value="50">50条</option>
+                                        <option value="100">100条</option>
+                                    </select>
+                                </div>
                             </div>
                             <div class="overflow-x-auto">
                                 <table class="min-w-full text-xs">
@@ -5227,9 +5236,9 @@ pm2 status                                                # 查看所有进程�
         }
         
         // 加载市场情绪历史数据
-        async function loadSentimentHistory() {
+        async function loadSentimentHistory(limit = 20) {
             try {
-                const response = await fetch(`/api/market-sentiment/history?limit=10&_t=${Date.now()}`, {
+                const response = await fetch(`/api/market-sentiment/history?limit=${limit}&_t=${Date.now()}`, {
                     cache: 'no-store'
                 });
                 const result = await response.json();
@@ -5251,6 +5260,14 @@ pm2 status                                                # 查看所有进程�
                     </tr>
                 `;
             }
+        }
+        
+        // 切换显示条数
+        function changeSentimentLimit() {
+            const select = document.getElementById('sentimentLimitSelect');
+            const limit = parseInt(select.value);
+            document.getElementById('sentimentLimit').textContent = limit;
+            loadSentimentHistory(limit);
         }
         
         // 更新历史数据表格

@@ -5755,86 +5755,52 @@ pm2 status                                                # 查看所有进程�
             initCharts();
             console.log('✅ 图表初始化完成');
             
-            // 第3步：显示加载提示
-            const loadingOverlay = document.createElement('div');
-            loadingOverlay.id = 'loadingOverlay';
-            loadingOverlay.innerHTML = `
-                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center;">
-                    <div style="background: white; padding: 30px; border-radius: 10px; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
-                        <div style="font-size: 20px; font-weight: bold; color: #3b82f6; margin-bottom: 10px;">
-                            <i class="fas fa-spinner fa-spin"></i> 加载中...
-                        </div>
-                        <div id="loadingProgress" style="font-size: 14px; color: #666;">正在并行加载数据...</div>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(loadingOverlay);
+            // 第3步：并行加载关键数据（最重要的优化：3个请求同时发出）
+            console.log('🔄 开始并行加载实时数据、市场情绪、历史数据...');
             
-            const updateProgress = (msg) => {
-                const progressEl = document.getElementById('loadingProgress');
-                if (progressEl) progressEl.textContent = msg;
-            };
+            const isToday = formatDate(currentDate) === formatDate(new Date());
             
-            try {
-                // 第4步：并行加载关键数据（最重要的优化：3个请求同时发出）
-                updateProgress('正在并行加载实时数据、市场情绪、历史数据...');
-                
-                const isToday = formatDate(currentDate) === formatDate(new Date());
-                
-                // 并行执行3个独立的数据加载任务
-                const [latestResult, sentimentResult, historyResult] = await Promise.allSettled([
-                    updateLatestData(),
-                    loadMarketSentiment(),
-                    isToday ? updateHistoryData() : updateHistoryData(currentDate)
-                ]);
-                
-                // 检查各个加载结果
-                if (latestResult.status === 'fulfilled') {
-                    console.log('✅ 实时数据加载完成');
-                } else {
-                    console.error('❌ 实时数据加载失败:', latestResult.reason);
-                }
-                
-                if (sentimentResult.status === 'fulfilled') {
-                    console.log('✅ 市场情绪加载完成');
-                } else {
-                    console.error('❌ 市场情绪加载失败:', sentimentResult.reason);
-                }
-                
-                if (historyResult.status === 'fulfilled') {
-                    console.log('✅ 历史数据加载完成');
-                } else {
-                    console.error('❌ 历史数据加载失败:', historyResult.reason);
-                }
-                
-                // 第5步：更新日期选择器（无需等待）
-                updateDateSelector();
-                
-                // 第6步：后台懒加载账户余额信息（不阻塞页面显示）
-                setTimeout(() => {
-                    loadAccountsBalance().then(() => {
-                        console.log('✅ 账户余额信息已加载，可以使用策略功能');
-                    }).catch(error => {
-                        console.error('❌ 账户余额加载失败:', error);
-                    });
-                }, 100);
-                
-                // 移除加载提示
-                setTimeout(() => {
-                    if (loadingOverlay) loadingOverlay.remove();
-                }, 300);
-                
-                const endTime = performance.now();
-                console.log(`✅ 页面初始化完成，总耗时: ${((endTime - startTime) / 1000).toFixed(2)}秒`);
-                console.log(`⚡ 性能提升: 采用并行加载 + 缓存机制，预计减少60%以上加载时间`);
-                
-            } catch (error) {
-                console.error('❌ 页面初始化失败:', error);
-                updateProgress('加载失败，请刷新页面重试');
-                setTimeout(() => {
-                    if (loadingOverlay) loadingOverlay.remove();
-                }, 2000);
+            // 并行执行3个独立的数据加载任务
+            const [latestResult, sentimentResult, historyResult] = await Promise.allSettled([
+                updateLatestData(),
+                loadMarketSentiment(),
+                isToday ? updateHistoryData() : updateHistoryData(currentDate)
+            ]);
+            
+            // 检查各个加载结果
+            if (latestResult.status === 'fulfilled') {
+                console.log('✅ 实时数据加载完成');
+            } else {
+                console.error('❌ 实时数据加载失败:', latestResult.reason);
             }
+            
+            if (sentimentResult.status === 'fulfilled') {
+                console.log('✅ 市场情绪加载完成');
+            } else {
+                console.error('❌ 市场情绪加载失败:', sentimentResult.reason);
+            }
+            
+            if (historyResult.status === 'fulfilled') {
+                console.log('✅ 历史数据加载完成');
+            } else {
+                console.error('❌ 历史数据加载失败:', historyResult.reason);
+            }
+            
+            // 第4步：更新日期选择器（无需等待）
+            updateDateSelector();
+            
+            // 第5步：后台懒加载账户余额信息（不阻塞页面显示）
+            setTimeout(() => {
+                loadAccountsBalance().then(() => {
+                    console.log('✅ 账户余额信息已加载，可以使用策略功能');
+                }).catch(error => {
+                    console.error('❌ 账户余额加载失败:', error);
+                });
+            }, 100);
+            
+            const endTime = performance.now();
+            console.log(`✅ 页面初始化完成，总耗时: ${((endTime - startTime) / 1000).toFixed(2)}秒`);
+            console.log(`⚡ 性能提升: 采用并行加载 + 缓存机制，预计减少60%以上加载时间`);
             
             // 绑定日期选择器事件
             document.getElementById('prevDay').addEventListener('click', goToPrevDay);

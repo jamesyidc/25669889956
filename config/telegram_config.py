@@ -29,11 +29,11 @@
 
 # Telegram Bot Token (从 @BotFather 获取)
 # 格式: "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
-TELEGRAM_BOT_TOKEN = ""
+TELEGRAM_BOT_TOKEN = "8437045462:AAFePnwdC21cqeWhZISMQHGGgjmroVqE2H0"
 
 # Telegram Chat ID (您的用户 ID 或群组 ID)
 # 格式: "123456789" (个人) 或 "-123456789" (群组)
-TELEGRAM_CHAT_ID = ""
+TELEGRAM_CHAT_ID = "-1003227444260"
 
 # =============================================================================
 # 高级配置（通常不需要修改）

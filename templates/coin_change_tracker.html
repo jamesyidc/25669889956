@@ -2651,9 +2651,14 @@ pm2 status                                                # 查看所有进程�
                     <!-- 历史数据表格 -->
                     <div class="px-4 pb-4">
                         <div class="bg-white rounded-lg p-4 shadow-md">
-                            <div class="text-sm font-semibold text-gray-700 mb-3">
-                                <i class="fas fa-history text-purple-600 mr-1"></i>
-                                历史记录（最近10条）
+                            <div class="text-sm font-semibold text-gray-700 mb-3 flex items-center justify-between">
+                                <span>
+                                    <i class="fas fa-history text-purple-600 mr-1"></i>
+                                    市场情绪历史记录（最近10条）
+                                </span>
+                                <span class="text-xs text-gray-500">
+                                    🔥 见底信号 | ⚠️ 见顶信号 | 每15分钟检查
+                                </span>
                             </div>
                             <div class="overflow-x-auto">
                                 <table class="min-w-full text-xs">
@@ -5253,18 +5258,31 @@ pm2 status                                                # 查看所有进程�
             const tbody = document.getElementById('sentimentHistoryTable');
             
             tbody.innerHTML = historyData.map(item => {
-                const sentimentColor = item.sentiment_type === 'bullish' ? 'text-green-600' : 
+                // 🔴 特殊处理见顶/见底信号
+                let sentimentColor, sentimentIcon, rowBgClass = '';
+                
+                if (item.sentiment === '🔥见底信号' || item.sentiment.includes('见底')) {
+                    sentimentColor = 'text-orange-600 font-bold';
+                    sentimentIcon = '🔥';
+                    rowBgClass = 'bg-orange-50 border-l-4 border-orange-500';
+                } else if (item.sentiment === '⚠️见顶信号' || item.sentiment.includes('见顶')) {
+                    sentimentColor = 'text-red-600 font-bold';
+                    sentimentIcon = '⚠️';
+                    rowBgClass = 'bg-red-50 border-l-4 border-red-500';
+                } else {
+                    sentimentColor = item.sentiment_type === 'bullish' ? 'text-green-600' : 
                                       item.sentiment_type === 'bearish' ? 'text-red-600' : 'text-gray-600';
-                const sentimentIcon = item.sentiment_type === 'bullish' ? '🐂' : 
+                    sentimentIcon = item.sentiment_type === 'bullish' ? '🐂' : 
                                      item.sentiment_type === 'bearish' ? '🐻' : '😐';
+                }
                 
                 const coinPctClass = item.coin_data.change_pct >= 0 ? 'text-green-600' : 'text-red-600';
                 const rsiPctClass = item.rsi_data.change_pct >= 0 ? 'text-purple-600' : 'text-orange-600';
                 
                 return `
-                    <tr class="border-b border-gray-100 hover:bg-gray-50">
+                    <tr class="border-b border-gray-100 hover:bg-gray-50 ${rowBgClass}">
                         <td class="px-3 py-2 text-gray-600 whitespace-nowrap">${item.beijing_time}</td>
-                        <td class="px-3 py-2 ${sentimentColor} font-semibold">${sentimentIcon} ${item.sentiment}</td>
+                        <td class="px-3 py-2 ${sentimentColor}">${sentimentIcon} ${item.sentiment}</td>
                         <td class="px-3 py-2">
                             <span class="${coinPctClass} font-semibold">
                                 ${item.coin_data.change_pct >= 0 ? '+' : ''}${item.coin_data.change_pct.toFixed(2)}%

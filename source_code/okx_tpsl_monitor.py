@@ -381,10 +381,6 @@ class TPSLMonitor:
         
         print(f"[{self.account_id}] 📊 当前持仓数: {len(positions)}")
         
-        # 获取最大持仓价值限制
-        max_position_value = float(settings.get('max_position_value_usdt', 9999999))
-        print(f"[{self.account_id}] 🛡️  最大单笔限制: {max_position_value} USDT")
-        
         # 🔥 检查市场情绪止盈
         sentiment_triggered = False
         latest_sentiment = None
@@ -419,8 +415,9 @@ class TPSLMonitor:
             # 计算持仓价值（USDT）
             position_value_usdt = pos_size * mark_px
             
-            # 🔥 优先检查市场情绪止盈（仅对多单有效）- 在最大持仓限制检查之前
+            # 🔥 优先检查市场情绪止盈（仅对多单有效）
             # 市场情绪止盈是紧急风控措施，无论持仓大小都应执行
+            # ⚠️ 注意：这里只检查pos_side == 'long'，不会平空单
             if sentiment_triggered and pos_side == 'long':
                 target_position_side = settings.get('sentiment_position_side', 'long')
                 if pos_side == target_position_side:
@@ -429,28 +426,6 @@ class TPSLMonitor:
                         result = self.execute_tpsl(credentials, pos, 'sentiment_take_profit', settings, latest_sentiment)
                         self.record_execution(inst_id, pos_side, 'sentiment_take_profit', result)
                         continue  # 已执行市场情绪止盈，跳过后续检查
-            
-            # ⚠️ 检查是否超过最大持仓价值限制（常规止盈止损才检查）
-            if position_value_usdt > max_position_value:
-                print(f"[{self.account_id}] ⚠️  {inst_id} {pos_side}: 持仓价值 {position_value_usdt:.2f} USDT > 限制 {max_position_value} USDT，跳过（疑似错误订单）")
-                
-                # 发送Telegram警告
-                pos_side_cn = '多单' if pos_side == 'long' else '空单'
-                warning_msg = (
-                    f"⚠️ <b>异常持仓检测</b>\n\n"
-                    f"📊 账户: <code>{self.account_id}</code>\n"
-                    f"💰 交易对: <code>{inst_id}</code>\n"
-                    f"📈 方向: {pos_side_cn}\n"
-                    f"💵 持仓价值: <b>{position_value_usdt:.2f} USDT</b>\n"
-                    f"🛡️ 最大限制: <b>{max_position_value} USDT</b>\n"
-                    f"⚠️ 状态: <b>疑似错误订单，已跳过止盈止损</b>\n\n"
-                    f"ℹ️ 持仓数量: {pos_size}\n"
-                    f"ℹ️ 当前价格: {mark_px:.2f} USDT\n"
-                    f"⏰ {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
-                    f"🔴 请手动检查此订单是否为错误开单！"
-                )
-                self.send_telegram(warning_msg)
-                continue
             
             # 计算当前盈亏百分比
             if pos_side == 'long':

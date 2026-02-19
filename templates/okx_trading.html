@@ -7571,18 +7571,20 @@ ${data.sMsg || result.message || ''}`);
             
             if (!settingsBox || !triggerPriceEl || !statusBadgeEl) return;
             
-            // 如果开关开启，显示服务器设置
+            // 始终显示服务器设置（包括JSONL执行许可和重置按钮）
+            settingsBox.style.display = 'block';
+            triggerPriceEl.textContent = `$${(settings.triggerPrice || 68000).toFixed(2)}`;
+            
             if (settings.enabled) {
-                settingsBox.style.display = 'block';
-                triggerPriceEl.textContent = `$${(settings.triggerPrice || 68000).toFixed(2)}`;
                 statusBadgeEl.textContent = '✅ 已启用';
-                statusBadgeEl.style.color = '#8b5cf6';
-                
-                // 同时检查JSONL状态（传递suffix和strategyType）
-                updateJsonlAllowedStatus(settings.strategyType, suffix);
+                statusBadgeEl.style.color = '#10b981';
             } else {
-                settingsBox.style.display = 'none';
+                statusBadgeEl.textContent = '⚪ 未启用';
+                statusBadgeEl.style.color = '#6b7280';
             }
+            
+            // 始终检查JSONL状态（无论enabled是否为true）
+            updateJsonlAllowedStatus(settings.strategyType, suffix);
             
             console.log('✅ 已更新服务器自动交易设置显示:', settings);
         }

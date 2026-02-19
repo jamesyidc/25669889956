@@ -3397,6 +3397,66 @@ data/
                         </button>
                     </h3>
 
+
+                    
+                    <!-- 当前涨跌幅 -->
+                    <div class="info-row" style="margin-bottom: 12px; padding: 10px; background: rgba(255,255,255,0.5); border-radius: 6px;">
+                        <span class="info-label" style="color: #991b1b;">27币总涨跌幅</span>
+                        <span class="info-value" style="font-weight: bold; font-size: 18px;" id="totalChangePercent">--</span>
+                    </div>
+                    
+                    <!-- 上涨预警 -->
+                    <div style="padding: 10px; background: rgba(34, 197, 94, 0.1); border-radius: 8px; border: 1px solid #22c55e; margin-bottom: 10px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: #166534; font-weight: 600; font-size: 13px;">📈 上涨预警</span>
+                            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+                                <input type="checkbox" id="upperAlertSwitch" style="opacity: 0; width: 0; height: 0;">
+                                <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px;"></span>
+                            </label>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <input type="number" id="upperThreshold" value="30" step="0.1" min="0" max="100" 
+                                   style="flex: 1; padding: 6px 10px; border: 1px solid #22c55e; border-radius: 6px; font-size: 13px;">
+                            <span style="color: #166534; font-size: 13px; font-weight: 600;">%</span>
+                        </div>
+                        <div style="font-size: 11px; color: #166534; margin-top: 6px;">
+                            涨幅超过此值时触发
+                        </div>
+                    </div>
+                    
+                    <!-- 下跌预警 -->
+                    <div style="padding: 10px; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border: 1px solid #ef4444; margin-bottom: 10px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: #991b1b; font-weight: 600; font-size: 13px;">📉 下跌预警</span>
+                            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+                                <input type="checkbox" id="lowerAlertSwitch" style="opacity: 0; width: 0; height: 0;">
+                                <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px;"></span>
+                            </label>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <input type="number" id="lowerThreshold" value="-40" step="0.1" max="0" min="-100" 
+                                   style="flex: 1; padding: 6px 10px; border: 1px solid #ef4444; border-radius: 6px; font-size: 13px;">
+                            <span style="color: #991b1b; font-size: 13px; font-weight: 600;">%</span>
+                        </div>
+                        <div style="font-size: 11px; color: #991b1b; margin-top: 6px;">
+                            跌幅小于此值时触发
+                        </div>
+                    </div>
+                    
+                    <!-- 保存按钮 -->
+                    <button onclick="saveAlertSettingsOKX()" style="width: 100%; padding: 10px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);">
+                        💾 保存预警设置
+                    </button>
+                    
+                    <!-- 提示 -->
+                    <div style="margin-top: 10px; padding: 8px; background: rgba(239, 68, 68, 0.1); border-radius: 6px; border-left: 3px solid #ef4444;">
+                        <p style="color: #991b1b; font-size: 10px; margin: 0; line-height: 1.4;">
+                            💡 触发后将播放音效、显示弹窗，并自动关闭开关。需要重新开启才能再次触发。
+                        </p>
+                    </div>
+                </div>
+
+
                 <!-- 💰 余额1%策略组 -->
                 <div style="margin-top: 16px; padding: 12px; background: linear-gradient(135deg, #f0f9ff 0%, #dbeafe 100%); border-radius: 12px; border: 2px solid #3b82f6; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.1);">
                     <h3 style="color: #1e40af; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; font-size: 15px;">
@@ -3559,64 +3619,6 @@ data/
                     </div>
                 </div>
 
-
-                    
-                    <!-- 当前涨跌幅 -->
-                    <div class="info-row" style="margin-bottom: 12px; padding: 10px; background: rgba(255,255,255,0.5); border-radius: 6px;">
-                        <span class="info-label" style="color: #991b1b;">27币总涨跌幅</span>
-                        <span class="info-value" style="font-weight: bold; font-size: 18px;" id="totalChangePercent">--</span>
-                    </div>
-                    
-                    <!-- 上涨预警 -->
-                    <div style="padding: 10px; background: rgba(34, 197, 94, 0.1); border-radius: 8px; border: 1px solid #22c55e; margin-bottom: 10px;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                            <span style="color: #166534; font-weight: 600; font-size: 13px;">📈 上涨预警</span>
-                            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
-                                <input type="checkbox" id="upperAlertSwitch" style="opacity: 0; width: 0; height: 0;">
-                                <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px;"></span>
-                            </label>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <input type="number" id="upperThreshold" value="30" step="0.1" min="0" max="100" 
-                                   style="flex: 1; padding: 6px 10px; border: 1px solid #22c55e; border-radius: 6px; font-size: 13px;">
-                            <span style="color: #166534; font-size: 13px; font-weight: 600;">%</span>
-                        </div>
-                        <div style="font-size: 11px; color: #166534; margin-top: 6px;">
-                            涨幅超过此值时触发
-                        </div>
-                    </div>
-                    
-                    <!-- 下跌预警 -->
-                    <div style="padding: 10px; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border: 1px solid #ef4444; margin-bottom: 10px;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                            <span style="color: #991b1b; font-weight: 600; font-size: 13px;">📉 下跌预警</span>
-                            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
-                                <input type="checkbox" id="lowerAlertSwitch" style="opacity: 0; width: 0; height: 0;">
-                                <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px;"></span>
-                            </label>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <input type="number" id="lowerThreshold" value="-40" step="0.1" max="0" min="-100" 
-                                   style="flex: 1; padding: 6px 10px; border: 1px solid #ef4444; border-radius: 6px; font-size: 13px;">
-                            <span style="color: #991b1b; font-size: 13px; font-weight: 600;">%</span>
-                        </div>
-                        <div style="font-size: 11px; color: #991b1b; margin-top: 6px;">
-                            跌幅小于此值时触发
-                        </div>
-                    </div>
-                    
-                    <!-- 保存按钮 -->
-                    <button onclick="saveAlertSettingsOKX()" style="width: 100%; padding: 10px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);">
-                        💾 保存预警设置
-                    </button>
-                    
-                    <!-- 提示 -->
-                    <div style="margin-top: 10px; padding: 8px; background: rgba(239, 68, 68, 0.1); border-radius: 6px; border-left: 3px solid #ef4444;">
-                        <p style="color: #991b1b; font-size: 10px; margin: 0; line-height: 1.4;">
-                            💡 触发后将播放音效、显示弹窗，并自动关闭开关。需要重新开启才能再次触发。
-                        </p>
-                    </div>
-                </div>
 
                 <!-- 持仓列表 -->
                 <div class="info-card">

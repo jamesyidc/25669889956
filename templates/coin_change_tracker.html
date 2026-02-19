@@ -5154,8 +5154,8 @@ pm2 status                                                # 查看所有进程�
             
             // 币价变化
             const coinData = data.coin_data;
-            document.getElementById('coinChangeFrom').textContent = coinData.previous_cumulative_pct.toFixed(2) + '%';
-            document.getElementById('coinChangeTo').textContent = coinData.current_cumulative_pct.toFixed(2) + '%';
+            document.getElementById('coinChangeFrom').textContent = coinData.prev_cumulative_pct.toFixed(2) + '%';
+            document.getElementById('coinChangeTo').textContent = coinData.curr_cumulative_pct.toFixed(2) + '%';
             document.getElementById('coinChangeDelta').textContent = (coinData.change_delta >= 0 ? '+' : '') + coinData.change_delta.toFixed(2) + '%';
             
             const coinChangePercent = document.getElementById('coinChangePercent');
@@ -5165,8 +5165,8 @@ pm2 status                                                # 查看所有进程�
             
             // RSI变化
             const rsiData = data.rsi_data;
-            document.getElementById('rsiChangeFrom').textContent = rsiData.previous_total_rsi.toFixed(2);
-            document.getElementById('rsiChangeTo').textContent = rsiData.current_total_rsi.toFixed(2);
+            document.getElementById('rsiChangeFrom').textContent = rsiData.prev_total_rsi.toFixed(2);
+            document.getElementById('rsiChangeTo').textContent = rsiData.curr_total_rsi.toFixed(2);
             document.getElementById('rsiChangeDelta').textContent = (rsiData.change_delta >= 0 ? '+' : '') + rsiData.change_delta.toFixed(2);
             
             const rsiChangePercent = document.getElementById('rsiChangePercent');
@@ -6627,10 +6627,10 @@ pm2 status                                                # 查看所有进程�
             
             scheduleAutoPageRefresh();
             
-            // 初始化RSI止盈功能
-            function initRSITakeProfit() {
-                console.log('🎯 初始化RSI止盈功能');
-                
+            // ==================== RSI止盈功能已移除 ====================
+            // 说明：coin-change-tracker页面不再包含RSI止盈交易功能
+            // RSI数据仅用于展示，自动止盈由后台rsi-takeprofit-monitor负责
+            
             // 窗口大小改变时重绘图表
             window.addEventListener('resize', () => {
                 trendChart.resize();

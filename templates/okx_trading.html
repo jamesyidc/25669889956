@@ -2697,36 +2697,22 @@ data/
                             <input type="hidden" id="autoStrategyType" value="bottom_performers">
                         </div>
                         
-                        <!-- 开仓金额配置 -->
+                        <!-- 单笔上限配置 -->
                         <div style="margin-top: 12px; padding: 10px; background: rgba(251, 191, 36, 0.1); border-radius: 8px; border: 1px solid #f59e0b;">
                             <label style="color: #92400e; font-weight: 600; font-size: 13px; display: block; margin-bottom: 8px;">
-                                💰 开仓金额设置
+                                🛡️ 单笔上限设置
                             </label>
                             
-                            <!-- 每币占比 -->
-                            <div style="margin-bottom: 10px;">
-                                <label style="color: #92400e; font-size: 11px; display: block; margin-bottom: 4px;">每币占比 (账户余额的百分比)</label>
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <input type="number" id="positionSizeInput" value="1.5" step="0.1" min="0.1" max="5"
-                                           style="flex: 1; padding: 6px 10px; border: 1px solid #f59e0b; border-radius: 6px; font-size: 13px;"
-                                           placeholder="例如: 1.5">
-                                    <span style="color: #92400e; font-size: 13px; font-weight: 600;">%</span>
-                                </div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                <input type="number" id="maxOrderSizeInput" value="5" step="0.5" min="1" 
+                                       style="flex: 1; padding: 8px 10px; border: 1px solid #f59e0b; border-radius: 6px; font-size: 14px; font-weight: 600;"
+                                       placeholder="例如: 5">
+                                <span style="color: #92400e; font-size: 14px; font-weight: 700;">USDT</span>
                             </div>
                             
-                            <!-- 单笔上限 -->
-                            <div>
-                                <label style="color: #92400e; font-size: 11px; display: block; margin-bottom: 4px;">单笔上限 (每个币最大开仓金额)</label>
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <input type="number" id="maxOrderSizeInput" value="5" step="0.5" min="1" 
-                                           style="flex: 1; padding: 6px 10px; border: 1px solid #f59e0b; border-radius: 6px; font-size: 13px;"
-                                           placeholder="例如: 5">
-                                    <span style="color: #92400e; font-size: 13px; font-weight: 600;">USDT</span>
-                                </div>
-                            </div>
-                            
-                            <div style="font-size: 10px; color: #92400e; margin-top: 8px; padding: 6px; background: rgba(251, 191, 36, 0.15); border-radius: 4px;">
-                                💡 <strong>说明：</strong>实际开仓金额 = min(账户余额 × 每币占比, 单笔上限)。例如余额67000U，占比1.5%，上限5U，则每币开仓 = min(67000×1.5%, 5) = 5 USDT
+                            <div style="font-size: 10px; color: #92400e; padding: 6px; background: rgba(251, 191, 36, 0.15); border-radius: 4px; line-height: 1.5;">
+                                💡 <strong>说明：</strong>每币开仓金额 = min(可用余额 × 1.5%, 单笔上限)
+                                <br>例如余额67000U，上限5U → 每币 = min(67000×1.5%, 5) = 5 USDT，8币共40 USDT
                             </div>
                         </div>
                     </div>
@@ -2821,36 +2807,22 @@ data/
                             <input type="hidden" id="autoStrategyTypeTop" value="top_performers">
                         </div>
                         
-                        <!-- 开仓金额配置 -->
+                        <!-- 单笔上限配置 -->
                         <div style="margin-top: 12px; padding: 10px; background: rgba(251, 191, 36, 0.1); border-radius: 8px; border: 1px solid #f59e0b;">
                             <label style="color: #92400e; font-weight: 600; font-size: 13px; display: block; margin-bottom: 8px;">
-                                💰 开仓金额设置
+                                🛡️ 单笔上限设置
                             </label>
                             
-                            <!-- 每币占比 -->
-                            <div style="margin-bottom: 10px;">
-                                <label style="color: #92400e; font-size: 11px; display: block; margin-bottom: 4px;">每币占比 (账户余额的百分比)</label>
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <input type="number" id="positionSizeInputTop" value="1.5" step="0.1" min="0.1" max="5"
-                                           style="flex: 1; padding: 6px 10px; border: 1px solid #f59e0b; border-radius: 6px; font-size: 13px;"
-                                           placeholder="例如: 1.5">
-                                    <span style="color: #92400e; font-size: 13px; font-weight: 600;">%</span>
-                                </div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                <input type="number" id="maxOrderSizeInputTop" value="5" step="0.5" min="1" 
+                                       style="flex: 1; padding: 8px 10px; border: 1px solid #f59e0b; border-radius: 6px; font-size: 14px; font-weight: 600;"
+                                       placeholder="例如: 5">
+                                <span style="color: #92400e; font-size: 14px; font-weight: 700;">USDT</span>
                             </div>
                             
-                            <!-- 单笔上限 -->
-                            <div>
-                                <label style="color: #92400e; font-size: 11px; display: block; margin-bottom: 4px;">单笔上限 (每个币最大开仓金额)</label>
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <input type="number" id="maxOrderSizeInputTop" value="5" step="0.5" min="1" 
-                                           style="flex: 1; padding: 6px 10px; border: 1px solid #f59e0b; border-radius: 6px; font-size: 13px;"
-                                           placeholder="例如: 5">
-                                    <span style="color: #92400e; font-size: 13px; font-weight: 600;">USDT</span>
-                                </div>
-                            </div>
-                            
-                            <div style="font-size: 10px; color: #92400e; margin-top: 8px; padding: 6px; background: rgba(251, 191, 36, 0.15); border-radius: 4px;">
-                                💡 <strong>说明：</strong>实际开仓金额 = min(账户余额 × 每币占比, 单笔上限)。例如余额67000U，占比1.5%，上限5U，则每币开仓 = min(67000×1.5%, 5) = 5 USDT
+                            <div style="font-size: 10px; color: #92400e; padding: 6px; background: rgba(251, 191, 36, 0.15); border-radius: 4px; line-height: 1.5;">
+                                💡 <strong>说明：</strong>每币开仓金额 = min(可用余额 × 1.5%, 单笔上限)
+                                <br>例如余额67000U，上限5U → 每币 = min(67000×1.5%, 5) = 5 USDT，8币共40 USDT
                             </div>
                         </div>
                     </div>
@@ -6442,20 +6414,16 @@ ${data.sMsg || result.message || ''}`);
                     const settings = result.settings;
                     document.getElementById('autoTriggerPrice').value = settings.triggerPrice || 65000;
                     
-                    // 加载开仓金额配置
-                    const positionSizeEl = document.getElementById('positionSizeInput');
-                    if (positionSizeEl) {
-                        positionSizeEl.value = settings.positionSize || 1.5;
-                    }
+                    // 加载单笔上限配置
                     const maxOrderSizeEl = document.getElementById('maxOrderSizeInput');
                     if (maxOrderSizeEl) {
                         maxOrderSizeEl.value = settings.maxOrderSize || 5;
                     }
                     
                     // 同步配置到账户对象，供批量开仓函数使用
-                    account.positionSize = settings.positionSize || 1.5;
+                    account.positionSize = 1.5;  // 固定为1.5%
                     account.maxOrderSize = settings.maxOrderSize || 5;
-                    console.log(`✅ 账户配置已同步: positionSize=${account.positionSize}%, maxOrderSize=${account.maxOrderSize}U`);
+                    console.log(`✅ 账户配置已同步: positionSize=1.5% (固定), maxOrderSize=${account.maxOrderSize}U`);
                     
                     const switchEl = document.getElementById('autoTradeSwitch');
                     if (switchEl) {
@@ -6546,12 +6514,7 @@ ${data.sMsg || result.message || ''}`);
                     const switchEl = document.getElementById('autoTradeSwitchTop');
                     const typeEl = document.getElementById('autoStrategyTypeTop');
                     
-                    // 加载开仓金额配置
-                    const positionSizeEl = document.getElementById('positionSizeInputTop');
-                    if (positionSizeEl) {
-                        positionSizeEl.value = settings.positionSize || 1.5;
-                        console.log(`✅ 更新每币占比: ${positionSizeEl.value}%`);
-                    }
+                    // 加载单笔上限配置
                     const maxOrderSizeEl = document.getElementById('maxOrderSizeInputTop');
                     if (maxOrderSizeEl) {
                         maxOrderSizeEl.value = settings.maxOrderSize || 5;
@@ -6559,9 +6522,9 @@ ${data.sMsg || result.message || ''}`);
                     }
                     
                     // 同步配置到账户对象，供批量开仓函数使用
-                    account.positionSize = settings.positionSize || 1.5;
+                    account.positionSize = 1.5;  // 固定为1.5%
                     account.maxOrderSize = settings.maxOrderSize || 5;
-                    console.log(`✅ 账户配置已同步(Top): positionSize=${account.positionSize}%, maxOrderSize=${account.maxOrderSize}U`);
+                    console.log(`✅ 账户配置已同步(Top): positionSize=1.5% (固定), maxOrderSize=${account.maxOrderSize}U`);
                     
                     if (priceEl) {
                         priceEl.value = settings.triggerPrice || 68000;
@@ -6720,10 +6683,8 @@ ${data.sMsg || result.message || ''}`);
             const switchEl = document.getElementById(switchId);
             const priceEl = document.getElementById(priceId);
             const typeEl = document.getElementById(typeId);
-            // 获取开仓金额配置元素
-            const positionSizeId = suffix ? `positionSizeInput${suffix}` : 'positionSizeInput';
+            // 获取单笔上限配置元素
             const maxOrderSizeId = suffix ? `maxOrderSizeInput${suffix}` : 'maxOrderSizeInput';
-            const positionSizeEl = document.getElementById(positionSizeId);
             const maxOrderSizeEl = document.getElementById(maxOrderSizeId);
             
             if (!switchEl || !priceEl || !typeEl) {
@@ -6735,7 +6696,7 @@ ${data.sMsg || result.message || ''}`);
                 enabled: switchEl.checked,
                 triggerPrice: parseFloat(priceEl.value),
                 strategyType: typeEl.value,
-                positionSize: positionSizeEl ? parseFloat(positionSizeEl.value) : 1.5,
+                positionSize: 1.5,  // 固定为1.5%
                 maxOrderSize: maxOrderSizeEl ? parseFloat(maxOrderSizeEl.value) : 5,
                 lastExecutedTime: currentSettings?.lastExecutedTime || null,
                 executedCount: currentSettings?.executedCount || 0
@@ -7000,23 +6961,18 @@ ${data.sMsg || result.message || ''}`);
                 console.warn('⚠️ 未找到 autoTradeSwitchTop 元素');
             }
             
-            // 添加开仓金额配置的事件监听器（涨幅后8名）
-            ['positionSizeInput', 'maxOrderSizeInput'].forEach(id => {
-                const element = document.getElementById(id);
-                if (element) {
-                    element.addEventListener('change', saveAutoStrategySettings);
-                    console.log(`✅ ${id} 事件监听器已添加`);
-                }
-            });
+            // 添加单笔上限配置的事件监听器（涨幅后8名和涨幅前8名）
+            const maxOrderSizeEl = document.getElementById('maxOrderSizeInput');
+            if (maxOrderSizeEl) {
+                maxOrderSizeEl.addEventListener('change', saveAutoStrategySettings);
+                console.log('✅ maxOrderSizeInput 事件监听器已添加');
+            }
             
-            // 添加开仓金额配置的事件监听器（涨幅前8名）
-            ['positionSizeInputTop', 'maxOrderSizeInputTop'].forEach(id => {
-                const element = document.getElementById(id);
-                if (element) {
-                    element.addEventListener('change', () => saveAutoStrategySettings('Top'));
-                    console.log(`✅ ${id} 事件监听器已添加`);
-                }
-            });
+            const maxOrderSizeTopEl = document.getElementById('maxOrderSizeInputTop');
+            if (maxOrderSizeTopEl) {
+                maxOrderSizeTopEl.addEventListener('change', () => saveAutoStrategySettings('Top'));
+                console.log('✅ maxOrderSizeInputTop 事件监听器已添加');
+            }
             
             // ✅ 上涨占比0策略A（涨幅前8名）开关事件监听
             const autoTradeSwitchUpRatio0Top8El = document.getElementById('autoTradeSwitchUpRatio0Top8');

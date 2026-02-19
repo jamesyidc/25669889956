@@ -4549,8 +4549,8 @@ data/
         }
 
         // 批量开仓 - 涨幅前8名策略
-        async function batchOrderTop8(direction, percentPerCoin) {
-            console.log(`[batchOrderTop8] 开始批量开仓前8: direction=${direction}, percentPerCoin=${percentPerCoin}%`);
+        async function batchOrderTop8(direction, percentPerCoin, skipConfirm = false) {
+            console.log(`[batchOrderTop8] 开始批量开仓前8: direction=${direction}, percentPerCoin=${percentPerCoin}%, skipConfirm=${skipConfirm}`);
             
             const account = accounts.find(acc => acc.id === currentAccount);
             
@@ -4637,9 +4637,14 @@ data/
                 `  • 可用余额: ${balance.toFixed(2)} USDT\n\n` +
                 `确认批量开仓？`;
             
-            if (!confirm(confirmMsg)) {
-                console.log('[batchOrderTop8] 用户取消批量开仓');
-                return;
+            // 自动策略触发时跳过确认弹窗
+            if (!skipConfirm) {
+                if (!confirm(confirmMsg)) {
+                    console.log('[batchOrderTop8] 用户取消批量开仓');
+                    return;
+                }
+            } else {
+                console.log('[batchOrderTop8] 自动策略触发，跳过确认弹窗');
             }
             
             // 🔔 发送Telegram通知 - 批量开仓开始
@@ -4727,8 +4732,8 @@ data/
         }
 
         // 批量开仓 - 涨幅后8名策略
-        async function batchOrderBottom8(direction, percentPerCoin) {
-            console.log(`[batchOrderBottom8] 开始批量开仓后8: direction=${direction}, percentPerCoin=${percentPerCoin}%`);
+        async function batchOrderBottom8(direction, percentPerCoin, skipConfirm = false) {
+            console.log(`[batchOrderBottom8] 开始批量开仓后8: direction=${direction}, percentPerCoin=${percentPerCoin}%, skipConfirm=${skipConfirm}`);
             
             const account = accounts.find(acc => acc.id === currentAccount);
             
@@ -4792,7 +4797,7 @@ data/
                 return;
             }
             
-            // 风险警告（手动执行需要确认）
+            // 风险警告（手动执行需要确认，自动策略跳过）
             const riskWarning = `⚠️ 高风险策略警告\n\n` +
                 `此策略针对跌幅最大的币种，波动性极高！\n\n` +
                 `【涨幅后8名 = 跌幅最大】\n` +
@@ -4805,9 +4810,13 @@ data/
                 `  • 剧烈波动（高风险）\n\n` +
                 `确定要继续吗？`;
             
-            if (!confirm(riskWarning)) {
-                console.log('[batchOrderBottom8] 用户取消（风险警告）');
-                return;
+            if (!skipConfirm) {
+                if (!confirm(riskWarning)) {
+                    console.log('[batchOrderBottom8] 用户取消（风险警告）');
+                    return;
+                }
+            } else {
+                console.log('[batchOrderBottom8] 自动策略触发，跳过风险警告');
             }
             
             // 确认对话框
@@ -4833,9 +4842,13 @@ data/
                 `  • 可用余额: ${balance.toFixed(2)} USDT\n\n` +
                 `⚠️ 最后确认：这是高风险策略！`;
             
-            if (!confirm(confirmMsg)) {
-                console.log('[batchOrderBottom8] 用户取消批量开仓');
-                return;
+            if (!skipConfirm) {
+                if (!confirm(confirmMsg)) {
+                    console.log('[batchOrderBottom8] 用户取消批量开仓');
+                    return;
+                }
+            } else {
+                console.log('[batchOrderBottom8] 自动策略触发，跳过确认弹窗');
             }
             
             // 🔔 发送Telegram通知 - 批量开仓开始
@@ -7571,17 +7584,17 @@ ${data.sMsg || result.message || ''}`);
             try {
                 const strategyName = strategyType === 'top_8' ? '涨幅前8名' : '涨幅后8名';
                 console.log(`📊 开始执行上涨占比0-${strategyName}策略...`);
-                console.log(`📊 直接调用手动批量开仓函数...`);
+                console.log(`📊 直接调用手动批量开仓函数（自动触发，跳过确认）...`);
                 
                 // 获取账户配置的仓位百分比，默认1.5%
                 const positionSizePercent = account.positionSize || 1.5;
                 
-                // 直接调用手动批量开仓函数（已经有5U上限保护）
+                // 直接调用手动批量开仓函数（skipConfirm=true 跳过确认弹窗）
                 let result;
                 if (strategyType === 'top_8') {
-                    result = await batchOrderTop8('long', positionSizePercent);
+                    result = await batchOrderTop8('long', positionSizePercent, true);
                 } else {
-                    result = await batchOrderBottom8('long', positionSizePercent);
+                    result = await batchOrderBottom8('long', positionSizePercent, true);
                 }
                 
                 return result;
@@ -7614,17 +7627,17 @@ ${data.sMsg || result.message || ''}`);
             try {
                 const strategyName = strategyType === 'top_performers' ? '涨幅前8名' : '涨幅后8名';
                 console.log(`📊 开始执行${strategyName}策略...`);
-                console.log(`📊 直接调用手动批量开仓函数...`);
+                console.log(`📊 直接调用手动批量开仓函数（自动触发，跳过确认）...`);
                 
                 // 获取账户配置的仓位百分比，默认1.5%
                 const positionSizePercent = account.positionSize || 1.5;
                 
-                // 直接调用手动批量开仓函数（已经有5U上限保护）
+                // 直接调用手动批量开仓函数（skipConfirm=true 跳过确认弹窗）
                 let result;
                 if (strategyType === 'top_performers') {
-                    result = await batchOrderTop8('long', positionSizePercent);
+                    result = await batchOrderTop8('long', positionSizePercent, true);
                 } else {
-                    result = await batchOrderBottom8('long', positionSizePercent);
+                    result = await batchOrderBottom8('long', positionSizePercent, true);
                 }
                 
                 return result;

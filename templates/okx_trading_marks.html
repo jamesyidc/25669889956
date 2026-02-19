@@ -1150,9 +1150,23 @@
                 const endTime = performance.now();
                 console.log(`✅ 页面初始化完成，总耗时: ${((endTime - startTime) / 1000).toFixed(2)}秒`);
                 console.log(`⚡ 性能提升: 采用并行加载 + 缓存机制，预计减少50%以上加载时间`);
+                
+                // 额外的安全措施：确保加载界面一定被移除
+                setTimeout(() => {
+                    const overlay = document.getElementById('loadingOverlay');
+                    if (overlay) {
+                        console.warn('⚠️ 检测到加载界面仍然存在，强制移除');
+                        overlay.remove();
+                    }
+                }, 2000);
             } catch (error) {
                 console.error('❌ 页面初始化失败:', error);
                 showError('页面初始化失败: ' + error.message);
+                // 确保出错时也移除加载界面
+                setTimeout(() => {
+                    const overlay = document.getElementById('loadingOverlay');
+                    if (overlay) overlay.remove();
+                }, 500);
             }
         };
 
@@ -1347,10 +1361,10 @@
                 
                 updateLoadingProgress(6, 100, `加载完成！耗时 ${loadTime} 秒`);
                 
-                // 延迟隐藏加载界面，让用户看到100%完成状态
+                // 立即隐藏加载界面（缩短延迟）
                 setTimeout(() => {
                     safeHideLoading();
-                }, 500);
+                }, 100);
             } catch (e) {
                 console.error('❌ 加载数据失败:', e);
                 // 即使出错也要隐藏加载界面
@@ -2412,8 +2426,11 @@
                 console.log('🔄 hideLoading 被调用, overlay存在:', !!overlay);
                 
                 if (overlay) {
-                    // 添加淡出动画
-                    overlay.style.animation = 'fadeOut 0.3s ease-out';
+                    // 立即隐藏，不等待动画
+                    overlay.style.opacity = '0';
+                    overlay.style.transition = 'opacity 0.3s ease-out';
+                    
+                    // 300ms后移除元素
                     setTimeout(() => {
                         overlay.remove();
                         console.log('✅ 加载界面已移除');

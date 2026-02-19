@@ -1754,6 +1754,25 @@
                     notMerge: true,  // 不合并，完全替换
                     replaceMerge: ['series']  // 替换series数组
                 });
+                
+                // 确保图表容器可见
+                const chartContainer = document.getElementById('mainChart');
+                if (chartContainer) {
+                    chartContainer.style.display = 'block';
+                    chartContainer.style.visibility = 'visible';
+                    chartContainer.style.opacity = '1';
+                    console.log('✅ 图表容器已设置为可见');
+                }
+                
+                // 强制图表resize以确保正确显示
+                setTimeout(() => {
+                    if (chart) {
+                        chart.resize();
+                        console.log('✅ 图表已resize');
+                    }
+                }, 100);
+                
+                console.log('✅ 图表渲染完成 - 系列数:', option.series.length, '时间点:', times.length);
             } else {
                 console.error('❌ 图表对象为null，无法设置选项');
             }

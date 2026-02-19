@@ -5817,8 +5817,8 @@ pm2 status                                                # 查看所有进程�
             let refreshCounter = 0;
             
             function startAutoRefresh() {
-                console.log('🚀 启动自动刷新，间隔: 15分钟（与数据采集周期同步）');
-                // 每15分钟更新一次（与后台数据采集周期一致：每5分钟采集，但每15分钟全量更新）
+                console.log('🚀 启动自动刷新，间隔: 5分钟（与数据采集周期同步）');
+                // 每5分钟更新一次（与后台数据采集周期一致）
                 autoRefreshInterval = setInterval(async () => {
                     const isToday = formatDate(currentDate) === formatDate(new Date());
                     if (isToday) {
@@ -5828,7 +5828,7 @@ pm2 status                                                # 查看所有进程�
                         console.log(`⏰ 自动刷新 #${refreshCounter} (${timeStr}): 开始更新所有数据...`);
                         
                         try {
-                            // 每15分钟全量刷新所有数据（与数据采集周期同步）
+                            // 每5分钟全量刷新所有数据（与数据采集周期同步）
                             // 这样可以确保用户看到的是最新的完整数据
                             console.log('📊 刷新实时数据...');
                             await updateLatestData();
@@ -5850,7 +5850,7 @@ pm2 status                                                # 查看所有进程�
                     } else {
                         console.log('⚠️ 当前日期不是今天，跳过更新');
                     }
-                }, 900000); // 15分钟 = 900000毫秒
+                }, 300000); // 5分钟 = 300000毫秒
             }
             
             startAutoRefresh();
@@ -5860,7 +5860,7 @@ pm2 status                                                # 查看所有进程�
             
             // 刷新倒计时显示函数
             function startRefreshCountdown() {
-                let nextRefreshTime = Date.now() + 900000; // 15分钟后
+                let nextRefreshTime = Date.now() + 300000; // 5分钟后
                 
                 function updateCountdown() {
                     const now = Date.now();
@@ -5868,7 +5868,7 @@ pm2 status                                                # 查看所有进程�
                     
                     if (remaining <= 0) {
                         // 重置倒计时
-                        nextRefreshTime = Date.now() + 900000;
+                        nextRefreshTime = Date.now() + 300000;
                     }
                     
                     const minutes = Math.floor(remaining / 60000);
@@ -7128,6 +7128,54 @@ pm2 status                                                # 查看所有进程�
             window.addEventListener('resize', () => {
                 trendChart.resize();
                 rankChart.resize();
+            });
+            
+            // 🆕 添加 Page Visibility API 监听
+            // 解决浏览器标签页切换到后台时，定时器被暂停的问题
+            let lastVisibilityChange = Date.now();
+            let wasHidden = false;
+            
+            document.addEventListener('visibilitychange', async () => {
+                if (document.hidden) {
+                    // 页面隐藏时
+                    wasHidden = true;
+                    lastVisibilityChange = Date.now();
+                    console.log('👀 页面已隐藏，定时器可能被暂停');
+                } else {
+                    // 页面重新可见时
+                    const hiddenDuration = Date.now() - lastVisibilityChange;
+                    console.log(`👀 页面重新可见，隐藏时长: ${Math.floor(hiddenDuration / 1000)}秒`);
+                    
+                    // 如果隐藏超过1分钟，立即刷新数据
+                    if (wasHidden && hiddenDuration > 60000) {
+                        console.log('🔄 页面长时间隐藏，立即刷新数据...');
+                        try {
+                            await updateLatestData();
+                            await loadMarketSentiment();
+                            await updateHistoryData(currentDate);
+                            console.log('✅ 数据刷新完成');
+                        } catch (error) {
+                            console.error('❌ 数据刷新失败:', error);
+                        }
+                    }
+                    wasHidden = false;
+                }
+            });
+            
+            // 🆕 添加窗口聚焦监听（作为备用机制）
+            window.addEventListener('focus', async () => {
+                const timeSinceLastUpdate = Date.now() - lastVisibilityChange;
+                if (timeSinceLastUpdate > 300000) { // 5分钟
+                    console.log('🔄 窗口重新聚焦且超过5分钟，刷新数据...');
+                    try {
+                        await updateLatestData();
+                        await loadMarketSentiment();
+                        await updateHistoryData(currentDate);
+                        console.log('✅ 数据刷新完成');
+                    } catch (error) {
+                        console.error('❌ 数据刷新失败:', error);
+                    }
+                }
             });
         };
         

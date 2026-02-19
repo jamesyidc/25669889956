@@ -12,6 +12,7 @@ import sys
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 import time
+import requests
 
 # 项目根目录
 BASE_DIR = Path('/home/user/webapp')
@@ -20,6 +21,15 @@ COIN_CHANGE_DIR = BASE_DIR / 'data' / 'coin_change_tracker'
 
 # 确保数据目录存在
 DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+# 导入Telegram配置
+sys.path.insert(0, str(BASE_DIR / 'config'))
+try:
+    from telegram_config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+except ImportError:
+    TELEGRAM_BOT_TOKEN = ""
+    TELEGRAM_CHAT_ID = ""
+    print("⚠️  未找到Telegram配置文件，通知功能将不可用")
 
 def get_today_file(data_type):
     """获取今天的数据文件路径"""
@@ -39,6 +49,42 @@ def read_latest_records(file_path, n=2):
     with open(file_path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
         return [json.loads(line) for line in lines[-n:] if line.strip()]
+
+def send_telegram_notification(message, repeat=3):
+    """
+    发送Telegram通知
+    @param message: 消息内容
+    @param repeat: 重复发送次数（默认3次）
+    """
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+        print("⚠️  Telegram配置未设置，跳过通知")
+        return False
+    
+    url = f'https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage'
+    success_count = 0
+    
+    for i in range(repeat):
+        try:
+            response = requests.post(url, json={
+                'chat_id': TELEGRAM_CHAT_ID,
+                'text': message,
+                'parse_mode': 'HTML'
+            }, timeout=10)
+            
+            if response.status_code == 200:
+                success_count += 1
+                print(f"✅ Telegram通知发送成功 ({i+1}/{repeat})")
+            else:
+                print(f"❌ Telegram通知发送失败 ({i+1}/{repeat}): {response.text}")
+            
+            # 间隔1秒再发送下一条
+            if i < repeat - 1:
+                time.sleep(1)
+                
+        except Exception as e:
+            print(f"❌ Telegram通知异常 ({i+1}/{repeat}): {e}")
+    
+    return success_count > 0
 
 def calculate_sentiment():
     """计算市场情绪偏向"""
@@ -103,6 +149,24 @@ def calculate_sentiment():
                     sentiment = "🔥见底信号"
                     sentiment_type = "bullish"
                     reason = f"下跌中RSI降幅({abs(rsi_change_pct):.2f}%) 是币价跌幅({abs(coin_change_pct):.2f}%)的{ratio:.1f}倍，恐慌过度，阶段性底部★★★"
+                    
+                    # 🔴 发送TG通知（3遍）
+                    beijing_time = datetime.now(timezone(timedelta(hours=8))).strftime('%Y-%m-%d %H:%M:%S')
+                    tg_message = (
+                        f"🔥🔥🔥 <b>见底信号</b> 🔥🔥🔥\n\n"
+                        f"⏰ 时间: {beijing_time}\n\n"
+                        f"📊 市场情况:\n"
+                        f"• 27币累计涨跌幅: {curr_total_change:.2f}%\n"
+                        f"• 涨跌幅变化: {coin_change_delta:.2f}% ({coin_change_pct:+.2f}%)\n\n"
+                        f"📈 RSI情况:\n"
+                        f"• RSI总和: {curr_total_rsi:.2f}\n"
+                        f"• RSI变化: {rsi_change_delta:.2f} ({rsi_change_pct:+.2f}%)\n\n"
+                        f"💡 分析:\n"
+                        f"{reason}\n\n"
+                        f"🎯 <b>操作建议: 考虑逢低做多</b>"
+                    )
+                    send_telegram_notification(tg_message, repeat=3)
+                    
                 elif ratio >= 1.5:
                     # RSI降幅 > 币价跌幅（1.5倍以上）→ 恐慌过度
                     sentiment = "偏多"
@@ -129,6 +193,24 @@ def calculate_sentiment():
                     sentiment = "⚠️见顶信号"
                     sentiment_type = "bearish"
                     reason = f"上涨中RSI涨幅({abs(rsi_change_pct):.2f}%) 是币价涨幅({abs(coin_change_pct):.2f}%)的{ratio:.1f}倍，贪婪过度★★★"
+                    
+                    # 🔴 发送TG通知（3遍）
+                    beijing_time = datetime.now(timezone(timedelta(hours=8))).strftime('%Y-%m-%d %H:%M:%S')
+                    tg_message = (
+                        f"⚠️⚠️⚠️ <b>见顶信号</b> ⚠️⚠️⚠️\n\n"
+                        f"⏰ 时间: {beijing_time}\n\n"
+                        f"📊 市场情况:\n"
+                        f"• 27币累计涨跌幅: {curr_total_change:.2f}%\n"
+                        f"• 涨跌幅变化: {coin_change_delta:.2f}% ({coin_change_pct:+.2f}%)\n\n"
+                        f"📈 RSI情况:\n"
+                        f"• RSI总和: {curr_total_rsi:.2f}\n"
+                        f"• RSI变化: {rsi_change_delta:.2f} ({rsi_change_pct:+.2f}%)\n\n"
+                        f"💡 分析:\n"
+                        f"{reason}\n\n"
+                        f"🎯 <b>操作建议: 考虑减仓或止盈</b>"
+                    )
+                    send_telegram_notification(tg_message, repeat=3)
+                    
                 elif ratio >= 1.5:
                     # RSI涨幅 > 币价涨幅（1.5倍以上）→ 贪婪过度
                     sentiment = "偏空"

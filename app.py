@@ -16559,12 +16559,12 @@ def check_strategy_allowed(account_id, strategy_type):
         # 🆕 根据策略类型使用不同的JSONL文件
         jsonl_file = os.path.join(jsonl_dir, f'{account_id}_btc_{strategy_type}_execution.jsonl')
         
-        # 如果文件不存在，返回默认不允许
+        # 如果文件不存在，返回默认允许（首次执行）
         if not os.path.exists(jsonl_file):
             return jsonify({
                 'success': True,
-                'allowed': False,
-                'reason': 'No execution record found',
+                'allowed': True,
+                'reason': 'No execution record found - first time execution allowed',
                 'lastRecord': None
             })
         
@@ -16580,8 +16580,8 @@ def check_strategy_allowed(account_id, strategy_type):
         if not last_record:
             return jsonify({
                 'success': True,
-                'allowed': False,
-                'reason': 'Empty execution file',
+                'allowed': True,
+                'reason': 'Empty execution file - first time execution allowed',
                 'lastRecord': None
             })
         
@@ -16667,12 +16667,12 @@ def check_takeprofit_allowed(account_id):
         # 使用统一的止盈JSONL文件
         jsonl_file = os.path.join(jsonl_dir, f'{account_id}_takeprofit_execution.jsonl')
         
-        # 如果文件不存在，返回默认不允许
+        # 如果文件不存在，返回默认允许（首次执行）
         if not os.path.exists(jsonl_file):
             return jsonify({
                 'success': True,
-                'allowed': False,
-                'reason': 'No execution record found',
+                'allowed': True,
+                'reason': 'No execution record found - first time execution allowed',
                 'lastRecord': None
             })
         
@@ -16688,8 +16688,8 @@ def check_takeprofit_allowed(account_id):
         if not last_record:
             return jsonify({
                 'success': True,
-                'allowed': False,
-                'reason': 'Empty execution file',
+                'allowed': True,
+                'reason': 'Empty execution file - first time execution allowed',
                 'lastRecord': None
             })
         
@@ -16775,12 +16775,12 @@ def check_upratio0_strategy_allowed(account_id, strategy_type):
         
         jsonl_file = os.path.join(jsonl_dir, f'{account_id}_upratio0_{strategy_type}_execution.jsonl')
         
-        # 如果文件不存在，返回默认不允许
+        # 如果文件不存在，返回默认允许（首次执行）
         if not os.path.exists(jsonl_file):
             return jsonify({
                 'success': True,
-                'allowed': False,
-                'reason': 'No execution record found',
+                'allowed': True,
+                'reason': 'No execution record found - first time execution allowed',
                 'lastRecord': None
             })
         
@@ -16796,8 +16796,8 @@ def check_upratio0_strategy_allowed(account_id, strategy_type):
         if not last_record:
             return jsonify({
                 'success': True,
-                'allowed': False,
-                'reason': 'Empty execution file',
+                'allowed': True,
+                'reason': 'Empty execution file - first time execution allowed',
                 'lastRecord': None
             })
         

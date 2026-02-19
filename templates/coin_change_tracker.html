@@ -2514,6 +2514,130 @@ pm2 status                                                # 查看所有进程�
             </div>
         </div>
 
+        <!-- 市场情绪偏向分析 (15分钟更新) -->
+        <div class="mb-6">
+            <div class="bg-gradient-to-r from-purple-50 via-pink-50 to-blue-50 rounded-lg shadow-lg border-2 border-purple-200">
+                <!-- 标题栏 -->
+                <div class="flex items-center justify-between p-4 border-b border-purple-200">
+                    <h2 class="text-xl font-bold flex items-center text-purple-800">
+                        <i class="fas fa-brain text-purple-600 mr-2"></i>
+                        市场情绪偏向分析 (15分钟更新)
+                    </h2>
+                    <div class="flex items-center gap-3">
+                        <button onclick="toggleSentimentDetails()" id="sentimentToggleBtn" class="px-3 py-1 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm">
+                            <i class="fas fa-chevron-down mr-1"></i>展开详情
+                        </button>
+                        <button onclick="refreshMarketSentiment()" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm">
+                            <i class="fas fa-sync-alt mr-1"></i>刷新
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 概览卡片（始终显示） -->
+                <div class="p-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- 当前情绪 -->
+                        <div class="bg-white rounded-lg p-4 shadow-md border-l-4" id="sentimentCard">
+                            <div class="text-sm text-gray-600 mb-2">当前情绪</div>
+                            <div id="currentSentiment" class="text-3xl font-bold mb-2">--</div>
+                            <div id="sentimentReason" class="text-xs text-gray-500">--</div>
+                            <div class="text-xs text-gray-400 mt-2">
+                                <i class="far fa-clock mr-1"></i>
+                                <span id="sentimentTime">--</span>
+                            </div>
+                        </div>
+                        
+                        <!-- 币价变化 -->
+                        <div class="bg-white rounded-lg p-4 shadow-md">
+                            <div class="text-sm text-gray-600 mb-2">27币价格变化</div>
+                            <div class="flex items-baseline gap-2 mb-2">
+                                <span id="coinChangeFrom" class="text-lg text-gray-500">--</span>
+                                <i class="fas fa-arrow-right text-gray-400"></i>
+                                <span id="coinChangeTo" class="text-2xl font-bold">--</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-gray-500">变化:</span>
+                                <span id="coinChangeDelta" class="text-lg font-semibold">--</span>
+                                <span id="coinChangePercent" class="text-sm">--</span>
+                            </div>
+                        </div>
+                        
+                        <!-- RSI变化 -->
+                        <div class="bg-white rounded-lg p-4 shadow-md">
+                            <div class="text-sm text-gray-600 mb-2">RSI总和变化</div>
+                            <div class="flex items-baseline gap-2 mb-2">
+                                <span id="rsiChangeFrom" class="text-lg text-gray-500">--</span>
+                                <i class="fas fa-arrow-right text-gray-400"></i>
+                                <span id="rsiChangeTo" class="text-2xl font-bold">--</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-gray-500">变化:</span>
+                                <span id="rsiChangeDelta" class="text-lg font-semibold">--</span>
+                                <span id="rsiChangePercent" class="text-sm">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 详细信息（可折叠） -->
+                <div id="sentimentDetailsPanel" style="display: none;">
+                    <!-- 判断逻辑说明 -->
+                    <div class="px-4 pb-4">
+                        <div class="bg-white rounded-lg p-4 shadow-md">
+                            <div class="text-sm font-semibold text-gray-700 mb-3">
+                                <i class="fas fa-info-circle text-purple-600 mr-1"></i>
+                                判断逻辑说明：
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-gray-600">
+                                <div class="bg-green-50 p-3 rounded border-l-2 border-green-500">
+                                    <strong class="text-green-700">🐂 偏多信号：</strong>
+                                    <ul class="list-disc list-inside ml-2 mt-2 space-y-1">
+                                        <li>价格下跌时，RSI下降幅度 <strong>&gt;</strong> 价格下降幅度（恐慌过度，可能反弹）</li>
+                                        <li>价格上涨时，RSI上涨幅度 <strong>&lt;</strong> 价格上涨幅度（理性上涨，可持续）</li>
+                                    </ul>
+                                </div>
+                                <div class="bg-red-50 p-3 rounded border-l-2 border-red-500">
+                                    <strong class="text-red-700">🐻 偏空信号：</strong>
+                                    <ul class="list-disc list-inside ml-2 mt-2 space-y-1">
+                                        <li>价格下跌时，RSI下降幅度 <strong>&lt;</strong> 价格下降幅度（下跌未充分反映，可能继续）</li>
+                                        <li>价格上涨时，RSI上涨幅度 <strong>&gt;</strong> 价格上涨幅度（贪婪过度，可能回调）</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 历史数据表格 -->
+                    <div class="px-4 pb-4">
+                        <div class="bg-white rounded-lg p-4 shadow-md">
+                            <div class="text-sm font-semibold text-gray-700 mb-3">
+                                <i class="fas fa-history text-purple-600 mr-1"></i>
+                                历史记录（最近10条）
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full text-xs">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-3 py-2 text-left font-medium text-gray-500">时间</th>
+                                            <th class="px-3 py-2 text-left font-medium text-gray-500">情绪</th>
+                                            <th class="px-3 py-2 text-left font-medium text-gray-500">币价变化</th>
+                                            <th class="px-3 py-2 text-left font-medium text-gray-500">RSI变化</th>
+                                            <th class="px-3 py-2 text-left font-medium text-gray-500">原因</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="sentimentHistoryTable">
+                                        <tr>
+                                            <td colspan="5" class="px-3 py-4 text-center text-gray-500">加载中...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- 排行榜 -->
         <div class="grid grid-cols-1 gap-6 mb-6">
             <!-- 单币涨跌幅排行 -->
@@ -5021,11 +5145,99 @@ pm2 status                                                # 查看所有进程�
             
             await loadMarketSentiment();
             
+            // 如果详情面板是展开的，也刷新历史数据
+            const detailsPanel = document.getElementById('sentimentDetailsPanel');
+            if (detailsPanel.style.display !== 'none') {
+                await loadSentimentHistory();
+            }
+            
             // 移除动画
             setTimeout(() => {
                 icon.classList.remove('fa-spin');
                 btn.disabled = false;
             }, 500);
+        }
+        
+        // 展开/折叠详情面板
+        function toggleSentimentDetails() {
+            const panel = document.getElementById('sentimentDetailsPanel');
+            const btn = document.getElementById('sentimentToggleBtn');
+            const icon = btn.querySelector('i');
+            
+            if (panel.style.display === 'none') {
+                // 展开
+                panel.style.display = 'block';
+                icon.className = 'fas fa-chevron-up mr-1';
+                btn.innerHTML = '<i class="fas fa-chevron-up mr-1"></i>收起详情';
+                
+                // 加载历史数据
+                loadSentimentHistory();
+            } else {
+                // 折叠
+                panel.style.display = 'none';
+                icon.className = 'fas fa-chevron-down mr-1';
+                btn.innerHTML = '<i class="fas fa-chevron-down mr-1"></i>展开详情';
+            }
+        }
+        
+        // 加载市场情绪历史数据
+        async function loadSentimentHistory() {
+            try {
+                const response = await fetch(`/api/market-sentiment/history?limit=10&_t=${Date.now()}`, {
+                    cache: 'no-store'
+                });
+                const result = await response.json();
+                
+                if (result.success && result.data && result.data.length > 0) {
+                    updateSentimentHistoryTable(result.data);
+                } else {
+                    document.getElementById('sentimentHistoryTable').innerHTML = `
+                        <tr>
+                            <td colspan="5" class="px-3 py-4 text-center text-gray-500">暂无历史数据</td>
+                        </tr>
+                    `;
+                }
+            } catch (error) {
+                console.error('❌ 加载历史数据失败:', error);
+                document.getElementById('sentimentHistoryTable').innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-3 py-4 text-center text-red-500">加载失败</td>
+                    </tr>
+                `;
+            }
+        }
+        
+        // 更新历史数据表格
+        function updateSentimentHistoryTable(historyData) {
+            const tbody = document.getElementById('sentimentHistoryTable');
+            
+            tbody.innerHTML = historyData.map(item => {
+                const sentimentColor = item.sentiment_type === 'bullish' ? 'text-green-600' : 
+                                      item.sentiment_type === 'bearish' ? 'text-red-600' : 'text-gray-600';
+                const sentimentIcon = item.sentiment_type === 'bullish' ? '🐂' : 
+                                     item.sentiment_type === 'bearish' ? '🐻' : '😐';
+                
+                const coinPctClass = item.coin_data.change_pct >= 0 ? 'text-green-600' : 'text-red-600';
+                const rsiPctClass = item.rsi_data.change_pct >= 0 ? 'text-purple-600' : 'text-orange-600';
+                
+                return `
+                    <tr class="border-b border-gray-100 hover:bg-gray-50">
+                        <td class="px-3 py-2 text-gray-600 whitespace-nowrap">${item.beijing_time}</td>
+                        <td class="px-3 py-2 ${sentimentColor} font-semibold">${sentimentIcon} ${item.sentiment}</td>
+                        <td class="px-3 py-2">
+                            <span class="${coinPctClass} font-semibold">
+                                ${item.coin_data.change_pct >= 0 ? '+' : ''}${item.coin_data.change_pct.toFixed(2)}%
+                            </span>
+                        </td>
+                        <td class="px-3 py-2">
+                            <span class="${rsiPctClass} font-semibold">
+                                ${item.rsi_data.change_pct >= 0 ? '+' : ''}${item.rsi_data.change_pct.toFixed(2)}%
+                            </span>
+                        </td>
+                        <td class="px-3 py-2 text-gray-600">${item.reason}</td>
+                    </tr>
+                `;
+            }).join('');
         }
         
         // 初始化

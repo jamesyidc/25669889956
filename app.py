@@ -14745,6 +14745,18 @@ def okx_trading_marks():
     response.headers['Expires'] = '-1'
     return response
 
+@app.route('/okx-trading-marks-v2')
+def okx_trading_marks_v2():
+    """OKX交易标记系统 V2 - 新URL测试版本"""
+    import time
+    timestamp = int(time.time() * 1000)
+    response = make_response(render_template('okx_trading_marks.html', cache_bust=timestamp))
+    # 禁用所有缓存
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '-1'
+    return response
+
 @app.route('/angle-test')
 def angle_test():
     """角度数据测试页面 - 2月2-6日"""

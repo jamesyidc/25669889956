@@ -82,26 +82,39 @@ def calculate_sentiment():
         else:
             rsi_change_pct = 0
         
-        # 判断市场情绪
+        # 判断市场情绪（基于倍数关系）
         sentiment = "中性"
         sentiment_type = "neutral"
         reason = ""
+        
+        # 计算倍数关系（避免除零）
+        if abs(coin_change_pct) > 0.01:  # 币价变化大于0.01%才计算倍数
+            ratio = abs(rsi_change_pct) / abs(coin_change_pct)
+        else:
+            ratio = 1.0
         
         # 下跌行情判断（币价累计涨跌幅变化为负）
         if coin_change_delta < 0:
             # 市场下跌
             if rsi_change_delta < 0:
-                # RSI也下跌
-                if abs(rsi_change_pct) < abs(coin_change_pct):
-                    sentiment = "偏空"
-                    sentiment_type = "bearish"
-                    reason = f"下跌中RSI降幅({abs(rsi_change_pct):.2f}%) < 币价跌幅({abs(coin_change_pct):.2f}%)，市场未恐慌，还会继续跌"
-                else:
+                # RSI也下跌（同向）
+                if ratio >= 10:
+                    # RSI降幅远大于币价跌幅（10倍以上）→ 阶段性底部
                     sentiment = "偏多"
                     sentiment_type = "bullish"
-                    reason = f"下跌中RSI降幅({abs(rsi_change_pct):.2f}%) ≥ 币价跌幅({abs(coin_change_pct):.2f}%)，恐慌过度，可能反弹"
+                    reason = f"下跌中RSI降幅({abs(rsi_change_pct):.2f}%) 是币价跌幅({abs(coin_change_pct):.2f}%)的{ratio:.1f}倍，恐慌过度，阶段性底部"
+                elif ratio >= 1.5:
+                    # RSI降幅 > 币价跌幅（1.5倍以上）→ 恐慌过度
+                    sentiment = "偏多"
+                    sentiment_type = "bullish"
+                    reason = f"下跌中RSI降幅({abs(rsi_change_pct):.2f}%) > 币价跌幅({abs(coin_change_pct):.2f}%)，恐慌过度，可能反弹"
+                else:
+                    # RSI降幅 < 币价跌幅 → 还会继续跌
+                    sentiment = "偏空"
+                    sentiment_type = "bearish"
+                    reason = f"下跌中RSI降幅({abs(rsi_change_pct):.2f}%) < 币价跌幅({abs(coin_change_pct):.2f}%)，下跌未充分反映，可能继续"
             else:
-                # RSI上涨但币价下跌（背离）
+                # RSI上涨但币价下跌（背离）→ 强烈底部信号
                 sentiment = "偏多"
                 sentiment_type = "bullish"
                 reason = f"下跌中RSI反涨({abs(rsi_change_pct):.2f}%)，底部背离信号，可能反弹"
@@ -110,17 +123,24 @@ def calculate_sentiment():
         elif coin_change_delta > 0:
             # 市场上涨
             if rsi_change_delta > 0:
-                # RSI也上涨
-                if abs(rsi_change_pct) < abs(coin_change_pct):
-                    sentiment = "偏多"
-                    sentiment_type = "bullish"
-                    reason = f"上涨中RSI涨幅({abs(rsi_change_pct):.2f}%) < 币价涨幅({abs(coin_change_pct):.2f}%)，市场未贪婪，还能继续涨"
-                else:
+                # RSI也上涨（同向）
+                if ratio >= 10:
+                    # RSI涨幅远大于币价涨幅（10倍以上）→ 见顶信号
                     sentiment = "偏空"
                     sentiment_type = "bearish"
-                    reason = f"上涨中RSI涨幅({abs(rsi_change_pct):.2f}%) ≥ 币价涨幅({abs(coin_change_pct):.2f}%)，贪婪过度，可能回调"
+                    reason = f"上涨中RSI涨幅({abs(rsi_change_pct):.2f}%) 是币价涨幅({abs(coin_change_pct):.2f}%)的{ratio:.1f}倍，贪婪过度，见顶信号"
+                elif ratio >= 1.5:
+                    # RSI涨幅 > 币价涨幅（1.5倍以上）→ 贪婪过度
+                    sentiment = "偏空"
+                    sentiment_type = "bearish"
+                    reason = f"上涨中RSI涨幅({abs(rsi_change_pct):.2f}%) > 币价涨幅({abs(coin_change_pct):.2f}%)，贪婪过度，可能回调"
+                else:
+                    # RSI涨幅 < 币价涨幅 → 还能继续涨
+                    sentiment = "偏多"
+                    sentiment_type = "bullish"
+                    reason = f"上涨中RSI涨幅({abs(rsi_change_pct):.2f}%) < 币价涨幅({abs(coin_change_pct):.2f}%)，理性上涨，还能继续"
             else:
-                # RSI下跌但币价上涨（背离）
+                # RSI下跌但币价上涨（背离）→ 顶部信号
                 sentiment = "偏空"
                 sentiment_type = "bearish"
                 reason = f"上涨中RSI反跌({abs(rsi_change_pct):.2f}%)，顶部背离信号，可能回调"

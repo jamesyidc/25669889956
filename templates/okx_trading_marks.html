@@ -1235,6 +1235,15 @@
 
         // 加载数据 - 高性能版本（并行加载 + 缓存 + 详细进度提示）
         async function loadData() {
+            // 确保即使出错也会隐藏加载界面
+            let loadingHidden = false;
+            const safeHideLoading = () => {
+                if (!loadingHidden) {
+                    hideLoading();
+                    loadingHidden = true;
+                }
+            };
+            
             try {
                 showLoading();
                 console.log('🔄 加载日期:', formatDate(currentDate));
@@ -1340,10 +1349,12 @@
                 
                 // 延迟隐藏加载界面，让用户看到100%完成状态
                 setTimeout(() => {
-                    hideLoading();
+                    safeHideLoading();
                 }, 500);
             } catch (e) {
                 console.error('❌ 加载数据失败:', e);
+                // 即使出错也要隐藏加载界面
+                safeHideLoading();
                 showError('加载数据失败: ' + e.message);
             }
         }
@@ -2337,6 +2348,8 @@
         
         // 更新加载进度
         function updateLoadingProgress(step, percentage, status) {
+            console.log(`📊 进度更新: 步骤${step}, ${percentage}%, ${status}`);
+            
             const progressBar = document.getElementById('progressBar');
             const progressText = document.getElementById('progressText');
             const loadingStatus = document.getElementById('loadingStatus');
@@ -2345,10 +2358,14 @@
             if (progressBar) {
                 progressBar.style.width = percentage + '%';
                 progressText.textContent = Math.round(percentage) + '%';
+            } else {
+                console.warn('⚠️ 找不到 progressBar 元素');
             }
             
             if (loadingStatus) {
                 loadingStatus.textContent = status;
+            } else {
+                console.warn('⚠️ 找不到 loadingStatus 元素');
             }
             
             // 更新步骤状态
@@ -2390,24 +2407,36 @@
         }
 
         function hideLoading() {
-            const overlay = document.getElementById('loadingOverlay');
-            if (overlay) {
-                // 添加淡出动画
-                overlay.style.animation = 'fadeOut 0.3s ease-out';
-                setTimeout(() => {
-                    overlay.remove();
-                }, 300);
-            }
-            
-            // 添加淡出动画样式
-            const style = document.createElement('style');
-            style.textContent = `
-                @keyframes fadeOut {
-                    from { opacity: 1; }
-                    to { opacity: 0; }
+            try {
+                const overlay = document.getElementById('loadingOverlay');
+                console.log('🔄 hideLoading 被调用, overlay存在:', !!overlay);
+                
+                if (overlay) {
+                    // 添加淡出动画
+                    overlay.style.animation = 'fadeOut 0.3s ease-out';
+                    setTimeout(() => {
+                        overlay.remove();
+                        console.log('✅ 加载界面已移除');
+                    }, 300);
+                } else {
+                    console.warn('⚠️ 找不到加载界面元素');
                 }
-            `;
-            document.head.appendChild(style);
+                
+                // 添加淡出动画样式（如果还没有）
+                if (!document.getElementById('fadeOutStyle')) {
+                    const style = document.createElement('style');
+                    style.id = 'fadeOutStyle';
+                    style.textContent = `
+                        @keyframes fadeOut {
+                            from { opacity: 1; }
+                            to { opacity: 0; }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+            } catch (e) {
+                console.error('❌ hideLoading 执行失败:', e);
+            }
         }
 
         function showError(message) {

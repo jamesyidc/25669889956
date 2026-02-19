@@ -5414,15 +5414,19 @@ data/
             
             // 计算每个币的保证金占用（从账户配置读取上限）
             const maxOrderSize = account.maxOrderSize || 5; // 单笔最大金额，默认5 USDT
-            const marginPerCoin = Math.min(
-                balance * percentPerCoin / 100,
-                maxOrderSize
-            ).toFixed(2);
+            const calculatedMargin = balance * percentPerCoin / 100;
+            const marginPerCoin = Math.min(calculatedMargin, maxOrderSize).toFixed(2);
             const totalMargin = (marginPerCoin * 8).toFixed(2);
             const contractValuePerCoin = (parseFloat(marginPerCoin) * 10).toFixed(2);
             const totalContractValue = (parseFloat(contractValuePerCoin) * 8).toFixed(2);
             
-            console.log(`[batchOrderTop8] 余额检查: 可用=${balance.toFixed(2)}, 每币保证金=${marginPerCoin} (上限${maxOrderSize}U), 总保证金=${totalMargin}`);
+            console.log(`[batchOrderTop8] 💰 保证金计算详情:`);
+            console.log(`  • 可用余额: ${balance.toFixed(2)} USDT`);
+            console.log(`  • 百分比: ${percentPerCoin}%`);
+            console.log(`  • 计算保证金: ${balance.toFixed(2)} × ${percentPerCoin}% = ${calculatedMargin.toFixed(2)} USDT`);
+            console.log(`  • 单笔上限: ${maxOrderSize} USDT`);
+            console.log(`  • 实际保证金: Math.min(${calculatedMargin.toFixed(2)}, ${maxOrderSize}) = ${marginPerCoin} USDT`);
+            console.log(`  • 总保证金: ${marginPerCoin} × 8 = ${totalMargin} USDT`);
             
             // 检查余额是否足够
             const requiredBalance = parseFloat(totalMargin) * 1.2;
@@ -5600,15 +5604,19 @@ data/
             
             // 计算每个币的保证金占用（从账户配置读取上限）
             const maxOrderSize = account.maxOrderSize || 5; // 单笔最大金额，默认5 USDT
-            const marginPerCoin = Math.min(
-                balance * percentPerCoin / 100,
-                maxOrderSize
-            ).toFixed(2);
+            const calculatedMargin = balance * percentPerCoin / 100;
+            const marginPerCoin = Math.min(calculatedMargin, maxOrderSize).toFixed(2);
             const totalMargin = (marginPerCoin * 8).toFixed(2);
             const contractValuePerCoin = (parseFloat(marginPerCoin) * 10).toFixed(2);
             const totalContractValue = (parseFloat(contractValuePerCoin) * 8).toFixed(2);
             
-            console.log(`[batchOrderBottom8] 余额检查: 可用=${balance.toFixed(2)}, 每币保证金=${marginPerCoin} (上限${maxOrderSize}U), 总保证金=${totalMargin}`);
+            console.log(`[batchOrderBottom8] 💰 保证金计算详情:`);
+            console.log(`  • 可用余额: ${balance.toFixed(2)} USDT`);
+            console.log(`  • 百分比: ${percentPerCoin}%`);
+            console.log(`  • 计算保证金: ${balance.toFixed(2)} × ${percentPerCoin}% = ${calculatedMargin.toFixed(2)} USDT`);
+            console.log(`  • 单笔上限: ${maxOrderSize} USDT`);
+            console.log(`  • 实际保证金: Math.min(${calculatedMargin.toFixed(2)}, ${maxOrderSize}) = ${marginPerCoin} USDT`);
+            console.log(`  • 总保证金: ${marginPerCoin} × 8 = ${totalMargin} USDT`);
             
             // 检查余额是否足够
             const requiredBalance = parseFloat(totalMargin) * 1.2;

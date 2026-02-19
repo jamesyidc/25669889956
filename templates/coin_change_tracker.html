@@ -5313,13 +5313,15 @@ pm2 status                                                # 查看所有进程�
                 ]);
                 
                 const sentimentData = await sentimentResp.json();
-                const latestData = await latestResp.json();
+                const latestResult = await latestResp.json();
                 
                 if (sentimentData.success && sentimentData.data) {
                     allDetailedData = sentimentData.data;
                     
-                    // 更新当前数据概览
-                    updateDetailedOverview(latestData);
+                    // 更新当前数据概览（注意要传递data字段）
+                    if (latestResult.success && latestResult.data) {
+                        updateDetailedOverview(latestResult.data);
+                    }
                     
                     // 显示第一页
                     currentDetailPage = 0;

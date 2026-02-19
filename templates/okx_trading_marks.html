@@ -1601,6 +1601,14 @@
 
         // 渲染图表
         function renderChart(trendData, trades, angleData = []) {
+            console.log('📊 renderChart被调用，参数检查:');
+            console.log('  - trendData:', trendData);
+            console.log('  - trendData类型:', typeof trendData);
+            console.log('  - trendData是否为数组:', Array.isArray(trendData));
+            console.log('  - trendData长度:', trendData ? trendData.length : 'null/undefined');
+            console.log('  - trades长度:', trades ? trades.length : 'null/undefined');
+            console.log('  - angleData长度:', angleData ? angleData.length : 'null/undefined');
+            
             // 确保图表已初始化
             if (!chart) {
                 console.error('❌ 图表未初始化');
@@ -1608,6 +1616,9 @@
             }
             
             if (!trendData || trendData.length === 0) {
+                console.error('❌ 无趋势数据，显示提示信息');
+                console.error('  - trendData值:', trendData);
+                console.error('  - 条件判断: !trendData =', !trendData, ', length === 0 =', trendData ? trendData.length === 0 : 'N/A');
                 if (chart) {
                     chart.setOption({
                         title: {
@@ -1620,6 +1631,8 @@
                 }
                 return;
             }
+            
+            console.log('✅ 趋势数据验证通过，开始渲染图表');
             
             // 保存当前数据供角度标记使用
             currentTrendData = trendData;

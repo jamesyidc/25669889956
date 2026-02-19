@@ -204,6 +204,102 @@ class TPSLMonitor:
             print(f"[{self.account_id}] ⚠️  获取持仓异常: {e}")
             return []
     
+    def _execute_market_close(self, credentials, position, sentiment_data=None):
+        """执行市价平仓（用于市场情绪止盈）"""
+        inst_id = position.get('instId', '')
+        pos_side = position.get('posSide', '')
+        avg_px = float(position.get('avgPx', 0))
+        mark_px = float(position.get('markPx', avg_px))
+        pos_size = abs(float(position.get('pos', 0)))
+        
+        try:
+            path = '/api/v5/trade/order'
+            timestamp = datetime.now(timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
+            
+            # 市价平仓参数
+            order_params = {
+                'instId': inst_id,
+                'tdMode': 'isolated',
+                'side': 'sell' if pos_side == 'long' else 'buy',
+                'posSide': pos_side,
+                'ordType': 'market',
+                'sz': str(pos_size),
+                'reduceOnly': True
+            }
+            
+            body = json.dumps(order_params)
+            message = timestamp + 'POST' + path + body
+            
+            mac = hmac.new(
+                bytes(credentials['secret_key'], encoding='utf8'),
+                bytes(message, encoding='utf-8'),
+                digestmod='sha256'
+            )
+            signature = base64.b64encode(mac.digest()).decode()
+            
+            headers = {
+                'OK-ACCESS-KEY': credentials['api_key'],
+                'OK-ACCESS-SIGN': signature,
+                'OK-ACCESS-TIMESTAMP': timestamp,
+                'OK-ACCESS-PASSPHRASE': credentials['passphrase'],
+                'Content-Type': 'application/json'
+            }
+            
+            response = requests.post(OKX_BASE_URL + path, headers=headers, data=body, timeout=10)
+            result = response.json()
+            
+            if result.get('code') == '0':
+                print(f"[{self.account_id}] ✅ 市价平仓成功: {inst_id} {pos_side}")
+                
+                # 计算当前盈亏
+                if pos_side == 'long':
+                    current_pnl = ((mark_px - avg_px) / avg_px) * 100
+                else:
+                    current_pnl = ((avg_px - mark_px) / avg_px) * 100
+                
+                # 构建Telegram消息
+                side_name = '多单' if pos_side == 'long' else '空单'
+                sentiment_text = sentiment_data.get('sentiment', '') if sentiment_data else ''
+                sentiment_reason = sentiment_data.get('reason', '') if sentiment_data else ''
+                sentiment_time = sentiment_data.get('beijing_time', '') if sentiment_data else ''
+                
+                tg_message = (
+                    f"🔥 <b>市场情绪止盈触发</b>\n\n"
+                    f"📊 账户: <code>{self.account_id}</code>\n"
+                    f"💰 交易对: <code>{inst_id}</code>\n"
+                    f"📈 方向: {side_name}\n"
+                    f"💵 开仓价: {avg_px:.4f}\n"
+                    f"💵 当前价: {mark_px:.4f}\n"
+                    f"📊 盈亏: {current_pnl:+.2f}%\n"
+                    f"✅ 状态: 市价平仓成功\n\n"
+                    f"⚠️ 触发信号: {sentiment_text}\n"
+                    f"📝 理由: {sentiment_reason}\n"
+                    f"⏰ 时间: {sentiment_time}\n\n"
+                    f"🔥 市场情绪止盈已执行！"
+                )
+                self.send_telegram(tg_message)
+                
+                return {'success': True, 'message': '市价平仓成功'}
+            else:
+                error_msg = result.get('msg', '未知错误')
+                print(f"[{self.account_id}] ❌ 市价平仓失败: {error_msg}")
+                
+                tg_message = (
+                    f"❌ <b>市场情绪止盈失败</b>\n\n"
+                    f"📊 账户: <code>{self.account_id}</code>\n"
+                    f"💰 交易对: <code>{inst_id}</code>\n"
+                    f"📈 方向: {side_name}\n"
+                    f"❌ 错误: {error_msg}\n\n"
+                    f"请手动检查并处理！"
+                )
+                self.send_telegram(tg_message)
+                
+                return {'success': False, 'error': error_msg}
+                
+        except Exception as e:
+            print(f"[{self.account_id}] ❌ 市价平仓异常: {e}")
+            return {'success': False, 'error': str(e)}
+    
     def execute_tpsl(self, credentials, position, trigger_type, settings, sentiment_data=None):
         """执行止盈或止损"""
         inst_id = position.get('instId', '')
@@ -214,7 +310,12 @@ class TPSLMonitor:
         if avg_px <= 0:
             return {'success': False, 'error': '无法获取开仓均价'}
         
-        # 计算触发价格
+        # 🔥 市场情绪止盈：立即市价平仓（不需要触发价格）
+        if trigger_type == 'sentiment_take_profit':
+            print(f"[{self.account_id}] 🔥 市场情绪止盈: {inst_id} {pos_side}, 立即市价平仓")
+            return self._execute_market_close(credentials, position, sentiment_data)
+        
+        # 计算触发价格（常规止盈止损）
         trigger_px = None
         if trigger_type == 'take_profit':
             tp_percent = float(settings.get('take_profit_threshold', 0)) / 100

@@ -24461,6 +24461,148 @@ def api_backup_delete():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+# ==================== 市场情绪偏向 API ====================
+
+@app.route('/api/market-sentiment/latest', methods=['GET'])
+def api_market_sentiment_latest():
+    """获取最新的市场情绪数据"""
+    try:
+        from datetime import datetime
+        from pathlib import Path
+        import json
+        
+        # 构建今天的JSONL文件路径
+        today = datetime.now().strftime('%Y%m%d')
+        jsonl_path = Path(f'/home/user/webapp/data/market_sentiment/market_sentiment_{today}.jsonl')
+        
+        if not jsonl_path.exists():
+            return jsonify({
+                'success': False,
+                'error': f'今日数据文件不存在: {jsonl_path}'
+            }), 404
+        
+        # 读取最后一行（最新数据）
+        with open(jsonl_path, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+            if not lines:
+                return jsonify({
+                    'success': False,
+                    'error': '数据文件为空'
+                }), 404
+            
+            last_data = json.loads(lines[-1])
+        
+        return jsonify({
+            'success': True,
+            'data': last_data
+        })
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+
+@app.route('/api/market-sentiment/history', methods=['GET'])
+def api_market_sentiment_history():
+    """获取历史市场情绪数据"""
+    try:
+        from datetime import datetime, timedelta
+        from pathlib import Path
+        import json
+        
+        # 获取查询参数
+        date_str = request.args.get('date', datetime.now().strftime('%Y%m%d'))
+        limit = int(request.args.get('limit', 100))
+        
+        # 构建JSONL文件路径
+        jsonl_path = Path(f'/home/user/webapp/data/market_sentiment/market_sentiment_{date_str}.jsonl')
+        
+        if not jsonl_path.exists():
+            return jsonify({
+                'success': False,
+                'error': f'数据文件不存在: {jsonl_path}'
+            }), 404
+        
+        # 读取数据
+        data_list = []
+        with open(jsonl_path, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+            # 返回最后limit条记录
+            for line in lines[-limit:]:
+                if line.strip():
+                    data_list.append(json.loads(line))
+        
+        return jsonify({
+            'success': True,
+            'date': date_str,
+            'count': len(data_list),
+            'data': data_list
+        })
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+
+@app.route('/api/market-sentiment/stats', methods=['GET'])
+def api_market_sentiment_stats():
+    """获取市场情绪统计数据"""
+    try:
+        from datetime import datetime
+        from pathlib import Path
+        import json
+        from collections import Counter
+        
+        # 获取查询参数
+        date_str = request.args.get('date', datetime.now().strftime('%Y%m%d'))
+        
+        # 构建JSONL文件路径
+        jsonl_path = Path(f'/home/user/webapp/data/market_sentiment/market_sentiment_{date_str}.jsonl')
+        
+        if not jsonl_path.exists():
+            return jsonify({
+                'success': False,
+                'error': f'数据文件不存在: {jsonl_path}'
+            }), 404
+        
+        # 读取数据并统计
+        sentiment_counts = Counter()
+        sentiment_type_counts = Counter()
+        total_records = 0
+        
+        with open(jsonl_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                if line.strip():
+                    data = json.loads(line)
+                    sentiment_counts[data['sentiment']] += 1
+                    sentiment_type_counts[data['sentiment_type']] += 1
+                    total_records += 1
+        
+        return jsonify({
+            'success': True,
+            'date': date_str,
+            'total_records': total_records,
+            'sentiment_counts': dict(sentiment_counts),
+            'sentiment_type_counts': dict(sentiment_type_counts)
+        })
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+
 # 数据管理页面路由
 @app.route('/data-management')
 def data_management_page():

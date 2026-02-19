@@ -1995,6 +1995,85 @@ pm2 status                                                # 查看所有进程�
                 </div>
             </div>
         </div>
+        
+        <!-- 市场情绪分析卡片 -->
+        <div class="mb-6">
+            <div class="bg-gradient-to-r from-purple-50 via-pink-50 to-blue-50 rounded-lg shadow-lg p-6 border-2 border-purple-200">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold flex items-center text-purple-800">
+                        <i class="fas fa-brain text-purple-600 mr-2"></i>
+                        市场情绪偏向分析 (15分钟更新)
+                    </h2>
+                    <button onclick="refreshMarketSentiment()" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm">
+                        <i class="fas fa-sync-alt mr-1"></i>刷新
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <!-- 当前情绪 -->
+                    <div class="bg-white rounded-lg p-4 shadow-md border-l-4" id="sentimentCard">
+                        <div class="text-sm text-gray-600 mb-2">当前情绪</div>
+                        <div id="currentSentiment" class="text-3xl font-bold mb-2">--</div>
+                        <div id="sentimentReason" class="text-xs text-gray-500">--</div>
+                        <div class="text-xs text-gray-400 mt-2">
+                            <i class="far fa-clock mr-1"></i>
+                            <span id="sentimentTime">--</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 币价变化 -->
+                    <div class="bg-white rounded-lg p-4 shadow-md">
+                        <div class="text-sm text-gray-600 mb-2">27币价格变化</div>
+                        <div class="flex items-baseline gap-2 mb-2">
+                            <span id="coinChangeFrom" class="text-lg text-gray-500">--</span>
+                            <i class="fas fa-arrow-right text-gray-400"></i>
+                            <span id="coinChangeTo" class="text-2xl font-bold">--</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-gray-500">变化:</span>
+                            <span id="coinChangeDelta" class="text-lg font-semibold">--</span>
+                            <span id="coinChangePercent" class="text-sm">--</span>
+                        </div>
+                    </div>
+                    
+                    <!-- RSI变化 -->
+                    <div class="bg-white rounded-lg p-4 shadow-md">
+                        <div class="text-sm text-gray-600 mb-2">RSI总和变化</div>
+                        <div class="flex items-baseline gap-2 mb-2">
+                            <span id="rsiChangeFrom" class="text-lg text-gray-500">--</span>
+                            <i class="fas fa-arrow-right text-gray-400"></i>
+                            <span id="rsiChangeTo" class="text-2xl font-bold">--</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-gray-500">变化:</span>
+                            <span id="rsiChangeDelta" class="text-lg font-semibold">--</span>
+                            <span id="rsiChangePercent" class="text-sm">--</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 情绪判断说明 -->
+                <div class="bg-white rounded-lg p-4 shadow-md">
+                    <div class="text-sm font-semibold text-gray-700 mb-2">判断逻辑说明：</div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-gray-600">
+                        <div class="bg-green-50 p-2 rounded border-l-2 border-green-500">
+                            <strong class="text-green-700">🐂 偏多信号：</strong>
+                            <ul class="list-disc list-inside ml-2 mt-1 space-y-0.5">
+                                <li>价格下跌时，RSI下降幅度 <strong>&gt;</strong> 价格下降幅度（恐慌过度，可能反弹）</li>
+                                <li>价格上涨时，RSI上涨幅度 <strong>&lt;</strong> 价格上涨幅度（理性上涨，可持续）</li>
+                            </ul>
+                        </div>
+                        <div class="bg-red-50 p-2 rounded border-l-2 border-red-500">
+                            <strong class="text-red-700">🐻 偏空信号：</strong>
+                            <ul class="list-disc list-inside ml-2 mt-1 space-y-0.5">
+                                <li>价格下跌时，RSI下降幅度 <strong>&lt;</strong> 价格下降幅度（下跌未充分反映，可能继续）</li>
+                                <li>价格上涨时，RSI上涨幅度 <strong>&gt;</strong> 价格上涨幅度（贪婪过度，可能回调）</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- BTC 当日涨跌幅状态框 -->
         <div class="mb-6">
@@ -4856,6 +4935,99 @@ pm2 status                                                # 查看所有进程�
             }
         }
         
+        // ========== 市场情绪分析功能 ==========
+        
+        // 加载市场情绪数据
+        async function loadMarketSentiment() {
+            try {
+                const response = await fetch(`/api/market-sentiment/latest?_t=${Date.now()}`, {
+                    cache: 'no-store'
+                });
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    updateMarketSentimentUI(result.data);
+                } else {
+                    console.warn('⚠️ 暂无市场情绪数据');
+                }
+            } catch (error) {
+                console.error('❌ 加载市场情绪失败:', error);
+            }
+        }
+        
+        // 更新市场情绪UI
+        function updateMarketSentimentUI(data) {
+            // 当前情绪
+            const sentimentCard = document.getElementById('sentimentCard');
+            const currentSentiment = document.getElementById('currentSentiment');
+            const sentimentReason = document.getElementById('sentimentReason');
+            const sentimentTime = document.getElementById('sentimentTime');
+            
+            let sentimentText = data.sentiment;
+            let sentimentColor = '';
+            let borderColor = '';
+            
+            if (data.sentiment_type === 'bullish') {
+                sentimentText = '🐂 偏多';
+                sentimentColor = 'text-green-600';
+                borderColor = 'border-green-500';
+            } else if (data.sentiment_type === 'bearish') {
+                sentimentText = '🐻 偏空';
+                sentimentColor = 'text-red-600';
+                borderColor = 'border-red-500';
+            } else {
+                sentimentText = '😐 中性';
+                sentimentColor = 'text-gray-600';
+                borderColor = 'border-gray-400';
+            }
+            
+            currentSentiment.textContent = sentimentText;
+            currentSentiment.className = `text-3xl font-bold mb-2 ${sentimentColor}`;
+            sentimentCard.className = `bg-white rounded-lg p-4 shadow-md border-l-4 ${borderColor}`;
+            sentimentReason.textContent = data.reason || '--';
+            sentimentTime.textContent = data.beijing_time || '--';
+            
+            // 币价变化
+            const coinData = data.coin_data;
+            document.getElementById('coinChangeFrom').textContent = coinData.previous_cumulative_pct.toFixed(2) + '%';
+            document.getElementById('coinChangeTo').textContent = coinData.current_cumulative_pct.toFixed(2) + '%';
+            document.getElementById('coinChangeDelta').textContent = (coinData.change_delta >= 0 ? '+' : '') + coinData.change_delta.toFixed(2) + '%';
+            
+            const coinChangePercent = document.getElementById('coinChangePercent');
+            const coinPct = coinData.change_pct;
+            coinChangePercent.textContent = `(${coinPct >= 0 ? '+' : ''}${coinPct.toFixed(2)}%)`;
+            coinChangePercent.className = `text-sm font-medium ${coinPct >= 0 ? 'text-green-600' : 'text-red-600'}`;
+            
+            // RSI变化
+            const rsiData = data.rsi_data;
+            document.getElementById('rsiChangeFrom').textContent = rsiData.previous_total_rsi.toFixed(2);
+            document.getElementById('rsiChangeTo').textContent = rsiData.current_total_rsi.toFixed(2);
+            document.getElementById('rsiChangeDelta').textContent = (rsiData.change_delta >= 0 ? '+' : '') + rsiData.change_delta.toFixed(2);
+            
+            const rsiChangePercent = document.getElementById('rsiChangePercent');
+            const rsiPct = rsiData.change_pct;
+            rsiChangePercent.textContent = `(${rsiPct >= 0 ? '+' : ''}${rsiPct.toFixed(2)}%)`;
+            rsiChangePercent.className = `text-sm font-medium ${rsiPct >= 0 ? 'text-purple-600' : 'text-orange-600'}`;
+        }
+        
+        // 刷新市场情绪
+        async function refreshMarketSentiment() {
+            const btn = event.target.closest('button');
+            const icon = btn.querySelector('i');
+            
+            // 添加旋转动画
+            icon.classList.add('fa-spin');
+            btn.disabled = true;
+            
+            await loadMarketSentiment();
+            
+            // 移除动画
+            setTimeout(() => {
+                icon.classList.remove('fa-spin');
+                btn.disabled = false;
+            }, 500);
+        }
+        
         // 初始化
         window.onload = function() {
             // 初始化音频上下文（需要用户交互）
@@ -4874,6 +5046,7 @@ pm2 status                                                # 查看所有进程�
             
             initCharts();
             updateLatestData();
+            loadMarketSentiment(); // 加载市场情绪数据
             // 使用currentDate（可能来自URL参数）
             const isToday = formatDate(currentDate) === formatDate(new Date());
             if (isToday) {
@@ -4914,6 +5087,7 @@ pm2 status                                                # 查看所有进程�
                     if (isToday) {
                         updateLatestData();
                         updateHistoryData(currentDate);  // 传递currentDate，保持当前选择的日期
+                        loadMarketSentiment(); // 更新市场情绪
                     } else {
                         console.log('⚠️ 当前日期不是今天，跳过更新');
                     }

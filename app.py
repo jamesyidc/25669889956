@@ -14772,6 +14772,11 @@ def okx_trading_marks_v3():
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     return response
 
+@app.route('/server-test')
+def server_test():
+    """服务器测试页面 - 验证服务器是否可访问"""
+    return render_template('server_test.html')
+
 @app.route('/angle-test')
 def angle_test():
     """角度数据测试页面 - 2月2-6日"""

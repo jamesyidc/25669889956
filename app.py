@@ -14757,6 +14757,21 @@ def okx_trading_marks_v2():
     response.headers['Expires'] = '-1'
     return response
 
+@app.route('/okx-trading-marks-v3')
+def okx_trading_marks_v3():
+    """OKX交易标记系统 V3 - 最新修复版本 (2026-02-19)"""
+    import time
+    timestamp = int(time.time() * 1000)
+    response = make_response(render_template('okx_trading_marks.html', cache_bust=timestamp))
+    # 禁用所有缓存
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '-1'
+    # 添加额外的header确保不缓存
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    return response
+
 @app.route('/angle-test')
 def angle_test():
     """角度数据测试页面 - 2月2-6日"""

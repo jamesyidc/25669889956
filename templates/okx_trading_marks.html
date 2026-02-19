@@ -1140,6 +1140,13 @@
                 // 第2步：加载今天的数据
                 await loadTodayData();
                 
+                // 第3步：等待chart初始化后添加点击事件
+                setTimeout(() => {
+                    if (chart) {
+                        setupChartEventListeners();
+                    }
+                }, 1000);
+                
                 const endTime = performance.now();
                 console.log(`✅ 页面初始化完成，总耗时: ${((endTime - startTime) / 1000).toFixed(2)}秒`);
                 console.log(`⚡ 性能提升: 采用并行加载 + 缓存机制，预计减少50%以上加载时间`);
@@ -2690,108 +2697,107 @@
             }
         }
         
-        // 修改图表初始化，添加点击事件
-        const originalInitChart = window.onload;
-        window.onload = function() {
-            if (originalInitChart) originalInitChart();
+        // 设置图表事件监听器
+        function setupChartEventListeners() {
+            if (!chart) {
+                console.error('❌ 图表未初始化，无法设置事件监听');
+                return;
+            }
             
-            // 等待chart初始化后添加点击事件
-            setTimeout(() => {
-                if (chart) {
-                    // 点击事件 - 处理交易标记评价和角度标记
-                    chart.on('click', function(params) {
-                        // 优先处理交易标记点击（开仓/平仓）
-                        if (params.componentType === 'series' && 
-                            (params.seriesName.includes('开仓') || params.seriesName.includes('平仓'))) {
-                            
-                            // 获取交易数据
-                            const trade = params.data.trade;
-                            if (trade) {
-                                console.log('🖱️ 点击交易标记:', trade.tradeId);
-                                openTradeRatingModal(trade);
-                            } else {
-                                console.warn('⚠️ 无法获取交易数据');
-                            }
-                            return;  // 阻止后续处理
-                        }
-                        
-                        // 角度标记模式的点击处理
-                        if (!angleModeActive) return;
-                        
-                        // 检查是否已选择方向
-                        if (!angleDirection) {
-                            alert('⚠️ 请先选择角度方向（↗️正角 或 ↘️负角）');
-                            return;
-                        }
-                        
-                        // 只处理趋势线上的点击
-                        if (params.componentType === 'series' && params.seriesName === '累计涨跌幅') {
-                            const clickedPoint = {
-                                time: params.name,
-                                value: params.value,
-                                index: params.dataIndex
-                            };
-                            
-                            selectedPoints.push(clickedPoint);
-                            const pointName = selectedPoints.length === 1 ? 'A点' : 'C\'点';
-                            console.log(`📍 已选择${pointName}:`, clickedPoint);
-                            
-                            updateAngleStepInfo();
-                            
-                            // 选择完2个点后，自动找B点并询问是否添加
-                            if (selectedPoints.length === 2) {
-                                const directionText = angleDirection === 'up' ? '↗️正角（上升）' : '↘️负角（下降）';
-                                setTimeout(() => {
-                                    if (confirm(`${directionText}\n已选择A点和C\'点，是否自动寻找B点并添加角度标记？\n\n提醒：C'点时间必须晚于B点`)) {
-                                        addManualAngle();
-                                    } else {
-                                        selectedPoints = [];
-                                        updateAngleStepInfo();
-                                    }
-                                }, 100);
-                            }
-                        }
-                    });
+            // 点击事件 - 处理交易标记评价和角度标记
+            chart.on('click', function(params) {
+                // 优先处理交易标记点击（开仓/平仓）
+                if (params.componentType === 'series' && 
+                    (params.seriesName.includes('开仓') || params.seriesName.includes('平仓'))) {
                     
-                    // 右键事件 - 删除角度（支持删除所有角度，包括系统生成的）
-                    chart.on('contextmenu', function(params) {
-                        params.event.event.preventDefault();
-                        
-                        // 检查是否点击的是角度标记
-                        if (params.componentType === 'series' && 
-                            (params.seriesName.includes('上升') || params.seriesName.includes('下降'))) {
-                            
-                            // 查找对应的角度数据
-                            const angleData = params.data.angle_data;
-                            if (angleData) {
-                                const angleType = angleData.manual ? '🖐️ 手动添加' : '🤖 系统生成';
-                                const directionText = angleData.direction === 'up' ? '上升' : '下降';
-                                const typeText = angleData.type === 'acute' ? '锐角' : '钝角';
-                                const angleSymbol = angleData.direction === 'up' 
-                                    ? (angleData.type === 'acute' ? '🔺' : '🟧')
-                                    : (angleData.type === 'acute' ? '🔻' : '💎');
-                                
-                                if (confirm(`🗑️ 确定要删除这个角度标记吗？\n\n` +
-                                          `━━━━━━━━━━━━━━━━━━━━━━\n` +
-                                          `${angleSymbol} 标记类型: ${angleType}\n` +
-                                          `📊 角度类型: ${directionText}${typeText}\n` +
-                                          `📐 角度值: ${parseFloat(angleData.angle).toFixed(2)}°\n` +
-                                          `⏰ 峰值时间: ${angleData.peak_time}\n` +
-                                          `📈 价格变化: ${parseFloat(angleData.peak_price).toFixed(2)}%\n` +
-                                          `🕐 时段: ${angleData.hour}:00-${parseInt(angleData.hour)+1}:00\n` +
-                                          `━━━━━━━━━━━━━━━━━━━━━━\n\n` +
-                                          `✅ 删除后会立即生效\n` +
-                                          `💡 适用于纠正系统识别错误的角度`)) {
-                                    deleteAngleMarker(angleData);
-                                }
-                            } else {
-                                alert('❌ 无法获取角度数据\n\n请稍后重试或刷新页面');
-                            }
-                        }
-                    });
+                    // 获取交易数据
+                    const trade = params.data.trade;
+                    if (trade) {
+                        console.log('🖱️ 点击交易标记:', trade.tradeId);
+                        openTradeRatingModal(trade);
+                    } else {
+                        console.warn('⚠️ 无法获取交易数据');
+                    }
+                    return;  // 阻止后续处理
                 }
-            }, 1000);
-        };
+                
+                // 角度标记模式的点击处理
+                if (!angleModeActive) return;
+                
+                // 检查是否已选择方向
+                if (!angleDirection) {
+                    alert('⚠️ 请先选择角度方向（↗️正角 或 ↘️负角）');
+                    return;
+                }
+                
+                // 只处理趋势线上的点击
+                if (params.componentType === 'series' && params.seriesName === '累计涨跌幅') {
+                    const clickedPoint = {
+                        time: params.name,
+                        value: params.value,
+                        index: params.dataIndex
+                    };
+                    
+                    selectedPoints.push(clickedPoint);
+                    const pointName = selectedPoints.length === 1 ? 'A点' : 'C\'点';
+                    console.log(`📍 已选择${pointName}:`, clickedPoint);
+                    
+                    updateAngleStepInfo();
+                    
+                    // 选择完2个点后，自动找B点并询问是否添加
+                    if (selectedPoints.length === 2) {
+                        const directionText = angleDirection === 'up' ? '↗️正角（上升）' : '↘️负角（下降）';
+                        setTimeout(() => {
+                            if (confirm(`${directionText}\n已选择A点和C\'点，是否自动寻找B点并添加角度标记？\n\n提醒：C'点时间必须晚于B点`)) {
+                                addManualAngle();
+                            } else {
+                                selectedPoints = [];
+                                updateAngleStepInfo();
+                            }
+                        }, 100);
+                    }
+                }
+            });
+            
+            // 右键事件 - 删除角度（支持删除所有角度，包括系统生成的）
+            chart.on('contextmenu', function(params) {
+                params.event.event.preventDefault();
+                
+                // 检查是否点击的是角度标记
+                if (params.componentType === 'series' && 
+                    (params.seriesName.includes('上升') || params.seriesName.includes('下降'))) {
+                    
+                    // 查找对应的角度数据
+                    const angleData = params.data.angle_data;
+                    if (angleData) {
+                        const angleType = angleData.manual ? '🖐️ 手动添加' : '🤖 系统生成';
+                        const directionText = angleData.direction === 'up' ? '上升' : '下降';
+                        const typeText = angleData.type === 'acute' ? '锐角' : '钝角';
+                        const angleSymbol = angleData.direction === 'up' 
+                            ? (angleData.type === 'acute' ? '🔺' : '🟧')
+                            : (angleData.type === 'acute' ? '🔻' : '💎');
+                        
+                        if (confirm(`🗑️ 确定要删除这个角度标记吗？\n\n` +
+                                  `━━━━━━━━━━━━━━━━━━━━━━\n` +
+                                  `${angleSymbol} 标记类型: ${angleType}\n` +
+                                  `📊 角度类型: ${directionText}${typeText}\n` +
+                                  `📐 角度值: ${parseFloat(angleData.angle).toFixed(2)}°\n` +
+                                  `⏰ 峰值时间: ${angleData.peak_time}\n` +
+                                  `📈 价格变化: ${parseFloat(angleData.peak_price).toFixed(2)}%\n` +
+                                  `🕐 时段: ${angleData.hour}:00-${parseInt(angleData.hour)+1}:00\n` +
+                                  `━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+                                  `✅ 删除后会立即生效\n` +
+                                  `💡 适用于纠正系统识别错误的角度`)) {
+                            deleteAngleMarker(angleData);
+                        }
+                    } else {
+                        alert('❌ 无法获取角度数据\n\n请稍后重试或刷新页面');
+                    }
+                }
+            });
+            
+            console.log('✅ 图表事件监听器已设置');
+        }
         
         // ==================== 交易评价功能 ====================
         

@@ -4991,6 +4991,10 @@ data/
                 checkAndExecuteUpRatio0Bottom8(); // 检查上涨占比0-涨幅后8名策略
                 checkRSITakeProfit(); // 检查RSI止盈
                 loadCurrentMarketSentiment(); // 🔥 刷新市场情绪
+                
+                // 🆕 刷新策略状态显示（确保UI与后端同步）
+                loadAutoStrategySettings(); // 刷新抄底策略UI
+                loadAutoStrategySettingsTop(); // 刷新追涨策略UI
             }, 60000);
             
             // 每30秒自动刷新行情数据（优化：从10秒改为30秒，减少频繁请求）

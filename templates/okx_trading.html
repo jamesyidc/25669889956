@@ -5108,7 +5108,8 @@ data/
                         side: direction === 'long' ? 'buy' : 'sell',
                         posSide: direction,
                         ordType: 'market',
-                        sz: contractValuePerCoin,  // 传递合约价值（保证金 × 10）
+                        sz: marginPerCoin,  // 🔴 修复：使用保证金而不是合约价值
+                        maxOrderSize: maxOrderSize  // 🔴 新增：传递单笔限额用于后端风控检查
                         lever: '10'
                     };
                     
@@ -5294,7 +5295,8 @@ data/
                         side: direction === 'long' ? 'buy' : 'sell',
                         posSide: direction,
                         ordType: 'market',
-                        sz: contractValuePerCoin,
+                        sz: marginPerCoin,  // 🔴 修复：使用保证金而不是合约价值
+                        maxOrderSize: maxOrderSize  // 🔴 新增：传递单笔限额用于后端风控检查
                         lever: '10'
                     };
                     
@@ -5499,7 +5501,8 @@ data/
                         side: direction === 'long' ? 'buy' : 'sell',
                         posSide: direction,
                         ordType: 'market',
-                        sz: contractValuePerCoin,
+                        sz: marginPerCoin,  // 🔴 修复：使用保证金而不是合约价值
+                        maxOrderSize: maxOrderSize  // 🔴 新增：传递单笔限额用于后端风控检查
                         lever: '10'
                     };
                     

@@ -139,11 +139,11 @@ def calculate_sentiment():
             # 市场下跌
             if rsi_change_delta < 0:
                 # RSI也下跌（同向）
-                if ratio >= 10:
-                    # RSI降幅远大于币价跌幅（10倍以上）→ 阶段性底部
+                if ratio >= 10 and curr_total_rsi < 700:
+                    # RSI降幅远大于币价跌幅（10倍以上）且 RSI总和<700 → 阶段性底部
                     sentiment = "🔥见底信号"
                     sentiment_type = "bullish"
-                    reason = f"下跌中RSI降幅({abs(rsi_change_pct):.2f}%) 是币价跌幅({abs(coin_change_pct):.2f}%)的{ratio:.1f}倍，恐慌过度，阶段性底部★★★"
+                    reason = f"下跌中RSI降幅({abs(rsi_change_pct):.2f}%) 是币价跌幅({abs(coin_change_pct):.2f}%)的{ratio:.1f}倍，恐慌过度，阶段性底部★★★（RSI总和{curr_total_rsi:.2f}<700）"
                     
                     # 🔴 发送TG通知（3遍）
                     beijing_time = datetime.now(timezone(timedelta(hours=8))).strftime('%Y-%m-%d %H:%M:%S')

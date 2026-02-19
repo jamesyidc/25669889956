@@ -21344,7 +21344,7 @@ def get_account_limit():
 
 @app.route('/api/coin-change-tracker/latest', methods=['GET'])
 def get_coin_change_latest():
-    """获取最新的27币涨跌幅数据"""
+    """获取最新的27币涨跌幅数据（包含RSI）"""
     try:
         from datetime import datetime, timezone, timedelta
         from pathlib import Path
@@ -21360,7 +21360,7 @@ def get_coin_change_latest():
         beijing_time = datetime.now(timezone(timedelta(hours=8)))
         date_str = beijing_time.strftime('%Y%m%d')
         
-        # 读取今天的数据文件
+        # 读取今天的币价数据文件
         data_file = data_dir / f'coin_change_{date_str}.jsonl'
         
         if not data_file.exists():
@@ -21369,25 +21369,37 @@ def get_coin_change_latest():
                 'error': f'今天的数据文件不存在: {date_str}'
             })
         
-        # 读取最后一条记录
+        # 读取最后一条币价记录
         with open(data_file, 'r') as f:
             lines = f.readlines()
-            if lines:
-                latest = json.loads(lines[-1].strip())
-                response = jsonify({
-                    'success': True,
-                    'data': latest
-                })
-                # 添加禁用缓存的响应头
-                response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
-                response.headers['Pragma'] = 'no-cache'
-                response.headers['Expires'] = '0'
-                return response
-            else:
+            if not lines:
                 return jsonify({
                     'success': False,
                     'error': '数据文件为空'
                 })
+            latest = json.loads(lines[-1].strip())
+        
+        # 读取RSI数据
+        rsi_file = data_dir / f'rsi_{date_str}.jsonl'
+        if rsi_file.exists():
+            with open(rsi_file, 'r') as f:
+                rsi_lines = f.readlines()
+                if rsi_lines:
+                    rsi_data = json.loads(rsi_lines[-1].strip())
+                    # 合并RSI数据到币价数据
+                    latest['total_rsi'] = rsi_data.get('total_rsi', 0)
+                    latest['rsi_values'] = rsi_data.get('rsi_values', {})
+                    latest['rsi_timestamp'] = rsi_data.get('beijing_time', '')
+        
+        response = jsonify({
+            'success': True,
+            'data': latest
+        })
+        # 添加禁用缓存的响应头
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
                 
     except Exception as e:
         import traceback

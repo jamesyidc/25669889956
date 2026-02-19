@@ -1330,36 +1330,87 @@
                 
                 <!-- 🔴 重要更新通知 -->
                 <div style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); padding: 12px; border-radius: 6px; margin-bottom: 12px; border: 2px solid #dc2626; box-shadow: 0 2px 8px rgba(220, 38, 38, 0.2);">
-                    <h4 style="margin: 0 0 8px 0; color: #991b1b; font-size: 13px; font-weight: 800;">🚨 重要Bug修复（2026-02-19）</h4>
+                    <h4 style="margin: 0 0 8px 0; color: #991b1b; font-size: 13px; font-weight: 800;">🚨 重要修复合集（2026-02-19）</h4>
+                    
+                    <!-- 修复1: 保证金计算逻辑错误 -->
                     <div style="background: white; padding: 10px; border-radius: 4px; margin-bottom: 8px;">
-                        <p style="margin: 0 0 6px 0; font-weight: 700; color: #b91c1c;">🐛 问题描述：</p>
-                        <ul style="margin: 4px 0 0 20px; padding: 0; color: #7f1d1d;">
-                            <li><strong>现象：</strong>批量开仓金额异常，单个持仓价值超出预期（如设置5U限额，实际开仓42.63U）</li>
-                            <li><strong>根因：</strong>前端下单时传递的是 <code>contractValuePerCoin</code>（合约价值 = 保证金×10），而非 <code>marginPerCoin</code>（保证金）</li>
-                            <li><strong>后果：</strong>实际开仓金额是预期的10倍，且后端风控检查因缺少 <code>maxOrderSize</code> 参数而失效</li>
+                        <p style="margin: 0 0 6px 0; font-weight: 700; color: #b91c1c;">🐛 问题1：保证金计算逻辑错误（提交: 753da18）</p>
+                        <ul style="margin: 4px 0 0 20px; padding: 0; color: #7f1d1d; font-size: 10px;">
+                            <li><strong>现象：</strong>设置单笔保证金5U，但实际只占用0.5U保证金</li>
+                            <li><strong>根因：</strong>前端传递 <code>sz = marginPerCoin</code>（5），后端理解为"合约价值5U"，实际保证金 = 5/10 = 0.5U</li>
+                            <li><strong>用户需求：</strong>保证金5U × 10倍杠杆 = 50U合约价值</li>
+                        </ul>
+                        <p style="margin: 6px 0 0 0; font-weight: 700; color: #047857; font-size: 10px;">✅ 解决方案：</p>
+                        <ul style="margin: 4px 0 0 20px; padding: 0; color: #065f46; font-size: 10px;">
+                            <li><strong>前端修正：</strong><code>sz = contractValuePerCoin = marginPerCoin × 10</code>（传50而不是5）</li>
+                            <li><strong>计算流程：</strong>保证金5U → 合约价值 = 5×10 = 50U → sz=50 → OKX占用保证金 = 50/10 = 5U ✅</li>
+                            <li><strong>增强日志：</strong>控制台详细显示每一步计算（保证金、合约价值、实际传值）</li>
+                            <li><strong>影响范围：</strong><code>batchOrderTop8</code>、<code>batchOrderBottom8</code>、<code>batchOrder</code></li>
                         </ul>
                     </div>
+                    
+                    <!-- 修复2: 自动策略反复触发 -->
                     <div style="background: white; padding: 10px; border-radius: 4px; margin-bottom: 8px;">
-                        <p style="margin: 0 0 6px 0; font-weight: 700; color: #047857;">✅ 修复方案：</p>
-                        <ul style="margin: 4px 0 0 20px; padding: 0; color: #065f46;">
-                            <li><strong>前端修复：</strong>将下单参数 <code>sz</code> 改为使用 <code>marginPerCoin</code>（保证金金额）</li>
-                            <li><strong>风控增强：</strong>新增 <code>maxOrderSize</code> 参数传递给后端，实现双重风控检查</li>
-                            <li><strong>限额计算：</strong>每个币保证金 = <code>Math.min(余额×百分比, maxOrderSize)</code>，确保单笔不超限</li>
-                            <li><strong>影响范围：</strong>修复了 <code>batchOrder</code>、<code>batchOrderTop8</code>、<code>batchOrderBottom8</code> 三个函数</li>
+                        <p style="margin: 0 0 6px 0; font-weight: 700; color: #b91c1c;">🐛 问题2：自动策略反复触发（提交: 9b808c1）</p>
+                        <ul style="margin: 4px 0 0 20px; padding: 0; color: #7f1d1d; font-size: 10px;">
+                            <li><strong>现象：</strong>策略执行后，每60秒又再次触发执行</li>
+                            <li><strong>根因：</strong>用户打开开关时，前端立即写入 <code>allowed=true</code> 到JSONL → 执行后虽然写入 <code>allowed=false</code>，但用户再次打开开关又写入 <code>allowed=true</code> → 定时器检查发现 <code>allowed=true</code> → 再次触发</li>
+                            <li><strong>触发流程：</strong>打开开关 → allowed=true → 触发执行 → allowed=false → 用户再开开关 → allowed=true → 60秒后再次触发</li>
+                        </ul>
+                        <p style="margin: 6px 0 0 0; font-weight: 700; color: #047857; font-size: 10px;">✅ 解决方案：</p>
+                        <ul style="margin: 4px 0 0 20px; padding: 0; color: #065f46; font-size: 10px;">
+                            <li><strong>删除自动写入：</strong>打开开关时不再自动写入 <code>allowed=true</code></li>
+                            <li><strong>allowed管理规则：</strong>只能通过以下方式修改：①策略执行成功后自动设为false ②用户手动点击"重置执行许可"按钮设为true</li>
+                            <li><strong>正确流程：</strong>打开开关 → 点击"🔄重置"按钮 → allowed=true → 等待触发 → 执行一次 → allowed=false</li>
                         </ul>
                     </div>
+                    
+                    <!-- 修复3: 缺少重置按钮 -->
+                    <div style="background: white; padding: 10px; border-radius: 4px; margin-bottom: 8px;">
+                        <p style="margin: 0 0 6px 0; font-weight: 700; color: #b91c1c;">🐛 问题3：业务逻辑缺陷 - 缺少重置入口（提交: 789d788）</p>
+                        <ul style="margin: 4px 0 0 20px; padding: 0; color: #7f1d1d; font-size: 10px;">
+                            <li><strong>现象：</strong>策略执行后，用户打开开关但策略不执行</li>
+                            <li><strong>根因：</strong>执行后 <code>allowed=false</code> + <code>enabled=false</code> → 用户打开开关 <code>enabled=true</code>，但 <code>allowed</code> 仍是 <code>false</code> → 不满足执行条件（需要 <code>enabled && allowed</code> 都为true）</li>
+                            <li><strong>用户困惑：</strong>开关已打开，为什么策略不执行？因为缺少重置 <code>allowed</code> 的UI入口</li>
+                        </ul>
+                        <p style="margin: 6px 0 0 0; font-weight: 700; color: #047857; font-size: 10px;">✅ 解决方案：</p>
+                        <ul style="margin: 4px 0 0 20px; padding: 0; color: #065f46; font-size: 10px;">
+                            <li><strong>添加"🔄重置"按钮：</strong>在"📄JSONL执行许可"状态旁边添加重置按钮</li>
+                            <li><strong>重置流程：</strong>点击按钮 → 弹出确认框（显示账户、策略、触发价格）→ 确认后设置 <code>allowed=true</code> → 刷新状态显示</li>
+                            <li><strong>完整使用流程：</strong>①打开策略开关 ②点击"🔄重置"按钮 ③等待BTC价格触发 ④策略自动执行一次</li>
+                            <li><strong>再次使用：</strong>必须重复步骤①②，确保每次执行都是有意为之，防止误触发</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- 修复4: 页面加载卡住 -->
+                    <div style="background: white; padding: 10px; border-radius: 4px; margin-bottom: 8px;">
+                        <p style="margin: 0 0 6px 0; font-weight: 700; color: #b91c1c;">🐛 问题4：页面加载卡在20%（提交: 79fce79）</p>
+                        <ul style="margin: 4px 0 0 20px; padding: 0; color: #7f1d1d; font-size: 10px;">
+                            <li><strong>现象：</strong>币涨跌追踪页面显示加载进度条卡在20%，内容已加载但被遮罩层覆盖</li>
+                            <li><strong>根因：</strong>JavaScript动态创建的加载遮罩层（z-index:9999）没有被正确移除</li>
+                            <li><strong>触发条件：</strong>数据加载成功，但 <code>LoadingManager.hide()</code> 未执行或执行失败</li>
+                        </ul>
+                        <p style="margin: 6px 0 0 0; font-weight: 700; color: #047857; font-size: 10px;">✅ 解决方案：</p>
+                        <ul style="margin: 4px 0 0 20px; padding: 0; color: #065f46; font-size: 10px;">
+                            <li><strong>回滚版本：</strong>回滚到添加加载进度功能之前的版本（6918937）</li>
+                            <li><strong>删除遮罩层：</strong>彻底移除动态创建加载界面的代码，恢复直接加载显示</li>
+                            <li><strong>性能优化：</strong>去除不必要的UI动画，减少CSS行数和动画数量</li>
+                        </ul>
+                    </div>
+                    
                     <div style="background: #f0fdfa; padding: 10px; border-radius: 4px; border-left: 3px solid #14b8a6;">
-                        <p style="margin: 0 0 6px 0; font-weight: 700; color: #0f766e;">🔒 风控保障（修复后）：</p>
-                        <ul style="margin: 4px 0 0 20px; padding: 0; color: #0f766e;">
-                            <li><strong>单笔限额：</strong>每次开仓单个订单不超过配置限额（默认5 USDT）</li>
-                            <li><strong>前端验证：</strong><code>Math.min(余额×%, maxOrderSize)</code> 确保不超限</li>
-                            <li><strong>后端验证：</strong>服务器二次检查，超限直接拒绝并返回错误</li>
-                            <li><strong>多次开仓：</strong>允许对同一币种多次开仓（正常累积持仓），但每次单笔必须≤限额</li>
-                            <li><strong>示例：</strong>限额5U，开3次仓 → 每次≤5U，累计持仓≤15U（符合预期）</li>
+                        <p style="margin: 0 0 6px 0; font-weight: 700; color: #0f766e; font-size: 11px;">🔒 当前风控机制：</p>
+                        <ul style="margin: 4px 0 0 20px; padding: 0; color: #0f766e; font-size: 10px;">
+                            <li><strong>保证金限额：</strong>单笔保证金≤5 USDT（可配置），10倍杠杆 = 50 USDT合约价值</li>
+                            <li><strong>前端验证：</strong><code>marginPerCoin = Math.min(余额×1.5%, maxOrderSize)</code></li>
+                            <li><strong>后端验证：</strong>服务器检查 <code>sz</code>（合约价值）是否超过 <code>maxOrderSize×10</code></li>
+                            <li><strong>双重状态控制：</strong><code>enabled</code>（UI开关）+ <code>allowed</code>（JSONL执行许可），两者都为true才执行</li>
+                            <li><strong>防重复机制：</strong>执行后立即设置 <code>allowed=false</code>，必须手动重置才能再次执行</li>
                         </ul>
                     </div>
+                    
                     <p style="margin: 8px 0 0 0; font-size: 10px; color: #7f1d1d; font-weight: 600;">
-                        ⚠️ 建议：如有超额持仓（如XRP 42.63U），请手动平仓后重新测试修复后的代码。
+                        ⚠️ 重要提示：如遇到问题，请硬刷新浏览器（Ctrl+Shift+R）清除缓存，或使用隐身模式访问。
                     </p>
                 </div>
                 

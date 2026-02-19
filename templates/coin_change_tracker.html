@@ -3303,8 +3303,81 @@ pm2 status                                                # 查看所有进程�
                                             }
                                         });
                                         
-                                        console.log('✅ 波峰标记点添加完成，总标记点数:', points.length);
+                                        console.log('✅ 完整波峰标记点添加完成，总标记点数:', points.length);
                                     }
+                                    
+                                    // 添加未完成的B-A波峰标记（如果存在）
+                                    if (currentState && currentState.has_incomplete_peak && currentState.b_candidate && currentState.a_candidate) {
+                                        console.log('🔍 发现未完成的B-A波峰');
+                                        
+                                        // B点候选
+                                        const bTime = currentState.b_candidate.beijing_time.split(' ')[1];
+                                        const bIndex = times.indexOf(bTime);
+                                        console.log(`🔍 未完成波峰 B点: ${currentState.b_candidate.beijing_time} -> 时间=${bTime}, 索引=${bIndex}`);
+                                        
+                                        if (bIndex >= 0) {
+                                            points.push({
+                                                name: `未完成-B`,
+                                                value: `B: ${currentState.b_candidate.value.toFixed(1)}%`,
+                                                xAxis: bIndex,
+                                                yAxis: currentState.b_candidate.value,
+                                                itemStyle: {
+                                                    color: '#06B6D4',
+                                                    borderColor: '#fff',
+                                                    borderWidth: 3,
+                                                    opacity: 0.7  // 半透明表示未完成
+                                                },
+                                                label: {
+                                                    formatter: (params) => {
+                                                        return `${params.name}\n${params.value}`;
+                                                    },
+                                                    fontSize: 12,
+                                                    fontWeight: 'bold',
+                                                    color: '#06B6D4',
+                                                    show: true,
+                                                    position: 'bottom'
+                                                },
+                                                symbol: 'circle',
+                                                symbolSize: 18
+                                            });
+                                        }
+                                        
+                                        // A点候选
+                                        const aTime = currentState.a_candidate.beijing_time.split(' ')[1];
+                                        const aIndex = times.indexOf(aTime);
+                                        console.log(`🔍 未完成波峰 A点: ${currentState.a_candidate.beijing_time} -> 时间=${aTime}, 索引=${aIndex}`);
+                                        
+                                        if (aIndex >= 0) {
+                                            points.push({
+                                                name: `未完成-A`,
+                                                value: `A: ${currentState.a_candidate.value.toFixed(1)}%`,
+                                                xAxis: aIndex,
+                                                yAxis: currentState.a_candidate.value,
+                                                itemStyle: {
+                                                    color: '#F59E0B',
+                                                    borderColor: '#fff',
+                                                    borderWidth: 3,
+                                                    opacity: 0.7  // 半透明表示未完成
+                                                },
+                                                label: {
+                                                    formatter: (params) => {
+                                                        return `${params.name}\n${params.value}`;
+                                                    },
+                                                    fontSize: 12,
+                                                    fontWeight: 'bold',
+                                                    color: '#F59E0B',
+                                                    show: true,
+                                                    position: 'top'
+                                                },
+                                                symbol: 'triangle',
+                                                symbolSize: 20
+                                            });
+                                        }
+                                        
+                                        console.log('✅ 未完成B-A波峰标记点添加完成');
+                                    }
+                                    
+                                    console.log('✅ 所有波峰标记点添加完成，总标记点数:', points.length);
                                     
                                     return points;
                                 })(),

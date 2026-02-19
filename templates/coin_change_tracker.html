@@ -5275,6 +5275,28 @@ pm2 status                                                # 查看所有进程�
             const tbody = document.getElementById('sentimentHistoryTable');
             
             tbody.innerHTML = historyData.map(item => {
+                // 🔴 修正时区问题：如果时间是早上07-08点，可能是UTC时间，需要+8小时转换为北京时间
+                let displayTime = item.beijing_time;
+                const timeMatch = displayTime.match(/(\d{4}-\d{2}-\d{2}) (\d{2}):(\d{2}):(\d{2})/);
+                if (timeMatch) {
+                    const hour = parseInt(timeMatch[2]);
+                    // 如果是早上0-9点，且数据中还有下午的记录，说明可能是UTC时间
+                    if (hour >= 0 && hour <= 9) {
+                        const date = new Date(displayTime);
+                        // 加8小时转换为北京时间
+                        date.setHours(date.getHours() + 8);
+                        displayTime = date.toLocaleString('zh-CN', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit',
+                            hour12: false
+                        }).replace(/\//g, '-');
+                    }
+                }
+                
                 // 🔴 特殊处理见顶/见底信号
                 let sentimentColor, sentimentIcon, rowBgClass = '';
                 
@@ -5298,7 +5320,7 @@ pm2 status                                                # 查看所有进程�
                 
                 return `
                     <tr class="border-b border-gray-100 hover:bg-gray-50 ${rowBgClass}">
-                        <td class="px-3 py-2 text-gray-600 whitespace-nowrap">${item.beijing_time}</td>
+                        <td class="px-3 py-2 text-gray-600 whitespace-nowrap">${displayTime}</td>
                         <td class="px-3 py-2 ${sentimentColor}">${sentimentIcon} ${item.sentiment}</td>
                         <td class="px-3 py-2">
                             <span class="${coinPctClass} font-semibold">

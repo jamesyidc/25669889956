@@ -3432,8 +3432,8 @@ data/
             if (takeProfitSwitch) {
                 takeProfitSwitch.checked = false;
                 
-                // 保存设置到服务器
-                await saveTakeProfitStopLossSettings();
+                // 静默保存设置到服务器（不显示提示）
+                await saveTakeProfitStopLossSettings(true);
                 
                 console.log('[止盈警报] 止盈已触发并自动关闭，下次需要手动开启');
             }
@@ -3459,8 +3459,8 @@ data/
             if (stopLossSwitch) {
                 stopLossSwitch.checked = false;
                 
-                // 保存设置到服务器
-                await saveTakeProfitStopLossSettings();
+                // 静默保存设置到服务器（不显示提示）
+                await saveTakeProfitStopLossSettings(true);
                 
                 console.log('[止损警报] 止损已触发并自动关闭，下次需要手动开启');
             }
@@ -6110,10 +6110,10 @@ ${data.sMsg || result.message || ''}`);
         }
         
         // 保存止盈止损设置（到服务器API和JSONL文件，按账户独立存储）
-        async function saveTakeProfitStopLossSettings() {
+        async function saveTakeProfitStopLossSettings(silent = false) {
             const account = accounts.find(acc => acc.id === currentAccount);
             if (!account) {
-                alert('⚠️ 请先选择账户');
+                if (!silent) alert('⚠️ 请先选择账户');
                 return;
             }
             
@@ -6164,7 +6164,10 @@ ${data.sMsg || result.message || ''}`);
                         }
                     }
                     
-                    alert(`✅ 账户「${account.name}」的止盈止损设置已保存到服务器！`);
+                    // 只有在非静默模式下才显示提示
+                    if (!silent) {
+                        alert(`✅ 账户「${account.name}」的止盈止损设置已保存到服务器！`);
+                    }
                     console.log(`✅ 已保存账户 ${account.name} 的止盈止损设置到服务器`, settings);
                     
                     // 更新最大持仓限制显示
@@ -6173,11 +6176,11 @@ ${data.sMsg || result.message || ''}`);
                     // 更新服务器阈值显示
                     updateServerThresholdDisplay(settings);
                 } else {
-                    alert(`❌ 保存失败：${result.error}`);
+                    if (!silent) alert(`❌ 保存失败：${result.error}`);
                     console.error('❌ 保存止盈止损设置失败:', result.error);
                 }
             } catch (e) {
-                alert('❌ 保存失败，请检查网络连接');
+                if (!silent) alert('❌ 保存失败，请检查网络连接');
                 console.error('❌ 保存止盈止损设置异常', e);
             }
         }

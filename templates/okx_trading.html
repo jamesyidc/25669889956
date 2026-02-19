@@ -3509,7 +3509,10 @@ data/
                             <div style="padding: 10px; background: rgba(59, 130, 246, 0.1); border-radius: 6px; margin-bottom: 12px; border: 1px solid #3b82f6;">
                                 <div style="display: flex; align-items: center; justify-content: space-between;">
                                     <span style="color: #1e40af; font-size: 11px; font-weight: 600;">📄 JSONL执行许可</span>
-                                    <span id="jsonlAllowedStatusUpRatio0Top8" style="color: #6b7280; font-size: 11px; font-weight: 600;">⏳ 检查中...</span>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span id="jsonlAllowedStatusUpRatio0Top8" style="color: #6b7280; font-size: 11px; font-weight: 600;">⏳ 检查中...</span>
+                                        <button onclick="resetJsonlAllowedUpRatio0Top8()" style="padding: 2px 8px; background: #10b981; color: white; border: none; border-radius: 4px; font-size: 10px; cursor: pointer; font-weight: 600;">🔄 重置</button>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -3599,7 +3602,10 @@ data/
                             <div style="padding: 10px; background: rgba(239, 68, 68, 0.1); border-radius: 6px; margin-bottom: 12px; border: 1px solid #ef4444;">
                                 <div style="display: flex; align-items: center; justify-content: space-between;">
                                     <span style="color: #991b1b; font-size: 11px; font-weight: 600;">📄 JSONL执行许可</span>
-                                    <span id="jsonlAllowedStatusUpRatio0Bottom8" style="color: #6b7280; font-size: 11px; font-weight: 600;">⏳ 检查中...</span>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span id="jsonlAllowedStatusUpRatio0Bottom8" style="color: #6b7280; font-size: 11px; font-weight: 600;">⏳ 检查中...</span>
+                                        <button onclick="resetJsonlAllowedUpRatio0Bottom8()" style="padding: 2px 8px; background: #10b981; color: white; border: none; border-radius: 4px; font-size: 10px; cursor: pointer; font-weight: 600;">🔄 重置</button>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -7661,6 +7667,102 @@ ${data.sMsg || result.message || ''}`);
             } catch (e) {
                 alert('❌ 重置失败，请检查网络连接');
                 console.error('重置JSONL许可失败:', e);
+            }
+        }
+        
+        // 重置涨幅前8名策略的JSONL执行许可
+        async function resetJsonlAllowedUpRatio0Top8() {
+            const account = accounts.find(acc => acc.id === currentAccount);
+            if (!account) {
+                alert('❌ 请先选择账户');
+                return;
+            }
+            
+            const strategyType = 'top8';
+            
+            // 获取当前上涨占比
+            const upRatioEl = document.getElementById('currentUpRatioTop8');
+            const currentUpRatio = upRatioEl ? parseFloat(upRatioEl.textContent) : 0;
+            
+            if (!confirm(`🔄 确认重置涨幅前8名策略的执行许可？\n\n这将允许策略再次执行。\n\n账户: ${account.name}\n策略类型: 涨幅前8名\n当前上涨占比: ${currentUpRatio}%`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/okx-trading/set-allowed-upratio0/${account.id}/${strategyType}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        allowed: true,
+                        reason: 'User manually reset execution permission for top8 strategy',
+                        up_ratio: currentUpRatio
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('✅ 重置成功！涨幅前8名策略现在可以执行了。');
+                    // 刷新JSONL状态显示
+                    const jsonlStatusEl = document.getElementById('jsonlAllowedStatusUpRatio0Top8');
+                    if (jsonlStatusEl) {
+                        jsonlStatusEl.textContent = '✅ 允许执行';
+                        jsonlStatusEl.style.color = '#10b981';
+                    }
+                } else {
+                    alert(`❌ 重置失败: ${result.error}`);
+                }
+            } catch (e) {
+                alert('❌ 重置失败，请检查网络连接');
+                console.error('重置涨幅前8名策略JSONL许可失败:', e);
+            }
+        }
+        
+        // 重置涨幅后8名策略的JSONL执行许可
+        async function resetJsonlAllowedUpRatio0Bottom8() {
+            const account = accounts.find(acc => acc.id === currentAccount);
+            if (!account) {
+                alert('❌ 请先选择账户');
+                return;
+            }
+            
+            const strategyType = 'bottom8';
+            
+            // 获取当前上涨占比
+            const upRatioEl = document.getElementById('currentUpRatioBottom8');
+            const currentUpRatio = upRatioEl ? parseFloat(upRatioEl.textContent) : 0;
+            
+            if (!confirm(`🔄 确认重置涨幅后8名策略的执行许可？\n\n这将允许策略再次执行。\n\n账户: ${account.name}\n策略类型: 涨幅后8名\n当前上涨占比: ${currentUpRatio}%`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/okx-trading/set-allowed-upratio0/${account.id}/${strategyType}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        allowed: true,
+                        reason: 'User manually reset execution permission for bottom8 strategy',
+                        up_ratio: currentUpRatio
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('✅ 重置成功！涨幅后8名策略现在可以执行了。');
+                    // 刷新JSONL状态显示
+                    const jsonlStatusEl = document.getElementById('jsonlAllowedStatusUpRatio0Bottom8');
+                    if (jsonlStatusEl) {
+                        jsonlStatusEl.textContent = '✅ 允许执行';
+                        jsonlStatusEl.style.color = '#10b981';
+                    }
+                } else {
+                    alert(`❌ 重置失败: ${result.error}`);
+                }
+            } catch (e) {
+                alert('❌ 重置失败，请检查网络连接');
+                console.error('重置涨幅后8名策略JSONL许可失败:', e);
             }
         }
         

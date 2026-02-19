@@ -2698,6 +2698,7 @@ data/
                             • 统一使用10倍杠杆、市价单<br>
                             • 空单策略：做空涨幅高的币种<br>
                             • 多单策略：做多涨幅高的币种<br>
+                            • <strong style="color: #10b981;">🔒 单笔限额：<span id="maxOrderSizeDisplay1">5</span> USDT</strong> (超出部分自动截断)<br>
                             • <span style="color: #fbbf24;">⚠️ 请先收藏至少6个常用币</span>
                         </div>
                     </div>
@@ -2759,6 +2760,7 @@ data/
                             • <strong style="color: #fbbf24;">多单策略：</strong>预期超跌反弹，开多单等待回升<br>
                             • <strong style="color: #fbbf24;">空单策略：</strong>预期趋势延续，做空继续下跌<br>
                             • 统一使用10倍杠杆、市价单<br>
+                            • <strong style="color: #10b981;">🔒 单笔限额：<span id="maxOrderSizeDisplay2">5</span> USDT</strong> (超出部分自动截断)<br>
                             • <span style="color: #fef3c7;">⚠️ 跌幅大的币种波动极高，风险极大！</span>
                         </div>
                     </div>
@@ -2905,6 +2907,7 @@ data/
                             • 每个币种平均分配开仓金额，统一使用10倍杠杆<br>
                             • <strong>涨幅前8：</strong>针对表现最强的币种<br>
                             • <strong>涨幅后8：</strong>针对跌幅最大的币种（高风险）<br>
+                            • <strong style="color: #10b981;">🔒 单笔限额：<span id="maxOrderSizeDisplay3">5</span> USDT</strong> (超出部分自动截断)<br>
                             • <span style="color: #fbbf24;">⚠️ 请先收藏至少8个常用币</span>
                         </div>
                     </div>
@@ -5453,6 +5456,7 @@ data/
                 `  • 订单类型: 市价单\n\n` +
                 `【资金分配】\n` +
                 `  • 每个币保证金: ${marginPerCoin} USDT (${percentPerCoin}%)\n` +
+                `  • 🔒 单笔上限: ${maxOrderSize} USDT (超出截断)\n` +
                 `  • 每个币合约价值: ${contractValuePerCoin} USDT\n` +
                 `  • 总保证金: ${totalMargin} USDT\n` +
                 `  • 总合约价值: ${totalContractValue} USDT\n` +
@@ -5478,6 +5482,7 @@ data/
                 `  • 订单类型: 市价单\n\n` +
                 `【资金分配】\n` +
                 `  • 每个币保证金: ${marginPerCoin} USDT (${percentPerCoin}%)\n` +
+                `  • 🔒 单笔上限: ${maxOrderSize} USDT (超出截断)\n` +
                 `  • 每个币合约价值: ${contractValuePerCoin} USDT\n` +
                 `  • 总保证金: ${totalMargin} USDT\n` +
                 `  • 总合约价值: ${totalContractValue} USDT\n` +
@@ -5659,6 +5664,7 @@ data/
                 `  • 订单类型: 市价单\n\n` +
                 `【资金分配】\n` +
                 `  • 每个币保证金: ${marginPerCoin} USDT (${percentPerCoin}%)\n` +
+                `  • 🔒 单笔上限: ${maxOrderSize} USDT (超出截断)\n` +
                 `  • 每个币合约价值: ${contractValuePerCoin} USDT\n` +
                 `  • 总保证金: ${totalMargin} USDT\n` +
                 `  • 总合约价值: ${totalContractValue} USDT\n` +
@@ -7099,6 +7105,14 @@ ${data.sMsg || result.message || ''}`);
                     account.positionSize = 1.5;  // 固定为1.5%
                     account.maxOrderSize = settings.maxOrderSize || 5;
                     console.log(`✅ 账户配置已同步: positionSize=1.5% (固定), maxOrderSize=${account.maxOrderSize}U`);
+                    
+                    // 🆕 更新页面上的单笔限额显示
+                    const maxOrderSizeValue = settings.maxOrderSize || 5;
+                    ['maxOrderSizeDisplay1', 'maxOrderSizeDisplay2', 'maxOrderSizeDisplay3'].forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.textContent = maxOrderSizeValue;
+                    });
+                    console.log(`✅ 单笔限额显示已更新: ${maxOrderSizeValue} USDT`);
                     
                     const switchEl = document.getElementById('autoTradeSwitch');
                     if (switchEl) {

@@ -2580,7 +2580,7 @@ pm2 status                                                # 查看所有进程�
                         <!-- 当前情绪 -->
                         <div class="bg-white rounded-lg p-4 shadow-md border-l-4" id="sentimentCard">
                             <div class="text-sm text-gray-600 mb-2">当前情绪</div>
-                            <div id="currentSentiment" class="text-3xl font-bold mb-2">--</div>
+                            <div id="currentSentiment" class="text-2xl font-bold mb-2">--</div>
                             <div id="sentimentReason" class="text-xs text-gray-500">--</div>
                             <div class="text-xs text-gray-400 mt-2">
                                 <i class="far fa-clock mr-1"></i>
@@ -5142,26 +5142,24 @@ pm2 status                                                # 查看所有进程�
             const sentimentReason = document.getElementById('sentimentReason');
             const sentimentTime = document.getElementById('sentimentTime');
             
-            let sentimentText = data.sentiment;
+            let sentimentText = data.sentiment || '--';  // 保留完整情绪文本
             let sentimentColor = '';
             let borderColor = '';
             
+            // 根据情绪类型设置颜色和边框
             if (data.sentiment_type === 'bullish') {
-                sentimentText = '🐂 偏多';
                 sentimentColor = 'text-green-600';
                 borderColor = 'border-green-500';
             } else if (data.sentiment_type === 'bearish') {
-                sentimentText = '🐻 偏空';
                 sentimentColor = 'text-red-600';
                 borderColor = 'border-red-500';
             } else {
-                sentimentText = '😐 中性';
                 sentimentColor = 'text-gray-600';
                 borderColor = 'border-gray-400';
             }
             
             currentSentiment.textContent = sentimentText;
-            currentSentiment.className = `text-3xl font-bold mb-2 ${sentimentColor}`;
+            currentSentiment.className = `text-2xl font-bold mb-2 ${sentimentColor}`;  // 从text-3xl改为text-2xl
             sentimentCard.className = `bg-white rounded-lg p-4 shadow-md border-l-4 ${borderColor}`;
             sentimentReason.textContent = data.reason || '--';
             sentimentTime.textContent = data.beijing_time || '--';

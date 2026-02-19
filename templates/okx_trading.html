@@ -7424,22 +7424,11 @@ ${data.sMsg || result.message || ''}`);
                 if (result.success) {
                     console.log(`✅ 已保存账户 ${account.name} 的自动交易策略设置到服务器`, settings);
                     
-                    // ⚠️ 如果开关被打开，写入JSONL设置allowed=true
-                    if (settings.enabled) {
-                        console.log('📝 用户开启策略，写入JSONL：设置allowed=true');
-                        const jsonlResponse = await fetch(`/api/okx-trading/set-allowed/${account.id}/${settings.strategyType}`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                allowed: true,
-                                reason: 'User enabled strategy',
-                                triggerPrice: settings.triggerPrice,
-                                strategyType: settings.strategyType
-                            })
-                        });
-                        const jsonlResult = await jsonlResponse.json();
-                        console.log('📄 JSONL写入结果:', jsonlResult);
-                    }
+                    // ⚠️ 注意：不要在打开开关时自动写入allowed=true
+                    // allowed状态只应该由以下方式修改：
+                    // 1. 策略执行成功后自动设置为false
+                    // 2. 用户手动点击"重置执行许可"按钮设置为true
+                    // 如果在打开开关时就写入allowed=true，会导致策略反复触发！
                     
                     // 更新对应的状态显示
                     updateAutoTradeStatus(settings.enabled, settings.lastExecutedTime, suffix);

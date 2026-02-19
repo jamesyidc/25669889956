@@ -6,7 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>OKX实盘交易系统 v2.6.2</title>
+    <title>OKX实盘交易系统 v2.6.3</title>
     <!-- 版本: 2026-02-19 - 紧急修复批量开仓金额错误 -->
     <style>
         * {
@@ -1392,9 +1392,9 @@
                 <!-- 1. 系统概述 -->
                 <div style="background: white; padding: 10px; border-radius: 6px; margin-bottom: 10px; border-left: 4px solid #0ea5e9;">
                     <h4 style="margin: 0 0 8px 0; color: #0369a1; font-size: 12px;">🎯 一、系统概述</h4>
-                    <p style="margin: 4px 0;"><strong>系统名称：</strong>OKX 实盘交易系统 v2.6.2</p>
-                    <p style="margin: 4px 0;"><strong>最新更新：</strong>2026-02-19 - 🔥 v2.6.2 新增功能：市场情绪止盈（见顶信号/顶部背离自动平多单）</p>
-                    <p style="margin: 4px 0;"><strong>历史更新：</strong>2026-02-17 - 🎉 v2.6 新增：自动止盈止损系统（后台监控+Telegram通知+最大持仓保护）</p>
+                    <p style="margin: 4px 0;"><strong>系统名称：</strong>OKX 实盘交易系统 v2.6.3</p>
+                    <p style="margin: 4px 0;"><strong>最新更新：</strong>2026-02-19 - 🔧 v2.6.3 修复：移除止盈止损的5U持仓限制检查（止盈止损不受开仓金额限制）</p>
+                    <p style="margin: 4px 0;"><strong>历史更新：</strong>2026-02-19 - 🔥 v2.6.2 新增：市场情绪止盈（见顶信号/顶部背离自动平多单）</p>
                     <p style="margin: 4px 0;"><strong>核心功能：</strong></p>
                     <ul style="margin: 4px 0 0 20px; padding: 0;">
                         <li>多账户管理（主账户、fangfang12、poit、marks）</li>
@@ -1419,7 +1419,7 @@
                             <ul style="margin: 2px 0 0 20px;">
                                 <li>✅ <strong>按账户独立配置：</strong>每个账户独立JSONL文件（*_tpsl.jsonl）</li>
                                 <li>✅ <strong>按持仓价格百分比：</strong>止盈12%，止损-8%（可自定义）</li>
-                                <li>✅ <strong>最大持仓价值保护：</strong>默认5U限制，超过视为错误订单，跳过止盈止损</li>
+                                <li>✅ <strong>开仓金额限制：</strong>5U限制仅用于开仓风控，止盈止损不受此限制</li>
                                 <li>✅ <strong>防重复执行：</strong>每个持仓只执行一次，记录在*_execution.jsonl</li>
                                 <li>✅ <strong>Telegram通知：</strong>订单设置成功/失败/异常大单均发送通知</li>
                                 <li>✅ <strong>后台自动运行：</strong>PM2守护进程，每60秒检查，无需人工确认</li>
@@ -3108,20 +3108,22 @@ data/
                         </div>
                     </div>
                     
-                    <!-- 最大持仓限制显示 -->
+                    <!-- 最大开仓保证金限制显示 -->
                     <div style="margin-top: 12px; padding: 10px; background: rgba(251, 191, 36, 0.1); border-radius: 8px; border: 1px solid #f59e0b;">
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                            <span style="color: #92400e; font-weight: 600; font-size: 13px;">🛡️ 单笔最大持仓限制</span>
+                            <span style="color: #92400e; font-weight: 600; font-size: 13px;">🛡️ 单笔最大开仓保证金</span>
                             <span style="font-size: 18px; font-weight: 700; color: #92400e;" id="maxPositionValueDisplay">5.0 USDT</span>
                         </div>
                         <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
                             <input type="number" id="maxPositionValueInput" value="5.0" step="0.5" min="1" 
                                    style="flex: 1; padding: 6px 10px; border: 1px solid #f59e0b; border-radius: 6px; font-size: 13px;"
-                                   placeholder="最大持仓金额">
+                                   placeholder="最大开仓保证金">
                             <span style="color: #92400e; font-size: 13px; font-weight: 600;">USDT</span>
                         </div>
                         <div style="font-size: 11px; color: #92400e; margin-top: 6px;">
-                            超过此金额的持仓将被视为异常订单，不执行止盈止损。建议设置为账户余额×1.5%×1.5（例如300U×1.5%×1.5≈6.75U）
+                            ⚠️ <strong>重要说明：</strong>此限制仅用于开仓风控，限制的是<strong>单笔开仓保证金</strong>（你花的钱），不是持仓价值。<br>
+                            📌 止盈止损操作不受此限制，任何大小的持仓都可以正常止盈止损。<br>
+                            💡 建议设置为账户余额×1.5%×1.5（例如300U×1.5%×1.5≈6.75U）
                         </div>
                     </div>
                     

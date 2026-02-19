@@ -22683,7 +22683,7 @@ def api_price_position_latest():
         from datetime import datetime
         
         # 构建今天的JSONL文件路径
-        today = datetime.now().strftime('%Y%m%d')
+        today = datetime.now(timezone(timedelta(hours=8))).strftime('%Y%m%d')
         jsonl_path = f'/home/user/webapp/data/price_position/price_position_{today}.jsonl'
         
         if not os.path.exists(jsonl_path):
@@ -22711,7 +22711,7 @@ def api_price_position_list():
         from datetime import datetime
         
         # 构建今天的JSONL文件路径
-        today = datetime.now().strftime('%Y%m%d')
+        today = datetime.now(timezone(timedelta(hours=8))).strftime('%Y%m%d')
         jsonl_path = f'/home/user/webapp/data/price_position/price_position_{today}.jsonl'
         
         if not os.path.exists(jsonl_path):
@@ -24666,15 +24666,16 @@ def api_backup_delete():
 def api_market_sentiment_latest():
     """获取最新的市场情绪数据（支持limit参数返回多条）"""
     try:
-        from datetime import datetime
+        from datetime import datetime, timezone, timedelta
         from pathlib import Path
         import json
         
         # 获取limit参数（默认1条）
         limit = int(request.args.get('limit', 1))
         
-        # 构建今天的JSONL文件路径
-        today = datetime.now().strftime('%Y%m%d')
+        # 构建今天的JSONL文件路径（使用北京时间）
+        beijing_tz = timezone(timedelta(hours=8))
+        today = datetime.now(beijing_tz).strftime('%Y%m%d')
         jsonl_path = Path(f'/home/user/webapp/data/market_sentiment/market_sentiment_{today}.jsonl')
         
         if not jsonl_path.exists():
@@ -24731,7 +24732,7 @@ def api_market_sentiment_history():
         import json
         
         # 获取查询参数
-        date_str = request.args.get('date', datetime.now().strftime('%Y%m%d'))
+        date_str = request.args.get('date', datetime.now(timezone(timedelta(hours=8))).strftime('%Y%m%d'))
         limit = int(request.args.get('limit', 100))
         
         # 构建JSONL文件路径
@@ -24778,7 +24779,7 @@ def api_market_sentiment_stats():
         from collections import Counter
         
         # 获取查询参数
-        date_str = request.args.get('date', datetime.now().strftime('%Y%m%d'))
+        date_str = request.args.get('date', datetime.now(timezone(timedelta(hours=8))).strftime('%Y%m%d'))
         
         # 构建JSONL文件路径
         jsonl_path = Path(f'/home/user/webapp/data/market_sentiment/market_sentiment_{date_str}.jsonl')

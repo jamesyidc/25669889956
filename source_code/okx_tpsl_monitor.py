@@ -22,6 +22,7 @@ from pathlib import Path
 WEBAPP_DIR = Path(__file__).resolve().parent.parent
 SETTINGS_DIR = WEBAPP_DIR / 'data' / 'okx_tpsl_settings'
 ACCOUNTS_CONFIG = WEBAPP_DIR / 'data' / 'okx_auto_strategy'
+SENTIMENT_DIR = WEBAPP_DIR / 'data' / 'market_sentiment'  # 市场情绪数据目录
 
 # OKX API
 OKX_BASE_URL = 'https://www.okx.com'
@@ -42,6 +43,26 @@ except Exception as e:
     TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')
     TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID', '')
     TELEGRAM_ENABLED = bool(TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID)
+
+def get_latest_market_sentiment():
+    """获取最新的市场情绪信号"""
+    try:
+        from datetime import datetime as dt, timezone, timedelta
+        today = dt.now(timezone(timedelta(hours=8))).strftime('%Y%m%d')
+        sentiment_file = SENTIMENT_DIR / f'market_sentiment_{today}.jsonl'
+        
+        if not sentiment_file.exists():
+            return None
+        
+        # 读取最后一条记录
+        with open(sentiment_file, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+            if lines:
+                last_record = json.loads(lines[-1].strip())
+                return last_record
+    except Exception as e:
+        print(f"⚠️  获取市场情绪失败: {e}")
+    return None
 
 class TPSLMonitor:
     def __init__(self, account_id):
@@ -183,7 +204,7 @@ class TPSLMonitor:
             print(f"[{self.account_id}] ⚠️  获取持仓异常: {e}")
             return []
     
-    def execute_tpsl(self, credentials, position, trigger_type, settings):
+    def execute_tpsl(self, credentials, position, trigger_type, settings, sentiment_data=None):
         """执行止盈或止损"""
         inst_id = position.get('instId', '')
         pos_side = position.get('posSide', '')
@@ -269,9 +290,14 @@ class TPSLMonitor:
                     current_pnl = ((avg_px - mark_px) / avg_px) * 100
                 
                 # 发送Telegram通知
-                trigger_name = '止盈' if trigger_type == 'take_profit' else '止损'
+                if trigger_type == 'sentiment_take_profit':
+                    trigger_name = '市场情绪止盈'
+                    emoji = '🔥'
+                else:
+                    trigger_name = '止盈' if trigger_type == 'take_profit' else '止损'
+                    emoji = '🎯' if trigger_type == 'take_profit' else '🛑'
+                
                 side_name = '多单' if pos_side == 'long' else '空单'
-                emoji = '🎯' if trigger_type == 'take_profit' else '🛑'
                 
                 tg_message = (
                     f"{emoji} <b>OKX {trigger_name}触发</b>\n\n"
@@ -282,6 +308,20 @@ class TPSLMonitor:
                     f"🎲 触发价: <b>{trigger_px:.2f} USDT</b>\n"
                     f"📊 当前价: <b>{mark_px:.2f} USDT</b>\n"
                     f"💹 当前盈亏: <b>{current_pnl:+.2f}%</b>\n"
+                )
+                
+                # 如果是市场情绪止盈，添加情绪信息
+                if trigger_type == 'sentiment_take_profit' and sentiment_data:
+                    tg_message += (
+                        f"\n🔥 <b>市场情绪信号</b>\n"
+                        f"📊 信号: <b>{sentiment_data.get('sentiment', '')}</b>\n"
+                        f"⏰ 时间: {sentiment_data.get('beijing_time', '')}\n"
+                        f"💡 理由: {sentiment_data.get('reason', '')}\n"
+                        f"📉 币涨跌: {sentiment_data.get('coin_data', {}).get('change_pct', 0):.2f}%\n"
+                        f"📊 RSI变化: {sentiment_data.get('rsi_data', {}).get('change_pct', 0):.2f}%\n\n"
+                    )
+                
+                tg_message += (
                     f"✅ 状态: <b>{trigger_name}订单已设置</b>\n\n"
                     f"⏰ {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
                     f"ℹ️ 等待市场价格触发平仓..."
@@ -345,6 +385,26 @@ class TPSLMonitor:
         max_position_value = float(settings.get('max_position_value_usdt', 9999999))
         print(f"[{self.account_id}] 🛡️  最大单笔限制: {max_position_value} USDT")
         
+        # 🔥 检查市场情绪止盈
+        sentiment_triggered = False
+        latest_sentiment = None
+        if settings.get('sentiment_take_profit_enabled', False):
+            latest_sentiment = get_latest_market_sentiment()
+            if latest_sentiment:
+                sentiment_text = latest_sentiment.get('sentiment', '')
+                trigger_signals = settings.get('sentiment_signals', ['见顶信号', '顶部背离'])
+                
+                # 检查是否匹配触发信号
+                if any(signal in sentiment_text for signal in trigger_signals):
+                    sentiment_triggered = True
+                    print(f"[{self.account_id}] 🔥 市场情绪止盈触发: {sentiment_text}")
+                    print(f"[{self.account_id}]    时间: {latest_sentiment.get('beijing_time')}")
+                    print(f"[{self.account_id}]    理由: {latest_sentiment.get('reason', '')}")
+                else:
+                    print(f"[{self.account_id}] 💚 市场情绪正常: {sentiment_text}")
+            else:
+                print(f"[{self.account_id}] ⚠️  未获取到市场情绪数据")
+        
         # 5. 检查每个持仓
         for pos in positions:
             inst_id = pos.get('instId', '')
@@ -388,6 +448,16 @@ class TPSLMonitor:
                 pnl_percent = ((avg_px - mark_px) / avg_px) * 100
             
             print(f"[{self.account_id}] 📊 {inst_id} {pos_side}: 开仓={avg_px}, 当前={mark_px}, 价值={position_value_usdt:.2f}U, 盈亏={pnl_percent:.2f}%")
+            
+            # 🔥 优先检查市场情绪止盈（仅对多单有效）
+            if sentiment_triggered and pos_side == 'long':
+                target_position_side = settings.get('sentiment_position_side', 'long')
+                if pos_side == target_position_side:
+                    if not self.check_executed(inst_id, pos_side, 'sentiment_take_profit'):
+                        print(f"[{self.account_id}] 🔥 触发市场情绪止盈: {latest_sentiment.get('sentiment')} - 平掉多单")
+                        result = self.execute_tpsl(credentials, pos, 'sentiment_take_profit', settings, latest_sentiment)
+                        self.record_execution(inst_id, pos_side, 'sentiment_take_profit', result)
+                        continue  # 已执行市场情绪止盈，跳过常规止盈止损检查
             
             # 检查止盈
             if settings.get('take_profit_enabled', False):

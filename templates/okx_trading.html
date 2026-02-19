@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>OKX实盘交易系统 v2.0</title>
-    <!-- 版本: 2026-02-13 - 添加加载进度显示 -->
+    <title>OKX实盘交易系统 v2.6.1</title>
+    <!-- 版本: 2026-02-19 - 紧急修复批量开仓金额错误 -->
     <style>
         * {
             margin: 0;
@@ -1307,11 +1307,47 @@
             </div>
             <div id="systemArchitecture" style="margin-top: 12px; max-height: 500px; overflow-y: auto; color: #0c4a6e; font-size: 11px; line-height: 1.8;">
                 
+                <!-- 🔴 重要更新通知 -->
+                <div style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); padding: 12px; border-radius: 6px; margin-bottom: 12px; border: 2px solid #dc2626; box-shadow: 0 2px 8px rgba(220, 38, 38, 0.2);">
+                    <h4 style="margin: 0 0 8px 0; color: #991b1b; font-size: 13px; font-weight: 800;">🚨 重要Bug修复（2026-02-19）</h4>
+                    <div style="background: white; padding: 10px; border-radius: 4px; margin-bottom: 8px;">
+                        <p style="margin: 0 0 6px 0; font-weight: 700; color: #b91c1c;">🐛 问题描述：</p>
+                        <ul style="margin: 4px 0 0 20px; padding: 0; color: #7f1d1d;">
+                            <li><strong>现象：</strong>批量开仓金额异常，单个持仓价值超出预期（如设置5U限额，实际开仓42.63U）</li>
+                            <li><strong>根因：</strong>前端下单时传递的是 <code>contractValuePerCoin</code>（合约价值 = 保证金×10），而非 <code>marginPerCoin</code>（保证金）</li>
+                            <li><strong>后果：</strong>实际开仓金额是预期的10倍，且后端风控检查因缺少 <code>maxOrderSize</code> 参数而失效</li>
+                        </ul>
+                    </div>
+                    <div style="background: white; padding: 10px; border-radius: 4px; margin-bottom: 8px;">
+                        <p style="margin: 0 0 6px 0; font-weight: 700; color: #047857;">✅ 修复方案：</p>
+                        <ul style="margin: 4px 0 0 20px; padding: 0; color: #065f46;">
+                            <li><strong>前端修复：</strong>将下单参数 <code>sz</code> 改为使用 <code>marginPerCoin</code>（保证金金额）</li>
+                            <li><strong>风控增强：</strong>新增 <code>maxOrderSize</code> 参数传递给后端，实现双重风控检查</li>
+                            <li><strong>限额计算：</strong>每个币保证金 = <code>Math.min(余额×百分比, maxOrderSize)</code>，确保单笔不超限</li>
+                            <li><strong>影响范围：</strong>修复了 <code>batchOrder</code>、<code>batchOrderTop8</code>、<code>batchOrderBottom8</code> 三个函数</li>
+                        </ul>
+                    </div>
+                    <div style="background: #f0fdfa; padding: 10px; border-radius: 4px; border-left: 3px solid #14b8a6;">
+                        <p style="margin: 0 0 6px 0; font-weight: 700; color: #0f766e;">🔒 风控保障（修复后）：</p>
+                        <ul style="margin: 4px 0 0 20px; padding: 0; color: #0f766e;">
+                            <li><strong>单笔限额：</strong>每次开仓单个订单不超过配置限额（默认5 USDT）</li>
+                            <li><strong>前端验证：</strong><code>Math.min(余额×%, maxOrderSize)</code> 确保不超限</li>
+                            <li><strong>后端验证：</strong>服务器二次检查，超限直接拒绝并返回错误</li>
+                            <li><strong>多次开仓：</strong>允许对同一币种多次开仓（正常累积持仓），但每次单笔必须≤限额</li>
+                            <li><strong>示例：</strong>限额5U，开3次仓 → 每次≤5U，累计持仓≤15U（符合预期）</li>
+                        </ul>
+                    </div>
+                    <p style="margin: 8px 0 0 0; font-size: 10px; color: #7f1d1d; font-weight: 600;">
+                        ⚠️ 建议：如有超额持仓（如XRP 42.63U），请手动平仓后重新测试修复后的代码。
+                    </p>
+                </div>
+                
                 <!-- 1. 系统概述 -->
                 <div style="background: white; padding: 10px; border-radius: 6px; margin-bottom: 10px; border-left: 4px solid #0ea5e9;">
                     <h4 style="margin: 0 0 8px 0; color: #0369a1; font-size: 12px;">🎯 一、系统概述</h4>
-                    <p style="margin: 4px 0;"><strong>系统名称：</strong>OKX 实盘交易系统 v2.6</p>
-                    <p style="margin: 4px 0;"><strong>版本更新：</strong>2026-02-17 - 🎉 v2.6 新增：自动止盈止损系统（后台监控+Telegram通知+最大持仓保护）</p>
+                    <p style="margin: 4px 0;"><strong>系统名称：</strong>OKX 实盘交易系统 v2.6.1</p>
+                    <p style="margin: 4px 0;"><strong>最新更新：</strong>2026-02-19 - 🔴 v2.6.1 紧急修复：批量开仓金额错误（sz参数使用保证金而非合约价值，新增后端风控）</p>
+                    <p style="margin: 4px 0;"><strong>历史更新：</strong>2026-02-17 - 🎉 v2.6 新增：自动止盈止损系统（后台监控+Telegram通知+最大持仓保护）</p>
                     <p style="margin: 4px 0;"><strong>核心功能：</strong></p>
                     <ul style="margin: 4px 0 0 20px; padding: 0;">
                         <li>多账户管理（主账户、fangfang12、poit、marks）</li>
@@ -1351,7 +1387,14 @@
                     </ul>
                     
                     <div style="margin: 10px 0; padding: 8px; background: #dcfce7; border-radius: 4px; border-left: 3px solid #16a34a;">
-                        <p style="margin: 0; font-weight: 600; color: #15803d;">🎯 v2.6 核心升级亮点（2026-02-17）：</p>
+                        <p style="margin: 0; font-weight: 600; color: #15803d;">🎯 v2.6.1 紧急修复（2026-02-19）：</p>
+                        <ul style="margin: 4px 0 0 20px; padding: 0; color: #166534;">
+                            <li><strong>修复1：</strong>批量开仓金额错误 - sz参数改用marginPerCoin（保证金）而非contractValuePerCoin（合约价值）</li>
+                            <li><strong>修复2：</strong>风控检查失效 - 新增maxOrderSize参数传递，后端实现双重验证</li>
+                            <li><strong>修复3：</strong>单笔限额保障 - 前端Math.min计算 + 后端二次检查，确保不超限</li>
+                            <li><strong>影响：</strong>修复前单笔金额是预期的10倍（如配置5U实际开50U合约价值），现已修正</li>
+                        </ul>
+                        <p style="margin: 8px 0 0 0; font-weight: 600; color: #15803d;">🎯 v2.6 核心升级亮点（2026-02-17）：</p>
                         <ul style="margin: 4px 0 0 20px; padding: 0; color: #166534;">
                             <li><strong>新增1：</strong>自动止盈止损系统 - 后台每60秒自动检查，无需人工确认</li>
                             <li><strong>新增2：</strong>最大持仓价值保护 - 默认5U限制，防止错误开单触发止盈止损</li>

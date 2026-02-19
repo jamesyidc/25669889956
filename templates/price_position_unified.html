@@ -1040,6 +1040,171 @@
                     </div>
                 </div>
 
+                <!-- 🚨 故障排查与预防措施（重要！）(2026-02-19) -->
+                <div style="margin-bottom: 30px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(251, 146, 60, 0.15)); padding: 25px; border-radius: 12px; border: 2px solid rgba(245, 158, 11, 0.5);">
+                    <h2 style="color: #fbbf24; font-size: 1.6em; margin-bottom: 15px; border-bottom: 2px solid #fbbf24; padding-bottom: 10px;">
+                        🚨 故障排查与预防措施 - 避免"只有一个数据点"问题 (2026-02-19)
+                    </h2>
+                    
+                    <div style="background: rgba(239, 68, 68, 0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #ef4444;">
+                        <h3 style="color: #ef4444; margin-bottom: 10px;">🐛 问题现象</h3>
+                        <p style="margin-bottom: 10px;"><strong style="color: #fbbf24;">用户反馈：</strong>"为什么 price-position 页面只显示 0 点一个数据点？"</p>
+                        <p style="margin-bottom: 10px;"><strong style="color: #ef4444;">现象描述：</strong></p>
+                        <ul style="line-height: 2; margin-left: 20px;">
+                            <li>页面图表只有凌晨一个数据点，无法显示完整时间线</li>
+                            <li>JSONL 文件 <code>price_position_20260219.jsonl</code> 只有 1 条记录</li>
+                            <li>采集器 <code>price-position-collector</code> 看起来在 PM2 中显示 "online"</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #f59e0b;">
+                        <h3 style="color: #f59e0b; margin-bottom: 10px;">🔍 根本原因分析</h3>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.9em; margin-top: 10px;">
+                            <thead>
+                                <tr style="background: rgba(245, 158, 11, 0.2);">
+                                    <th style="padding: 10px; border: 1px solid rgba(255,255,255,0.1); text-align: left;">时间</th>
+                                    <th style="padding: 10px; border: 1px solid rgba(255,255,255,0.1); text-align: left;">事件</th>
+                                    <th style="padding: 10px; border: 1px solid rgba(255,255,255,0.1); text-align: left;">结果</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="padding: 10px; border: 1px solid rgba(255,255,255,0.1);">06:16:22</td>
+                                    <td style="padding: 10px; border: 1px solid rgba(255,255,255,0.1);">采集器成功启动并采集第一批数据</td>
+                                    <td style="padding: 10px; border: 1px solid rgba(255,255,255,0.1); color: #10b981;">✅ 生成 1 条记录</td>
+                                </tr>
+                                <tr style="background: rgba(255,255,255,0.02);">
+                                    <td style="padding: 10px; border: 1px solid rgba(255,255,255,0.1);">06:19:22</td>
+                                    <td style="padding: 10px; border: 1px solid rgba(255,255,255,0.1);">采集器尝试第二次采集</td>
+                                    <td style="padding: 10px; border: 1px solid rgba(255,255,255,0.1); color: #ef4444;">❌ <code>ModuleNotFoundError: No module named 'ccxt'</code></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 10px; border: 1px solid rgba(255,255,255,0.1);">06:19 - 14:16</td>
+                                    <td style="padding: 10px; border: 1px solid rgba(255,255,255,0.1);">采集器不断崩溃重启（PM2 显示 online 但实际无法工作）</td>
+                                    <td style="padding: 10px; border: 1px solid rgba(255,255,255,0.1); color: #ef4444;">❌ 无新数据</td>
+                                </tr>
+                                <tr style="background: rgba(255,255,255,0.02);">
+                                    <td style="padding: 10px; border: 1px solid rgba(255,255,255,0.1);">14:16</td>
+                                    <td style="padding: 10px; border: 1px solid rgba(255,255,255,0.1);">发现问题，安装 <code>ccxt</code> 依赖</td>
+                                    <td style="padding: 10px; border: 1px solid rgba(255,255,255,0.1); color: #10b981;">✅ 修复</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <p style="margin-top: 15px; padding: 10px; background: rgba(239, 68, 68, 0.1); border-radius: 6px;">
+                            <strong style="color: #ef4444;">根本原因：</strong>Python 环境缺少 <code>ccxt</code> 模块 → 采集器首次运行成功（已加载模块）→ 下次调用时 import 失败 → PM2 自动重启但每次都崩溃 → 页面只显示第一次采集的数据
+                        </p>
+                        <p style="margin-top: 10px; padding: 10px; background: rgba(245, 158, 11, 0.1); border-radius: 6px;">
+                            <strong style="color: #f59e0b;">注意：</strong>PM2 进程状态显示 "online" 并不代表脚本正常工作！必须检查日志才能发现问题。
+                        </p>
+                    </div>
+                    
+                    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #10b981;">
+                        <h3 style="color: #10b981; margin-bottom: 10px;">✅ 解决方案</h3>
+                        <pre style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 6px; font-size: 0.9em; line-height: 1.6; color: #e0e0e0;">
+<strong style="color: #10b981;"># 步骤 1: 安装缺失的依赖</strong>
+cd /home/user/webapp && pip3 install ccxt pytz
+
+<strong style="color: #10b981;"># 步骤 2: 重启采集器</strong>
+cd /home/user/webapp && pm2 restart price-position-collector
+
+<strong style="color: #10b981;"># 步骤 3: 验证采集器正常运行（检查日志中是否有错误）</strong>
+cd /home/user/webapp && pm2 logs price-position-collector --lines 50
+
+<strong style="color: #10b981;"># 步骤 4: 确认数据正在积累</strong>
+cd /home/user/webapp && wc -l data/price_position/price_position_$(date +%Y%m%d).jsonl
+# 应该看到数字在增加（每3分钟 +1）</pre>
+                    </div>
+                    
+                    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #8b5cf6;">
+                        <h3 style="color: #8b5cf6; margin-bottom: 10px;">🛡️ 预防措施 - 标准化依赖检查流程</h3>
+                        <p style="margin-bottom: 15px;"><strong style="color: #fbbf24;">为避免类似问题再次发生，建立以下检查机制：</strong></p>
+                        
+                        <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                            <h4 style="color: #8b5cf6; margin-bottom: 10px;">📋 1. 每日健康检查清单</h4>
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.85em; margin-top: 10px;">
+                                <thead>
+                                    <tr style="background: rgba(139, 92, 246, 0.2);">
+                                        <th style="padding: 8px; border: 1px solid rgba(255,255,255,0.1); text-align: left;">检查项</th>
+                                        <th style="padding: 8px; border: 1px solid rgba(255,255,255,0.1); text-align: left;">命令</th>
+                                        <th style="padding: 8px; border: 1px solid rgba(255,255,255,0.1); text-align: left;">预期结果</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.1);">PM2 进程状态</td>
+                                        <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.1);"><code>pm2 list | grep price-position</code></td>
+                                        <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.1);">status = online</td>
+                                    </tr>
+                                    <tr style="background: rgba(255,255,255,0.02);">
+                                        <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.1);">⚠️ 日志错误检查</td>
+                                        <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.1);"><code>pm2 logs price-position-collector --lines 20 --nostream</code></td>
+                                        <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.1);">无 Error/Traceback</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.1);">数据积累检查</td>
+                                        <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.1);"><code>wc -l data/price_position/price_position_$(date +%Y%m%d).jsonl</code></td>
+                                        <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.1);">每3分钟 +1 条记录</td>
+                                    </tr>
+                                    <tr style="background: rgba(255,255,255,0.02);">
+                                        <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.1);">最新数据时间</td>
+                                        <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.1);"><code>tail -1 data/price_position/price_position_$(date +%Y%m%d).jsonl | grep -o '"snapshot_time": "[^"]*"'</code></td>
+                                        <td style="padding: 8px; border: 1px solid rgba(255,255,255,0.1);">时间在最近3分钟内</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                            <h4 style="color: #8b5cf6; margin-bottom: 10px;">🔧 2. 依赖管理最佳实践</h4>
+                            <ul style="line-height: 2; margin-left: 20px;">
+                                <li><strong>✓ 创建 requirements.txt：</strong>在项目根目录维护所有 Python 依赖清单</li>
+                                <li><strong>✓ 环境验证脚本：</strong>创建 <code>check_dependencies.py</code> 启动前验证所有依赖</li>
+                                <li><strong>✓ PM2 启动前检查：</strong>在 PM2 配置中添加 <code>interpreter_args</code> 检查模块</li>
+                                <li><strong>✓ 监控告警：</strong>配置 PM2 错误日志告警（Telegram/Email）</li>
+                            </ul>
+                        </div>
+                        
+                        <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px;">
+                            <h4 style="color: #8b5cf6; margin-bottom: 10px;">📝 3. 标准化故障排查流程</h4>
+                            <pre style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 6px; font-size: 0.85em; line-height: 1.6; color: #e0e0e0;">
+<strong style="color: #fbbf24;">当发现页面数据异常时，按以下顺序排查：</strong>
+
+1️⃣ <strong style="color: #10b981;">检查数据文件</strong>
+   wc -l data/price_position/price_position_$(date +%Y%m%d).jsonl
+   → 如果只有 1 条记录，说明采集器有问题
+
+2️⃣ <strong style="color: #10b981;">检查 PM2 状态</strong>
+   pm2 list | grep price-position
+   → status = online 不代表正常！必须检查日志
+
+3️⃣ <strong style="color: #10b981;">检查错误日志（最重要！）</strong>
+   pm2 logs price-position-collector --lines 50 --nostream
+   → 查找 Error、Traceback、ModuleNotFoundError 等关键字
+
+4️⃣ <strong style="color: #10b981;">识别缺失依赖</strong>
+   → 如果看到 "No module named 'xxx'"
+   → pip3 install xxx
+
+5️⃣ <strong style="color: #10b981;">重启并验证</strong>
+   pm2 restart price-position-collector
+   → 等待 3-5 分钟，再次检查日志和数据文件</pre>
+                        </div>
+                    </div>
+                    
+                    <div style="background: rgba(16, 185, 129, 0.1); padding: 15px; border-radius: 8px; border-left: 4px solid #10b981;">
+                        <h3 style="color: #10b981; margin-bottom: 10px;">✅ 当前状态（2026-02-19 14:20）</h3>
+                        <ul style="line-height: 2; margin-left: 20px;">
+                            <li><strong style="color: #10b981;">✓ 采集器已修复：</strong>ccxt 和 pytz 依赖已安装</li>
+                            <li><strong style="color: #10b981;">✓ 进程正常运行：</strong>price-position-collector 状态 online</li>
+                            <li><strong style="color: #10b981;">✓ 数据正常积累：</strong>每 3 分钟生成一条新记录</li>
+                            <li><strong style="color: #10b981;">✓ 预计恢复时间：</strong>1 小时后约 20 个数据点，24 小时后完整 288 个数据点</li>
+                        </ul>
+                        <p style="margin-top: 15px; padding: 10px; background: rgba(16, 185, 129, 0.1); border-radius: 6px; color: #10b981;">
+                            <strong>📌 关键要点：</strong>遇到"只有一个数据点"问题时，第一时间检查 PM2 日志，不要只看进程状态！
+                        </p>
+                    </div>
+                </div>
+
                 <!-- 🔴 V2.0.9 CRITICAL FIX (2026-02-17) - 后台计算系统彻底修复 -->
                 <div style="margin-bottom: 30px; background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.15)); padding: 25px; border-radius: 12px; border: 2px solid rgba(239, 68, 68, 0.5);">
                     <h2 style="color: #f87171; font-size: 1.6em; margin-bottom: 15px; border-bottom: 2px solid #f87171; padding-bottom: 10px;">

@@ -16317,6 +16317,8 @@ def save_okx_auto_strategy(account_id):
             'enabled': bool(data.get('enabled', False)),
             'triggerPrice': float(data.get('triggerPrice', 65000)),
             'strategyType': strategy_type,
+            'positionSize': float(data.get('positionSize', 1.5)),
+            'maxOrderSize': float(data.get('maxOrderSize', 5)),
             'lastExecutedTime': data.get('lastExecutedTime'),
             'executedCount': int(data.get('executedCount', 0)),
             'lastUpdated': datetime.now().strftime('%Y-%m-%d %H:%M:%S')

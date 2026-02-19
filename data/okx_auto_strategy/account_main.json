@@ -5,5 +5,6 @@
   "lastExecutedTime": null,
   "executedCount": 0,
   "lastUpdated": "2026-02-17 04:19:01",
-  "max_order_size": 5
+  "positionSize": 1.5,
+  "maxOrderSize": 5
 }

@@ -4,5 +4,7 @@
   "strategyType": "bottom_performers",
   "lastExecutedTime": "2026/2/18 01:41:31",
   "executedCount": 2,
-  "lastUpdated": "2026-02-18 01:49:48"
+  "lastUpdated": "2026-02-18 01:49:48",
+  "positionSize": 1.5,
+  "maxOrderSize": 5
 }

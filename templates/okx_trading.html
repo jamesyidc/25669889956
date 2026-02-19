@@ -2597,6 +2597,45 @@ data/
                         </div>
                     </div>
                     
+                    <!-- RSI止盈 -->
+                    <div style="margin-top: 10px; padding: 10px; background: rgba(251, 191, 36, 0.1); border-radius: 8px; border: 1px solid #f59e0b;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: #92400e; font-weight: 600; font-size: 13px;">📊 RSI止盈</span>
+                            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+                                <input type="checkbox" id="rsiTakeProfitSwitch" style="opacity: 0; width: 0; height: 0;">
+                                <span class="slider slider-rsi-takeprofit" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px;">
+                                    <style>
+                                        #rsiTakeProfitSwitch:checked + .slider-rsi-takeprofit { background-color: #f59e0b; }
+                                        #rsiTakeProfitSwitch:checked + .slider-rsi-takeprofit:before { transform: translateX(20px); }
+                                        .slider-rsi-takeprofit:before {
+                                            position: absolute;
+                                            content: "";
+                                            height: 18px;
+                                            width: 18px;
+                                            left: 3px;
+                                            bottom: 3px;
+                                            background-color: white;
+                                            transition: .4s;
+                                            border-radius: 50%;
+                                        }
+                                    </style>
+                                </span>
+                            </label>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                            <input type="number" id="rsiTakeProfitThreshold" value="1900" step="10" min="810" max="2700"
+                                   style="flex: 1; padding: 6px 10px; border: 1px solid #f59e0b; border-radius: 6px; font-size: 13px;"
+                                   placeholder="RSI阈值">
+                            <span style="color: #92400e; font-size: 13px; font-weight: 600;">RSI</span>
+                        </div>
+                        <div style="font-size: 11px; color: #92400e; margin-top: 6px;">
+                            当27币RSI之和超过此值时自动平仓全部持仓（范围: 810-2700）
+                        </div>
+                        <div style="margin-top: 8px; padding: 6px; background: rgba(251, 191, 36, 0.15); border-radius: 4px; font-size: 10px; color: #92400e;">
+                            💡 <strong>说明：</strong>使用JSONL执行许可机制。触发后自动设置为不允许执行，需手动重新启用。RSI数据来源：coin-change-tracker页面的27币RSI之和。
+                        </div>
+                    </div>
+                    
                     <!-- 最大持仓限制显示 -->
                     <div style="margin-top: 12px; padding: 10px; background: rgba(251, 191, 36, 0.1); border-radius: 8px; border: 1px solid #f59e0b;">
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
@@ -3671,6 +3710,103 @@ data/
             }
         }
 
+        // RSI止盈监控：检查RSI之和并触发平仓
+        let lastRSICheckValue = null;
+        let lastRSITriggerTime = 0;
+        const RSI_CHECK_COOLDOWN = 300000; // 5分钟冷却时间，防止重复触发
+        
+        async function checkRSITakeProfit() {
+            try {
+                // 检查是否启用RSI止盈
+                const rsiSwitch = document.getElementById('rsiTakeProfitSwitch');
+                if (!rsiSwitch || !rsiSwitch.checked) return;
+                
+                const account = accounts.find(acc => acc.id === currentAccount);
+                if (!account) return;
+                
+                // 检查JSONL执行许可
+                const allowedResponse = await fetch(`/api/okx-trading/check-allowed-takeprofit/${account.id}`);
+                const allowedResult = await allowedResponse.json();
+                
+                if (!allowedResult.success || !allowedResult.allowed) {
+                    console.log('RSI止盈：执行未许可，跳过检查');
+                    return;
+                }
+                
+                // 获取RSI数据
+                const rsiResponse = await fetch('/api/coin-change-tracker/latest');
+                const rsiResult = await rsiResponse.json();
+                
+                if (!rsiResult.success || !rsiResult.data) {
+                    console.warn('获取RSI数据失败');
+                    return;
+                }
+                
+                const totalRSI = rsiResult.data.total_rsi || 0;
+                const rsiThreshold = parseFloat(document.getElementById('rsiTakeProfitThreshold').value) || 1900;
+                
+                console.log(`[RSI止盈监控] 当前RSI: ${totalRSI.toFixed(2)}, 阈值: ${rsiThreshold}`);
+                
+                // 检查是否达到阈值
+                if (totalRSI >= rsiThreshold) {
+                    const now = Date.now();
+                    
+                    // 防止短时间内重复触发
+                    if (lastRSICheckValue === totalRSI || now - lastRSITriggerTime < RSI_CHECK_COOLDOWN) {
+                        console.log('RSI止盈：冷却期内或相同RSI值，跳过');
+                        return;
+                    }
+                    
+                    lastRSICheckValue = totalRSI;
+                    lastRSITriggerTime = now;
+                    
+                    console.log(`🎯 [RSI止盈] 触发！RSI=${totalRSI.toFixed(2)} >= ${rsiThreshold}`);
+                    
+                    // 立即设置为不允许执行，防止重复触发
+                    await fetch(`/api/okx-trading/set-allowed-takeprofit/${account.id}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            allowed: false,
+                            reason: `RSI止盈已触发并执行，RSI=${totalRSI.toFixed(2)}`,
+                            takeprofitType: 'rsi',
+                            rsiValue: totalRSI
+                        })
+                    });
+                    
+                    // 执行一键平仓
+                    await closeAllPositions();
+                    
+                    // 自动关闭RSI止盈开关
+                    rsiSwitch.checked = false;
+                    await saveTakeProfitStopLossSettings(true);
+                    
+                    // 发送通知
+                    const message = `🎯 RSI止盈触发！\n账户：${account.name}\nRSI之和：${totalRSI.toFixed(2)}\n阈值：${rsiThreshold}\n已执行一键平仓`;
+                    
+                    // 浏览器通知
+                    if ('Notification' in window && Notification.permission === 'granted') {
+                        new Notification('🎯 RSI止盈触发', {
+                            body: message,
+                            icon: '/static/favicon.ico',
+                            requireInteraction: true
+                        });
+                    }
+                    
+                    // Telegram通知
+                    await fetch('/api/telegram/send-message', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message })
+                    });
+                    
+                    console.log('✅ RSI止盈执行完成');
+                }
+            } catch (e) {
+                console.error('❌ RSI止盈监控失败', e);
+            }
+        }
+
         // 一键平仓所有持仓
         async function closeAllPositions() {
             console.log('[closeAllPositions] 开始一键平仓所有持仓');
@@ -4297,6 +4433,7 @@ data/
                 checkAndExecuteAutoStrategy(); // 检查自动交易策略
                 checkAndExecuteUpRatio0Top8(); // 检查上涨占比0-涨幅前8名策略
                 checkAndExecuteUpRatio0Bottom8(); // 检查上涨占比0-涨幅后8名策略
+                checkRSITakeProfit(); // 检查RSI止盈
             }, 60000);
             
             // 每30秒自动刷新行情数据（优化：从10秒改为30秒，减少频繁请求）
@@ -6305,6 +6442,10 @@ ${data.sMsg || result.message || ''}`);
                     document.getElementById('takeProfitSwitch').checked = settings.takeProfitEnabled || false;
                     document.getElementById('stopLossSwitch').checked = settings.stopLossEnabled || false;
                     
+                    // 加载RSI止盈设置
+                    document.getElementById('rsiTakeProfitThreshold').value = settings.rsiTakeProfitThreshold || 1900;
+                    document.getElementById('rsiTakeProfitSwitch').checked = settings.rsiTakeProfitEnabled || false;
+                    
                     // 加载最大持仓限制
                     const maxPosValue = settings.maxPositionValueUsdt || 5.0;
                     document.getElementById('maxPositionValueInput').value = maxPosValue;
@@ -6335,6 +6476,8 @@ ${data.sMsg || result.message || ''}`);
                 stopLossThreshold: parseFloat(document.getElementById('stopLossThreshold').value),
                 takeProfitEnabled: document.getElementById('takeProfitSwitch').checked,
                 stopLossEnabled: document.getElementById('stopLossSwitch').checked,
+                rsiTakeProfitThreshold: parseFloat(document.getElementById('rsiTakeProfitThreshold').value),
+                rsiTakeProfitEnabled: document.getElementById('rsiTakeProfitSwitch').checked,
                 maxPositionValueUsdt: parseFloat(document.getElementById('maxPositionValueInput').value)
             };
             
@@ -6913,7 +7056,7 @@ ${data.sMsg || result.message || ''}`);
             
             // ✅ 添加事件监听器（必须在DOM加载后）
             // 添加止盈止损设置的事件监听器
-            ['takeProfitThreshold', 'stopLossThreshold'].forEach(id => {
+            ['takeProfitThreshold', 'stopLossThreshold', 'rsiTakeProfitThreshold'].forEach(id => {
                 const element = document.getElementById(id);
                 if (element) {
                     element.addEventListener('change', saveTakeProfitStopLossSettings);
@@ -6926,6 +7069,40 @@ ${data.sMsg || result.message || ''}`);
                     element.addEventListener('change', saveTakeProfitStopLossSettings);
                 }
             });
+            
+            // RSI止盈开关特殊处理：同时设置JSONL执行许可
+            const rsiTakeProfitSwitchEl = document.getElementById('rsiTakeProfitSwitch');
+            if (rsiTakeProfitSwitchEl) {
+                rsiTakeProfitSwitchEl.addEventListener('change', async function() {
+                    // 保存设置
+                    await saveTakeProfitStopLossSettings();
+                    
+                    // 设置JSONL执行许可
+                    const account = accounts.find(acc => acc.id === currentAccount);
+                    if (!account) return;
+                    
+                    const enabled = this.checked;
+                    const rsiValue = parseFloat(document.getElementById('rsiTakeProfitThreshold').value) || 1900;
+                    
+                    try {
+                        const response = await fetch(`/api/okx-trading/set-allowed-takeprofit/${account.id}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                allowed: enabled,
+                                reason: enabled ? `开启RSI止盈监控，阈值${rsiValue}` : '关闭RSI止盈监控',
+                                takeprofitType: 'rsi',
+                                rsiValue: rsiValue
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        console.log(enabled ? `✅ 已开启RSI止盈监控` : `⚪ 已关闭RSI止盈监控`, result);
+                    } catch (e) {
+                        console.error('❌ 设置RSI止盈执行许可失败', e);
+                    }
+                });
+            }
             
             // 添加自动交易策略设置的事件监听器
             const autoTriggerPriceEl = document.getElementById('autoTriggerPrice');

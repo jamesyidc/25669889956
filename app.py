@@ -16064,6 +16064,8 @@ def get_okx_tpsl_settings(account_id):
                         'stopLossThreshold': jsonl_settings.get('stop_loss_threshold', -30),
                         'takeProfitEnabled': jsonl_settings.get('take_profit_enabled', False),
                         'stopLossEnabled': jsonl_settings.get('stop_loss_enabled', False),
+                        'rsiTakeProfitThreshold': jsonl_settings.get('rsi_take_profit_threshold', 1900),
+                        'rsiTakeProfitEnabled': jsonl_settings.get('rsi_take_profit_enabled', False),
                         'maxPositionValueUsdt': jsonl_settings.get('max_position_value_usdt', 5.0),
                         'enabled': jsonl_settings.get('enabled', True),
                         'lastUpdated': jsonl_settings.get('last_updated', '')
@@ -16090,6 +16092,8 @@ def get_okx_tpsl_settings(account_id):
             'stopLossThreshold': -8.0,
             'takeProfitEnabled': True,
             'stopLossEnabled': True,
+            'rsiTakeProfitThreshold': 1900,
+            'rsiTakeProfitEnabled': False,
             'maxPositionValueUsdt': 5.0,
             'enabled': True
         }
@@ -16131,9 +16135,11 @@ def save_okx_tpsl_settings(account_id):
             'take_profit_threshold': float(data.get('takeProfitThreshold', 50)),
             'stop_loss_enabled': bool(data.get('stopLossEnabled', False)),
             'stop_loss_threshold': float(data.get('stopLossThreshold', -30)),
+            'rsi_take_profit_enabled': bool(data.get('rsiTakeProfitEnabled', False)),
+            'rsi_take_profit_threshold': float(data.get('rsiTakeProfitThreshold', 1900)),
             'max_position_value_usdt': float(data.get('maxPositionValueUsdt', 5.0)),
             'last_updated': last_updated,
-            'comment': '止盈止损配置 - 最大单笔保护'
+            'comment': '止盈止损配置 - 最大单笔保护 + RSI止盈'
         }
         
         # 保存到JSONL文件（覆盖第一行）
@@ -16154,6 +16160,8 @@ def save_okx_tpsl_settings(account_id):
             'stopLossThreshold': jsonl_settings['stop_loss_threshold'],
             'takeProfitEnabled': jsonl_settings['take_profit_enabled'],
             'stopLossEnabled': jsonl_settings['stop_loss_enabled'],
+            'rsiTakeProfitThreshold': jsonl_settings['rsi_take_profit_threshold'],
+            'rsiTakeProfitEnabled': jsonl_settings['rsi_take_profit_enabled'],
             'maxPositionValueUsdt': jsonl_settings['max_position_value_usdt'],
             'enabled': jsonl_settings['enabled'],
             'lastUpdated': last_updated

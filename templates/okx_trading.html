@@ -3225,7 +3225,10 @@ data/
                             </div>
                             <div style="display: flex; align-items: center; justify-content: space-between;">
                                 <span style="color: #5b21b6; font-size: 11px;">📄 JSONL执行许可</span>
-                                <span id="jsonlAllowedStatus" style="color: #6b7280; font-size: 11px; font-weight: 600;">⏳ 检查中...</span>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span id="jsonlAllowedStatus" style="color: #6b7280; font-size: 11px; font-weight: 600;">⏳ 检查中...</span>
+                                    <button onclick="resetJsonlAllowed()" style="padding: 2px 8px; background: #10b981; color: white; border: none; border-radius: 4px; font-size: 10px; cursor: pointer; font-weight: 600;">🔄 重置</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -7559,6 +7562,54 @@ ${data.sMsg || result.message || ''}`);
                 console.error('检查JSONL状态失败:', e);
                 jsonlStatusEl.textContent = '❌ 异常';
                 jsonlStatusEl.style.color = '#6b7280';
+            }
+        }
+        
+        // 重置JSONL执行许可
+        async function resetJsonlAllowed(suffix = '') {
+            const account = accounts.find(acc => acc.id === currentAccount);
+            if (!account) {
+                alert('❌ 请先选择账户');
+                return;
+            }
+            
+            // 获取当前策略类型
+            const typeId = suffix ? `autoStrategyType${suffix}` : 'autoStrategyType';
+            const typeEl = document.getElementById(typeId);
+            const strategyType = typeEl ? typeEl.value : 'bottom_performers';
+            
+            // 获取触发价格
+            const priceId = suffix ? `autoTriggerPrice${suffix}` : 'autoTriggerPrice';
+            const priceEl = document.getElementById(priceId);
+            const triggerPrice = priceEl ? parseFloat(priceEl.value) : 66000;
+            
+            if (!confirm(`🔄 确认重置执行许可？\n\n这将允许策略再次执行。\n\n账户: ${account.name}\n策略: ${strategyType === 'top_performers' ? '涨幅前8名' : '涨幅后8名'}\n触发价格: $${triggerPrice}`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/okx-trading/set-allowed/${account.id}/${strategyType}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        allowed: true,
+                        reason: 'User manually reset execution permission',
+                        triggerPrice: triggerPrice
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('✅ 重置成功！策略现在可以执行了。');
+                    // 刷新JSONL状态显示
+                    await updateJsonlAllowedStatus(strategyType, suffix);
+                } else {
+                    alert(`❌ 重置失败: ${result.error}`);
+                }
+            } catch (e) {
+                alert('❌ 重置失败，请检查网络连接');
+                console.error('重置JSONL许可失败:', e);
             }
         }
         

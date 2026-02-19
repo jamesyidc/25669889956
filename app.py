@@ -20698,6 +20698,8 @@ def batch_order_from_event():
         secret_key = data.get('apiSecret', '')
         passphrase = data.get('passphrase', '')
         
+        print(f"[批量开仓] 接收参数: direction={direction}, percentPerCoin={percent_per_coin}")
+        
         if not api_key or not secret_key or not passphrase:
             return jsonify({
                 'success': False,
@@ -20729,17 +20731,21 @@ def batch_order_from_event():
                 'error': f"获取余额失败: {balance_result.get('msg')}"
             })
         
-        # 提取USDT可用余额
-        balance = 0
+        # 提取USDT总权益（不是可用余额）
+        total_equity = 0
+        available_balance = 0
         for detail in balance_result.get('data', [{}])[0].get('details', []):
             if detail.get('ccy') == 'USDT':
-                balance = float(detail.get('availBal', 0))
+                total_equity = float(detail.get('eq', 0))  # 使用总权益
+                available_balance = float(detail.get('availBal', 0))
                 break
         
-        if balance <= 0:
+        print(f"[批量开仓] 账户总权益: {total_equity} USDT, 可用余额: {available_balance} USDT")
+        
+        if total_equity <= 0:
             return jsonify({
                 'success': False,
-                'error': f"USDT余额不足: {balance}"
+                'error': f"USDT总权益不足: {total_equity}"
             })
         
         # 2. 获取常用币列表
@@ -20796,8 +20802,15 @@ def batch_order_from_event():
             })
         
         # 4. 计算每个币的开仓参数
-        margin_per_coin = balance * percent_per_coin / 100  # 保证金
+        # 使用与前端相同的逻辑：每个币最多使用 min(总权益 * percent%, 5 USDT)
+        max_order_size = 5.0  # 单笔最大5 USDT
+        margin_per_coin = min(
+            total_equity * (percent_per_coin / 100),  # 使用总权益 * 配置百分比
+            max_order_size  # 不超过5 USDT
+        )
         contract_value_per_coin = margin_per_coin * 10  # 合约价值(10x杠杆)
+        
+        print(f"[批量开仓] 每个币开仓保证金: {margin_per_coin:.2f} USDT (配置比例: {percent_per_coin}%, 最大限制: {max_order_size} USDT)")
         
         # 5. 批量下单
         success_count = 0
@@ -20848,6 +20861,9 @@ def batch_order_from_event():
                 # 计算合约张数
                 usdt_per_contract = ct_val * price
                 contracts_count = max(1, round(contract_value_per_coin / usdt_per_contract))
+                
+                print(f"[批量开仓] {inst_id} 开仓计算: 保证金={margin_per_coin:.2f} USDT, 合约价值={contract_value_per_coin:.2f} USDT, "
+                      f"ctVal={ct_val}, 价格={price}, 单张USDT={usdt_per_contract:.2f}, 张数={contracts_count}")
                 
                 # 下单
                 request_path = '/api/v5/trade/order'

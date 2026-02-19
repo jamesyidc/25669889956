@@ -7645,9 +7645,12 @@ ${data.sMsg || result.message || ''}`);
                 
                 // 6. 读取策略配置中的仓位百分比，如果没有则使用默认值1.5%
                 const positionSizePercent = account.positionSize || 1.5; // 默认1.5%
-                // 使用可用余额 × 配置百分比，不设置上限
-                const positionSize = availableBalance * (positionSizePercent / 100);
-                console.log(`📊 每个币种开仓金额: ${positionSize.toFixed(2)} USDT (可用余额${availableBalance.toFixed(2)} × ${positionSizePercent}%)`);
+                const maxOrderSize = 5; // 单笔最大下单金额（保护机制）
+                const positionSize = Math.min(
+                    availableBalance * (positionSizePercent / 100),  // 使用可用余额 × 配置百分比
+                    maxOrderSize                                      // 不超过5 USDT
+                );
+                console.log(`📊 每个币种开仓金额: ${positionSize.toFixed(2)} USDT (可用余额${availableBalance.toFixed(2)} × ${positionSizePercent}%, 上限${maxOrderSize}U)`);
                 
                 // 7. 依次下单
                 const successCoins = [];

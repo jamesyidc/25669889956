@@ -20804,10 +20804,14 @@ def batch_order_from_event():
         # 4. 计算每个币的开仓参数
         # 用户逻辑：可用余额 × percent_per_coin% = 每份保证金，买6份（涨幅前6）
         # 默认: percent_per_coin = 5 (即5%)，可以传入1.5表示1.5%
-        margin_per_coin = available_balance * (percent_per_coin / 100)  # 每份保证金
+        max_order_size = 5.0  # 单笔最大5 USDT（保护机制）
+        margin_per_coin = min(
+            available_balance * (percent_per_coin / 100),  # 可用余额 × 配置百分比
+            max_order_size  # 不超过5 USDT
+        )
         contract_value_per_coin = margin_per_coin * 10  # 合约价值(10x杠杆)
         
-        print(f"[批量开仓] 每个币开仓保证金: {margin_per_coin:.2f} USDT (可用余额 {available_balance:.2f} × {percent_per_coin}%)")
+        print(f"[批量开仓] 每个币开仓保证金: {margin_per_coin:.2f} USDT (可用余额 {available_balance:.2f} × {percent_per_coin}%, 上限{max_order_size}U)")
         
         # 5. 批量下单
         success_count = 0

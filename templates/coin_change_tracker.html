@@ -3309,12 +3309,13 @@ pm2 status                                                # 查看所有进程�
                                         console.log('✅ 完整波峰标记点添加完成，总标记点数:', points.length);
                                     }
                                     
-                                    // 添加未完成的B-A波峰标记（只有A点确认后才标记）
-                                    // state = 5: LOOKING_FOR_C（等待C点形成，此时B点和A点都已确认）
-                                    if (currentState && currentState.state === 5 && currentState.b_candidate && currentState.a_candidate) {
-                                        console.log('🔍 发现未完成的B-A波峰（A点已确认）');
+                                    // 添加未完成的B-A波峰标记（A候选出现后就显示）
+                                    // state = 4: CONFIRMING_A（正在确认A点，A候选已出现）
+                                    // state = 5: LOOKING_FOR_C（等待C点形成，A点已确认）
+                                    if (currentState && (currentState.state === 4 || currentState.state === 5) && currentState.b_candidate && currentState.a_candidate) {
+                                        console.log('🔍 发现未完成的B-A波峰（A候选已出现）');
                                         
-                                        // B点（已确认）
+                                        // B点
                                         const bTime = currentState.b_candidate.beijing_time.split(' ')[1];
                                         const bIndex = times.indexOf(bTime);
                                         console.log(`🔍 未完成波峰 B点: ${currentState.b_candidate.beijing_time} -> 时间=${bTime}, 索引=${bIndex}`);

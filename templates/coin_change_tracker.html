@@ -2453,9 +2453,6 @@ pm2 status                                                # 查看所有进程�
             timestamp: null
         };
         
-        // 当前选择的日期
-        let currentDate = new Date();
-        
         // 格式化日期为 YYYY-MM-DD
         function formatDate(date) {
             const year = date.getFullYear();
@@ -2468,6 +2465,12 @@ pm2 status                                                # 查看所有进程�
         function parseDate(dateStr) {
             return new Date(dateStr + 'T00:00:00');
         }
+        
+        // 当前选择的日期
+        // 检查URL参数中是否有date参数
+        const urlParams = new URL(window.location.href).searchParams;
+        const urlDate = urlParams.get('date');
+        let currentDate = urlDate ? parseDate(urlDate) : new Date();
         
         // 初始化图表
         function initCharts() {
@@ -4582,7 +4585,13 @@ pm2 status                                                # 查看所有进程�
             
             initCharts();
             updateLatestData();
-            updateHistoryData();
+            // 使用currentDate（可能来自URL参数）
+            const isToday = formatDate(currentDate) === formatDate(new Date());
+            if (isToday) {
+                updateHistoryData(); // 今天不传参数
+            } else {
+                updateHistoryData(currentDate); // 历史日期传日期参数
+            }
             updateDateSelector();
             
             // 加载账户余额信息（用于策略开仓金额计算）

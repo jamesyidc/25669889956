@@ -419,7 +419,18 @@ class TPSLMonitor:
             # 计算持仓价值（USDT）
             position_value_usdt = pos_size * mark_px
             
-            # ⚠️ 检查是否超过最大持仓价值限制
+            # 🔥 优先检查市场情绪止盈（仅对多单有效）- 在最大持仓限制检查之前
+            # 市场情绪止盈是紧急风控措施，无论持仓大小都应执行
+            if sentiment_triggered and pos_side == 'long':
+                target_position_side = settings.get('sentiment_position_side', 'long')
+                if pos_side == target_position_side:
+                    if not self.check_executed(inst_id, pos_side, 'sentiment_take_profit'):
+                        print(f"[{self.account_id}] 🔥 触发市场情绪止盈: {latest_sentiment.get('sentiment')} - 平掉多单 {inst_id} (价值{position_value_usdt:.2f}U)")
+                        result = self.execute_tpsl(credentials, pos, 'sentiment_take_profit', settings, latest_sentiment)
+                        self.record_execution(inst_id, pos_side, 'sentiment_take_profit', result)
+                        continue  # 已执行市场情绪止盈，跳过后续检查
+            
+            # ⚠️ 检查是否超过最大持仓价值限制（常规止盈止损才检查）
             if position_value_usdt > max_position_value:
                 print(f"[{self.account_id}] ⚠️  {inst_id} {pos_side}: 持仓价值 {position_value_usdt:.2f} USDT > 限制 {max_position_value} USDT，跳过（疑似错误订单）")
                 
@@ -448,16 +459,6 @@ class TPSLMonitor:
                 pnl_percent = ((avg_px - mark_px) / avg_px) * 100
             
             print(f"[{self.account_id}] 📊 {inst_id} {pos_side}: 开仓={avg_px}, 当前={mark_px}, 价值={position_value_usdt:.2f}U, 盈亏={pnl_percent:.2f}%")
-            
-            # 🔥 优先检查市场情绪止盈（仅对多单有效）
-            if sentiment_triggered and pos_side == 'long':
-                target_position_side = settings.get('sentiment_position_side', 'long')
-                if pos_side == target_position_side:
-                    if not self.check_executed(inst_id, pos_side, 'sentiment_take_profit'):
-                        print(f"[{self.account_id}] 🔥 触发市场情绪止盈: {latest_sentiment.get('sentiment')} - 平掉多单")
-                        result = self.execute_tpsl(credentials, pos, 'sentiment_take_profit', settings, latest_sentiment)
-                        self.record_execution(inst_id, pos_side, 'sentiment_take_profit', result)
-                        continue  # 已执行市场情绪止盈，跳过常规止盈止损检查
             
             # 检查止盈
             if settings.get('take_profit_enabled', False):

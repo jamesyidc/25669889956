@@ -20731,21 +20731,21 @@ def batch_order_from_event():
                 'error': f"获取余额失败: {balance_result.get('msg')}"
             })
         
-        # 提取USDT总权益（不是可用余额）
+        # 提取USDT可用余额（按用户需求使用availBal）
         total_equity = 0
         available_balance = 0
         for detail in balance_result.get('data', [{}])[0].get('details', []):
             if detail.get('ccy') == 'USDT':
-                total_equity = float(detail.get('eq', 0))  # 使用总权益
-                available_balance = float(detail.get('availBal', 0))
+                total_equity = float(detail.get('eq', 0))  # 总权益
+                available_balance = float(detail.get('availBal', 0))  # 可用余额
                 break
         
         print(f"[批量开仓] 账户总权益: {total_equity} USDT, 可用余额: {available_balance} USDT")
         
-        if total_equity <= 0:
+        if available_balance <= 0:
             return jsonify({
                 'success': False,
-                'error': f"USDT总权益不足: {total_equity}"
+                'error': f"USDT可用余额不足: {available_balance}"
             })
         
         # 2. 获取常用币列表
@@ -20802,15 +20802,12 @@ def batch_order_from_event():
             })
         
         # 4. 计算每个币的开仓参数
-        # 使用与前端相同的逻辑：每个币最多使用 min(总权益 * percent%, 5 USDT)
-        max_order_size = 5.0  # 单笔最大5 USDT
-        margin_per_coin = min(
-            total_equity * (percent_per_coin / 100),  # 使用总权益 * 配置百分比
-            max_order_size  # 不超过5 USDT
-        )
+        # 用户逻辑：可用余额 × percent_per_coin% = 每份保证金，买6份（涨幅前6）
+        # 默认: percent_per_coin = 5 (即5%)，可以传入1.5表示1.5%
+        margin_per_coin = available_balance * (percent_per_coin / 100)  # 每份保证金
         contract_value_per_coin = margin_per_coin * 10  # 合约价值(10x杠杆)
         
-        print(f"[批量开仓] 每个币开仓保证金: {margin_per_coin:.2f} USDT (配置比例: {percent_per_coin}%, 最大限制: {max_order_size} USDT)")
+        print(f"[批量开仓] 每个币开仓保证金: {margin_per_coin:.2f} USDT (可用余额 {available_balance:.2f} × {percent_per_coin}%)")
         
         # 5. 批量下单
         success_count = 0

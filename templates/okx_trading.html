@@ -2599,48 +2599,58 @@ data/
                         </h4>
                         
                         <!-- 多单策略行 -->
-                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 8px;">
-                            <button type="button" class="batch-btn long" onclick="batchOrderTop8('long', 1.5)" style="padding: 8px;">
-                                <div class="batch-btn-title" style="font-size: 13px;">📈 多单策略</div>
-                                <div class="batch-btn-desc" style="font-size: 11px;">涨幅前8 · 1.5% · 10x</div>
+                        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 8px;">
+                            <button type="button" class="batch-btn long" onclick="batchOrderTop8('long', 1.5)" style="padding: 6px;">
+                                <div class="batch-btn-title" style="font-size: 12px;">📈 多单</div>
+                                <div class="batch-btn-desc" style="font-size: 10px;">前8·1.5%·10x</div>
                             </button>
                             
-                            <button type="button" class="batch-btn long" onclick="batchOrderTop8('long', 3)" style="padding: 8px;">
-                                <div class="batch-btn-title" style="font-size: 13px;">📈 多单策略</div>
-                                <div class="batch-btn-desc" style="font-size: 11px;">涨幅前8 · 3% · 10x</div>
+                            <button type="button" class="batch-btn long" onclick="batchOrderTop8('long', 3)" style="padding: 6px;">
+                                <div class="batch-btn-title" style="font-size: 12px;">📈 多单</div>
+                                <div class="batch-btn-desc" style="font-size: 10px;">前8·3%·10x</div>
                             </button>
                             
-                            <button type="button" class="batch-btn long" onclick="batchOrderTop8('long', 5)" style="padding: 8px;">
-                                <div class="batch-btn-title" style="font-size: 13px;">📈 多单策略</div>
-                                <div class="batch-btn-desc" style="font-size: 11px;">涨幅前8 · 5% · 10x</div>
+                            <button type="button" class="batch-btn long" onclick="batchOrderTop8('long', 5)" style="padding: 6px;">
+                                <div class="batch-btn-title" style="font-size: 12px;">📈 多单</div>
+                                <div class="batch-btn-desc" style="font-size: 10px;">前8·5%·10x</div>
                             </button>
                             
-                            <button type="button" class="batch-btn long" onclick="batchOrderTop8('long', 8)" style="padding: 8px;">
-                                <div class="batch-btn-title" style="font-size: 13px;">📈 多单策略</div>
-                                <div class="batch-btn-desc" style="font-size: 11px;">涨幅前8 · 8% · 10x</div>
+                            <button type="button" class="batch-btn long" onclick="batchOrderTop8('long', 8)" style="padding: 6px;">
+                                <div class="batch-btn-title" style="font-size: 12px;">📈 多单</div>
+                                <div class="batch-btn-desc" style="font-size: 10px;">前8·8%·10x</div>
+                            </button>
+                            
+                            <button type="button" class="batch-btn long" onclick="executeBalStrategy('top8', 'long')" style="padding: 6px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
+                                <div class="batch-btn-title" style="font-size: 12px;">💰 多单</div>
+                                <div class="batch-btn-desc" style="font-size: 10px;">前8·余额1%</div>
                             </button>
                         </div>
                         
                         <!-- 空单策略行 -->
-                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
-                            <button type="button" class="batch-btn short" onclick="batchOrderTop8('short', 1.5)" style="padding: 8px;">
-                                <div class="batch-btn-title" style="font-size: 13px;">📉 空单策略</div>
-                                <div class="batch-btn-desc" style="font-size: 11px;">涨幅前8 · 1.5% · 10x</div>
+                        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;">
+                            <button type="button" class="batch-btn short" onclick="batchOrderTop8('short', 1.5)" style="padding: 6px;">
+                                <div class="batch-btn-title" style="font-size: 12px;">📉 空单</div>
+                                <div class="batch-btn-desc" style="font-size: 10px;">前8·1.5%·10x</div>
                             </button>
                             
-                            <button type="button" class="batch-btn short" onclick="batchOrderTop8('short', 3)" style="padding: 8px;">
-                                <div class="batch-btn-title" style="font-size: 13px;">📉 空单策略</div>
-                                <div class="batch-btn-desc" style="font-size: 11px;">涨幅前8 · 3% · 10x</div>
+                            <button type="button" class="batch-btn short" onclick="batchOrderTop8('short', 3)" style="padding: 6px;">
+                                <div class="batch-btn-title" style="font-size: 12px;">📉 空单</div>
+                                <div class="batch-btn-desc" style="font-size: 10px;">前8·3%·10x</div>
                             </button>
                             
-                            <button type="button" class="batch-btn short" onclick="batchOrderTop8('short', 5)" style="padding: 8px;">
-                                <div class="batch-btn-title" style="font-size: 13px;">📉 空单策略</div>
-                                <div class="batch-btn-desc" style="font-size: 11px;">涨幅前8 · 5% · 10x</div>
+                            <button type="button" class="batch-btn short" onclick="batchOrderTop8('short', 5)" style="padding: 6px;">
+                                <div class="batch-btn-title" style="font-size: 12px;">📉 空单</div>
+                                <div class="batch-btn-desc" style="font-size: 10px;">前8·5%·10x</div>
                             </button>
                             
-                            <button type="button" class="batch-btn short" onclick="batchOrderTop8('short', 8)" style="padding: 8px;">
-                                <div class="batch-btn-title" style="font-size: 13px;">📉 空单策略</div>
-                                <div class="batch-btn-desc" style="font-size: 11px;">涨幅前8 · 8% · 10x</div>
+                            <button type="button" class="batch-btn short" onclick="batchOrderTop8('short', 8)" style="padding: 6px;">
+                                <div class="batch-btn-title" style="font-size: 12px;">📉 空单</div>
+                                <div class="batch-btn-desc" style="font-size: 10px;">前8·8%·10x</div>
+                            </button>
+                            
+                            <button type="button" class="batch-btn short" onclick="executeBalStrategy('top8', 'short')" style="padding: 6px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                                <div class="batch-btn-title" style="font-size: 12px;">💰 空单</div>
+                                <div class="batch-btn-desc" style="font-size: 10px;">前8·余额1%</div>
                             </button>
                         </div>
                     </div>
@@ -2652,48 +2662,58 @@ data/
                         </h4>
                         
                         <!-- 多单策略行 -->
-                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 8px;">
-                            <button type="button" class="batch-btn long" onclick="batchOrderBottom8('long', 1.5)" style="padding: 8px; background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);">
-                                <div class="batch-btn-title" style="font-size: 13px;">📈 多单策略</div>
-                                <div class="batch-btn-desc" style="font-size: 11px;">涨幅后8 · 1.5% · 10x</div>
+                        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 8px;">
+                            <button type="button" class="batch-btn long" onclick="batchOrderBottom8('long', 1.5)" style="padding: 6px; background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);">
+                                <div class="batch-btn-title" style="font-size: 12px;">📈 多单</div>
+                                <div class="batch-btn-desc" style="font-size: 10px;">后8·1.5%·10x</div>
                             </button>
                             
-                            <button type="button" class="batch-btn long" onclick="batchOrderBottom8('long', 3)" style="padding: 8px; background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);">
-                                <div class="batch-btn-title" style="font-size: 13px;">📈 多单策略</div>
-                                <div class="batch-btn-desc" style="font-size: 11px;">涨幅后8 · 3% · 10x</div>
+                            <button type="button" class="batch-btn long" onclick="batchOrderBottom8('long', 3)" style="padding: 6px; background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);">
+                                <div class="batch-btn-title" style="font-size: 12px;">📈 多单</div>
+                                <div class="batch-btn-desc" style="font-size: 10px;">后8·3%·10x</div>
                             </button>
                             
-                            <button type="button" class="batch-btn long" onclick="batchOrderBottom8('long', 5)" style="padding: 8px; background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);">
-                                <div class="batch-btn-title" style="font-size: 13px;">📈 多单策略</div>
-                                <div class="batch-btn-desc" style="font-size: 11px;">涨幅后8 · 5% · 10x</div>
+                            <button type="button" class="batch-btn long" onclick="batchOrderBottom8('long', 5)" style="padding: 6px; background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);">
+                                <div class="batch-btn-title" style="font-size: 12px;">📈 多单</div>
+                                <div class="batch-btn-desc" style="font-size: 10px;">后8·5%·10x</div>
                             </button>
                             
-                            <button type="button" class="batch-btn long" onclick="batchOrderBottom8('long', 8)" style="padding: 8px; background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);">
-                                <div class="batch-btn-title" style="font-size: 13px;">📈 多单策略</div>
-                                <div class="batch-btn-desc" style="font-size: 11px;">涨幅后8 · 8% · 10x</div>
+                            <button type="button" class="batch-btn long" onclick="batchOrderBottom8('long', 8)" style="padding: 6px; background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);">
+                                <div class="batch-btn-title" style="font-size: 12px;">📈 多单</div>
+                                <div class="batch-btn-desc" style="font-size: 10px;">后8·8%·10x</div>
+                            </button>
+                            
+                            <button type="button" class="batch-btn long" onclick="executeBalStrategy('bottom8', 'long')" style="padding: 6px; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                                <div class="batch-btn-title" style="font-size: 12px;">💰 多单</div>
+                                <div class="batch-btn-desc" style="font-size: 10px;">后8·余额1%</div>
                             </button>
                         </div>
                         
                         <!-- 空单策略行 -->
-                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
-                            <button type="button" class="batch-btn short" onclick="batchOrderBottom8('short', 1.5)" style="padding: 8px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
-                                <div class="batch-btn-title" style="font-size: 13px;">📉 空单策略</div>
-                                <div class="batch-btn-desc" style="font-size: 11px;">涨幅后8 · 1.5% · 10x</div>
+                        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;">
+                            <button type="button" class="batch-btn short" onclick="batchOrderBottom8('short', 1.5)" style="padding: 6px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                                <div class="batch-btn-title" style="font-size: 12px;">📉 空单</div>
+                                <div class="batch-btn-desc" style="font-size: 10px;">后8·1.5%·10x</div>
                             </button>
                             
-                            <button type="button" class="batch-btn short" onclick="batchOrderBottom8('short', 3)" style="padding: 8px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
-                                <div class="batch-btn-title" style="font-size: 13px;">📉 空单策略</div>
-                                <div class="batch-btn-desc" style="font-size: 11px;">涨幅后8 · 3% · 10x</div>
+                            <button type="button" class="batch-btn short" onclick="batchOrderBottom8('short', 3)" style="padding: 6px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                                <div class="batch-btn-title" style="font-size: 12px;">📉 空单</div>
+                                <div class="batch-btn-desc" style="font-size: 10px;">后8·3%·10x</div>
                             </button>
                             
-                            <button type="button" class="batch-btn short" onclick="batchOrderBottom8('short', 5)" style="padding: 8px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
-                                <div class="batch-btn-title" style="font-size: 13px;">📉 空单策略</div>
-                                <div class="batch-btn-desc" style="font-size: 11px;">涨幅后8 · 5% · 10x</div>
+                            <button type="button" class="batch-btn short" onclick="batchOrderBottom8('short', 5)" style="padding: 6px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                                <div class="batch-btn-title" style="font-size: 12px;">📉 空单</div>
+                                <div class="batch-btn-desc" style="font-size: 10px;">后8·5%·10x</div>
                             </button>
                             
-                            <button type="button" class="batch-btn short" onclick="batchOrderBottom8('short', 8)" style="padding: 8px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
-                                <div class="batch-btn-title" style="font-size: 13px;">📉 空单策略</div>
-                                <div class="batch-btn-desc" style="font-size: 11px;">涨幅后8 · 8% · 10x</div>
+                            <button type="button" class="batch-btn short" onclick="batchOrderBottom8('short', 8)" style="padding: 6px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                                <div class="batch-btn-title" style="font-size: 12px;">📉 空单</div>
+                                <div class="batch-btn-desc" style="font-size: 10px;">后8·8%·10x</div>
+                            </button>
+                            
+                            <button type="button" class="batch-btn short" onclick="executeBalStrategy('bottom8', 'short')" style="padding: 6px; background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);">
+                                <div class="batch-btn-title" style="font-size: 12px;">💰 空单</div>
+                                <div class="batch-btn-desc" style="font-size: 10px;">后8·余额1%</div>
                             </button>
                         </div>
                     </div>
@@ -3455,172 +3475,6 @@ data/
                         </p>
                     </div>
                 </div>
-
-
-                <!-- 💰 余额1%策略组 -->
-                <div style="margin-top: 16px; padding: 12px; background: linear-gradient(135deg, #f0f9ff 0%, #dbeafe 100%); border-radius: 12px; border: 2px solid #3b82f6; box-shadow: 0 4px 6px rgba(59, 130, 246, 0.1);">
-                    <h3 style="color: #1e40af; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; font-size: 15px;">
-                        💰 余额1%自动策略（4合1）
-                        <span style="background: #3b82f6; color: white; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 700;">NEW</span>
-                    </h3>
-                    
-                    <div style="padding: 8px 12px; background: rgba(59, 130, 246, 0.1); border-radius: 6px; margin-bottom: 12px; font-size: 11px; color: #1e40af; line-height: 1.6;">
-                        <strong>💡 说明：</strong>基于可用余额1%开仓，每个策略独立触发，互不干扰
-                        <br>• 每币开仓金额 = 可用余额 × 1% ÷ 8 ≈ 0.125%余额
-                        <br>• 例如余额10000U → 每币12.5U，8币共100U (1%)
-                    </div>
-                    
-                    <!-- 策略1: 涨幅前8开多 -->
-                    <div class="info-card" style="margin-bottom: 12px; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border: 2px solid #10b981;">
-                        <h4 style="color: #065f46; margin-bottom: 10px; font-size: 13px; display: flex; align-items: center; gap: 6px;">
-                            📈 涨幅前8开多 (1%余额)
-                        </h4>
-                        
-                        <div style="padding: 8px; background: rgba(16, 185, 129, 0.1); border-radius: 6px; border: 1px solid #10b981; margin-bottom: 8px;">
-                            <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <div style="display: flex; flex-direction: column; gap: 4px;">
-                                    <span style="color: #065f46; font-weight: 600; font-size: 12px;">🚀 启用策略</span>
-                                    <span id="switchStatusBalTop8Long" style="color: #6b7280; font-size: 10px; font-weight: 600;">🔴 未开启</span>
-                                </div>
-                                <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
-                                    <input type="checkbox" id="autoTradeSwitchBalTop8Long" style="opacity: 0; width: 0; height: 0;">
-                                    <span class="slider slider-bal-top8-long" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px;">
-                                        <style>
-                                            #autoTradeSwitchBalTop8Long:checked + .slider-bal-top8-long { background-color: #10b981; }
-                                            #autoTradeSwitchBalTop8Long:checked + .slider-bal-top8-long:before { transform: translateX(20px); }
-                                            .slider-bal-top8-long:before {
-                                                position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
-                                                background-color: white; transition: .4s; border-radius: 50%;
-                                            }
-                                        </style>
-                                    </span>
-                                </label>
-                            </div>
-                        </div>
-                        
-                        <div style="font-size: 10px; color: #065f46; padding: 6px; background: rgba(16, 185, 129, 0.1); border-radius: 4px;">
-                            触发：手动点击"执行" | 方向：做多 | 金额：余额×1%
-                        </div>
-                    </div>
-                    
-                    <!-- 策略2: 涨幅前8开空 -->
-                    <div class="info-card" style="margin-bottom: 12px; background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border: 2px solid #ef4444;">
-                        <h4 style="color: #991b1b; margin-bottom: 10px; font-size: 13px; display: flex; align-items: center; gap: 6px;">
-                            📉 涨幅前8开空 (1%余额)
-                        </h4>
-                        
-                        <div style="padding: 8px; background: rgba(239, 68, 68, 0.1); border-radius: 6px; border: 1px solid #ef4444; margin-bottom: 8px;">
-                            <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <div style="display: flex; flex-direction: column; gap: 4px;">
-                                    <span style="color: #991b1b; font-weight: 600; font-size: 12px;">🚀 启用策略</span>
-                                    <span id="switchStatusBalTop8Short" style="color: #6b7280; font-size: 10px; font-weight: 600;">🔴 未开启</span>
-                                </div>
-                                <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
-                                    <input type="checkbox" id="autoTradeSwitchBalTop8Short" style="opacity: 0; width: 0; height: 0;">
-                                    <span class="slider slider-bal-top8-short" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px;">
-                                        <style>
-                                            #autoTradeSwitchBalTop8Short:checked + .slider-bal-top8-short { background-color: #ef4444; }
-                                            #autoTradeSwitchBalTop8Short:checked + .slider-bal-top8-short:before { transform: translateX(20px); }
-                                            .slider-bal-top8-short:before {
-                                                position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
-                                                background-color: white; transition: .4s; border-radius: 50%;
-                                            }
-                                        </style>
-                                    </span>
-                                </label>
-                            </div>
-                        </div>
-                        
-                        <div style="font-size: 10px; color: #991b1b; padding: 6px; background: rgba(239, 68, 68, 0.1); border-radius: 4px;">
-                            触发：手动点击"执行" | 方向：做空 | 金额：余额×1%
-                        </div>
-                    </div>
-                    
-                    <!-- 策略3: 涨幅后8开多 -->
-                    <div class="info-card" style="margin-bottom: 12px; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border: 2px solid #3b82f6;">
-                        <h4 style="color: #1e40af; margin-bottom: 10px; font-size: 13px; display: flex; align-items: center; gap: 6px;">
-                            📊 涨幅后8开多 (1%余额)
-                        </h4>
-                        
-                        <div style="padding: 8px; background: rgba(59, 130, 246, 0.1); border-radius: 6px; border: 1px solid #3b82f6; margin-bottom: 8px;">
-                            <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <div style="display: flex; flex-direction: column; gap: 4px;">
-                                    <span style="color: #1e40af; font-weight: 600; font-size: 12px;">🚀 启用策略</span>
-                                    <span id="switchStatusBalBottom8Long" style="color: #6b7280; font-size: 10px; font-weight: 600;">🔴 未开启</span>
-                                </div>
-                                <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
-                                    <input type="checkbox" id="autoTradeSwitchBalBottom8Long" style="opacity: 0; width: 0; height: 0;">
-                                    <span class="slider slider-bal-bottom8-long" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px;">
-                                        <style>
-                                            #autoTradeSwitchBalBottom8Long:checked + .slider-bal-bottom8-long { background-color: #3b82f6; }
-                                            #autoTradeSwitchBalBottom8Long:checked + .slider-bal-bottom8-long:before { transform: translateX(20px); }
-                                            .slider-bal-bottom8-long:before {
-                                                position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
-                                                background-color: white; transition: .4s; border-radius: 50%;
-                                            }
-                                        </style>
-                                    </span>
-                                </label>
-                            </div>
-                        </div>
-                        
-                        <div style="font-size: 10px; color: #1e40af; padding: 6px; background: rgba(59, 130, 246, 0.1); border-radius: 4px;">
-                            触发：手动点击"执行" | 方向：做多 | 金额：余额×1%
-                        </div>
-                    </div>
-                    
-                    <!-- 策略4: 涨幅后8开空 -->
-                    <div class="info-card" style="margin-bottom: 12px; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b;">
-                        <h4 style="color: #92400e; margin-bottom: 10px; font-size: 13px; display: flex; align-items: center; gap: 6px;">
-                            📉 涨幅后8开空 (1%余额)
-                        </h4>
-                        
-                        <div style="padding: 8px; background: rgba(245, 158, 11, 0.1); border-radius: 6px; border: 1px solid #f59e0b; margin-bottom: 8px;">
-                            <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <div style="display: flex; flex-direction: column; gap: 4px;">
-                                    <span style="color: #92400e; font-weight: 600; font-size: 12px;">🚀 启用策略</span>
-                                    <span id="switchStatusBalBottom8Short" style="color: #6b7280; font-size: 10px; font-weight: 600;">🔴 未开启</span>
-                                </div>
-                                <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
-                                    <input type="checkbox" id="autoTradeSwitchBalBottom8Short" style="opacity: 0; width: 0; height: 0;">
-                                    <span class="slider slider-bal-bottom8-short" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px;">
-                                        <style>
-                                            #autoTradeSwitchBalBottom8Short:checked + .slider-bal-bottom8-short { background-color: #f59e0b; }
-                                            #autoTradeSwitchBalBottom8Short:checked + .slider-bal-bottom8-short:before { transform: translateX(20px); }
-                                            .slider-bal-bottom8-short:before {
-                                                position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
-                                                background-color: white; transition: .4s; border-radius: 50%;
-                                            }
-                                        </style>
-                                    </span>
-                                </label>
-                            </div>
-                        </div>
-                        
-                        <div style="font-size: 10px; color: #92400e; padding: 6px; background: rgba(245, 158, 11, 0.1); border-radius: 4px;">
-                            触发：手动点击"执行" | 方向：做空 | 金额：余额×1%
-                        </div>
-                    </div>
-                    
-                    <!-- 统一执行按钮 -->
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px;">
-                        <button onclick="executeBalStrategy('top8', 'long')" style="padding: 10px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 12px; cursor: pointer; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);">
-                            📈 涨幅前8开多
-                        </button>
-                        <button onclick="executeBalStrategy('top8', 'short')" style="padding: 10px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 12px; cursor: pointer; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);">
-                            📉 涨幅前8开空
-                        </button>
-                        <button onclick="executeBalStrategy('bottom8', 'long')" style="padding: 10px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 12px; cursor: pointer; box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);">
-                            📊 涨幅后8开多
-                        </button>
-                        <button onclick="executeBalStrategy('bottom8', 'short')" style="padding: 10px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 12px; cursor: pointer; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">
-                            📉 涨幅后8开空
-                        </button>
-                    </div>
-                </div>
-
-
-                <!-- 持仓列表 -->
                 <div class="info-card">
                     <h3 style="margin-bottom: 12px;">
                         📊 持仓 

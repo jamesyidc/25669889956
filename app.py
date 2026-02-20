@@ -16698,25 +16698,36 @@ def set_strategy_allowed(account_id, strategy_type):
 def check_takeprofit_allowed(account_id):
     """检查指定账户的止盈策略是否允许执行（从JSONL读取）
     用于RSI止盈和盈利金额止盈
+    支持按posSide查询: ?posSide=long 或 ?posSide=short
     """
     try:
         import json
         import os
         from datetime import datetime
         
+        # 获取posSide参数（可选）
+        pos_side = request.args.get('posSide', 'all')  # 'long', 'short', 'all'
+        
         current_dir = os.path.dirname(os.path.abspath(__file__))
         jsonl_dir = os.path.join(current_dir, 'data', 'okx_auto_strategy')
         os.makedirs(jsonl_dir, exist_ok=True)
         
-        # 使用统一的止盈JSONL文件
-        jsonl_file = os.path.join(jsonl_dir, f'{account_id}_takeprofit_execution.jsonl')
+        # 根据posSide使用不同的文件
+        if pos_side == 'long':
+            jsonl_file = os.path.join(jsonl_dir, f'{account_id}_takeprofit_long_execution.jsonl')
+        elif pos_side == 'short':
+            jsonl_file = os.path.join(jsonl_dir, f'{account_id}_takeprofit_short_execution.jsonl')
+        else:
+            # 兼容旧的统一文件
+            jsonl_file = os.path.join(jsonl_dir, f'{account_id}_takeprofit_execution.jsonl')
         
         # 如果文件不存在，返回默认允许（首次执行）
         if not os.path.exists(jsonl_file):
             return jsonify({
                 'success': True,
                 'allowed': True,
-                'reason': 'No execution record found - first time execution allowed',
+                'reason': f'No execution record found for {pos_side} - first time execution allowed',
+                'posSide': pos_side,
                 'lastRecord': None
             })
         
@@ -16733,7 +16744,8 @@ def check_takeprofit_allowed(account_id):
             return jsonify({
                 'success': True,
                 'allowed': True,
-                'reason': 'Empty execution file - first time execution allowed',
+                'reason': f'Empty execution file for {pos_side} - first time execution allowed',
+                'posSide': pos_side,
                 'lastRecord': None
             })
         
@@ -16741,7 +16753,8 @@ def check_takeprofit_allowed(account_id):
         return jsonify({
             'success': True,
             'allowed': last_record.get('allowed', False),
-            'reason': 'Read from JSONL',
+            'reason': f'Read from JSONL ({pos_side})',
+            'posSide': pos_side,
             'lastRecord': last_record
         })
         
@@ -16756,6 +16769,7 @@ def check_takeprofit_allowed(account_id):
 def set_takeprofit_allowed(account_id):
     """设置指定账户的止盈策略执行允许状态（写入JSONL）
     用于RSI止盈和盈利金额止盈
+    支持posSide参数: 'long', 'short', 'all'
     """
     try:
         import json
@@ -16766,19 +16780,27 @@ def set_takeprofit_allowed(account_id):
         allowed = bool(data.get('allowed', False))
         reason = data.get('reason', 'Manual update')
         takeprofit_type = data.get('takeprofitType', 'unknown')  # 'rsi' 或 'profit'
+        pos_side = data.get('posSide', 'all')  # 'long', 'short', 'all'
         
         current_dir = os.path.dirname(os.path.abspath(__file__))
         jsonl_dir = os.path.join(current_dir, 'data', 'okx_auto_strategy')
         os.makedirs(jsonl_dir, exist_ok=True)
         
-        # 使用统一的止盈JSONL文件
-        jsonl_file = os.path.join(jsonl_dir, f'{account_id}_takeprofit_execution.jsonl')
+        # 根据posSide使用不同的文件
+        if pos_side == 'long':
+            jsonl_file = os.path.join(jsonl_dir, f'{account_id}_takeprofit_long_execution.jsonl')
+        elif pos_side == 'short':
+            jsonl_file = os.path.join(jsonl_dir, f'{account_id}_takeprofit_short_execution.jsonl')
+        else:
+            # 兼容旧的统一文件
+            jsonl_file = os.path.join(jsonl_dir, f'{account_id}_takeprofit_execution.jsonl')
         
         # 创建新记录
         record = {
             'timestamp': datetime.now().isoformat(),
             'time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'account_id': account_id,
+            'pos_side': pos_side,  # 记录持仓方向
             'takeprofit_type': takeprofit_type,  # rsi 或 profit
             'allowed': allowed,
             'reason': reason,
@@ -16792,7 +16814,7 @@ def set_takeprofit_allowed(account_id):
         
         return jsonify({
             'success': True,
-            'message': f'Take profit execution allowed status set to {allowed}',
+            'message': f'Take profit execution allowed status set to {allowed} for {pos_side}',
             'record': record
         })
         

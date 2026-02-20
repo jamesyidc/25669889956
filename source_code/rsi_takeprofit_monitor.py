@@ -89,27 +89,43 @@ def get_tpsl_settings(account_id):
         return {}
 
 
-def check_allowed_takeprofit(account_id):
-    """检查执行许可"""
+def check_allowed_takeprofit(account_id, pos_side='all'):
+    """检查执行许可
+    Args:
+        account_id: 账户ID
+        pos_side: 持仓方向 'long', 'short', 'all'
+    """
     try:
-        response = requests.get(f"{API_BASE}/api/okx-trading/check-allowed-takeprofit/{account_id}", timeout=10)
+        url = f"{API_BASE}/api/okx-trading/check-allowed-takeprofit/{account_id}"
+        if pos_side != 'all':
+            url += f"?posSide={pos_side}"
+        
+        response = requests.get(url, timeout=10)
         response.raise_for_status()
         result = response.json()
         
         return result.get('success', False) and result.get('allowed', False)
     except Exception as e:
-        log(f"❌ 检查账户 {account_id} 执行许可异常: {str(e)}")
+        log(f"❌ 检查账户 {account_id} ({pos_side}) 执行许可异常: {str(e)}")
         return False
 
 
-def set_allowed_takeprofit(account_id, allowed, reason, rsi_value):
-    """设置执行许可"""
+def set_allowed_takeprofit(account_id, allowed, reason, rsi_value, pos_side='all'):
+    """设置执行许可
+    Args:
+        account_id: 账户ID
+        allowed: 是否允许
+        reason: 原因
+        rsi_value: RSI值
+        pos_side: 持仓方向 'long', 'short', 'all'
+    """
     try:
         data = {
             'allowed': allowed,
             'reason': reason,
             'takeprofitType': 'rsi',
-            'rsiValue': rsi_value
+            'rsiValue': rsi_value,
+            'posSide': pos_side
         }
         response = requests.post(
             f"{API_BASE}/api/okx-trading/set-allowed-takeprofit/{account_id}",
@@ -119,7 +135,7 @@ def set_allowed_takeprofit(account_id, allowed, reason, rsi_value):
         response.raise_for_status()
         return response.json().get('success', False)
     except Exception as e:
-        log(f"❌ 设置账户 {account_id} 执行许可异常: {str(e)}")
+        log(f"❌ 设置账户 {account_id} ({pos_side}) 执行许可异常: {str(e)}")
         return False
 
 
@@ -199,8 +215,8 @@ def check_rsi_takeprofit():
             if rsi_long_enabled:
                 log(f"🎯 [{account_name}] RSI多单监控 - 当前: {total_rsi:.2f}, 阈值: {rsi_long_threshold}")
                 
-                # 检查执行许可
-                allowed = check_allowed_takeprofit(account_id)
+                # 检查多单执行许可（独立）
+                allowed = check_allowed_takeprofit(account_id, pos_side='long')
                 if allowed and total_rsi >= rsi_long_threshold:
                     # 防止短时间内重复触发
                     now = int(time.time() * 1000)
@@ -214,12 +230,13 @@ def check_rsi_takeprofit():
                         
                         log(f"🚨 [{account_name}] RSI多单止盈触发！RSI={total_rsi:.2f} >= {rsi_long_threshold}")
                         
-                        # 立即禁用执行许可
+                        # 立即禁用多单执行许可
                         set_allowed_takeprofit(
                             account_id,
                             False,
                             f"RSI多单止盈已触发，RSI={total_rsi:.2f}",
-                            total_rsi
+                            total_rsi,
+                            pos_side='long'
                         )
                         
                         # 执行多单平仓
@@ -259,9 +276,8 @@ def check_rsi_takeprofit():
             if rsi_short_enabled:
                 log(f"📉 [{account_name}] RSI空单监控 - 当前: {total_rsi:.2f}, 阈值: {rsi_short_threshold}")
                 
-                # 空单止盈使用独立的执行许可检查（可以考虑用不同的API）
-                # 这里暂时复用同一个许可，实际可以创建独立的检查
-                allowed_short = check_allowed_takeprofit(account_id)  # TODO: 可以添加独立的空单许可检查
+                # 检查空单执行许可（独立）
+                allowed_short = check_allowed_takeprofit(account_id, pos_side='short')
                 
                 if allowed_short and total_rsi <= rsi_short_threshold:
                     # 防止短时间内重复触发
@@ -276,12 +292,13 @@ def check_rsi_takeprofit():
                         
                         log(f"🚨 [{account_name}] RSI空单止盈触发！RSI={total_rsi:.2f} <= {rsi_short_threshold}")
                         
-                        # 立即禁用执行许可（暂时复用同一个，实际可以独立）
+                        # 立即禁用空单执行许可（独立）
                         set_allowed_takeprofit(
                             account_id,
                             False,
                             f"RSI空单止盈已触发，RSI={total_rsi:.2f}",
-                            total_rsi
+                            total_rsi,
+                            pos_side='short'
                         )
                         
                         # 执行空单平仓

@@ -16283,6 +16283,8 @@ def get_okx_tpsl_settings(account_id):
                         'stopLossEnabled': jsonl_settings.get('stop_loss_enabled', False),
                         'rsiTakeProfitThreshold': jsonl_settings.get('rsi_take_profit_threshold', 1900),
                         'rsiTakeProfitEnabled': jsonl_settings.get('rsi_take_profit_enabled', False),
+                        'rsiShortTakeProfitThreshold': jsonl_settings.get('rsi_short_take_profit_threshold', 810),
+                        'rsiShortTakeProfitEnabled': jsonl_settings.get('rsi_short_take_profit_enabled', False),
                         'sentimentTakeProfitEnabled': jsonl_settings.get('sentiment_take_profit_enabled', False),  # 🔥 市场情绪止盈
                         'maxPositionValueUsdt': jsonl_settings.get('max_position_value_usdt', 5.0),
                         'enabled': jsonl_settings.get('enabled', True),
@@ -16312,6 +16314,8 @@ def get_okx_tpsl_settings(account_id):
             'stopLossEnabled': True,
             'rsiTakeProfitThreshold': 1900,
             'rsiTakeProfitEnabled': False,
+            'rsiShortTakeProfitThreshold': 810,
+            'rsiShortTakeProfitEnabled': False,
             'sentimentTakeProfitEnabled': False,  # 🔥 市场情绪止盈默认关闭
             'maxPositionValueUsdt': 5.0,
             'enabled': True
@@ -16356,12 +16360,14 @@ def save_okx_tpsl_settings(account_id):
             'stop_loss_threshold': float(data.get('stopLossThreshold', -30)),
             'rsi_take_profit_enabled': bool(data.get('rsiTakeProfitEnabled', False)),
             'rsi_take_profit_threshold': float(data.get('rsiTakeProfitThreshold', 1900)),
+            'rsi_short_take_profit_enabled': bool(data.get('rsiShortTakeProfitEnabled', False)),
+            'rsi_short_take_profit_threshold': float(data.get('rsiShortTakeProfitThreshold', 810)),
             'sentiment_take_profit_enabled': bool(data.get('sentimentTakeProfitEnabled', False)),  # 🔥 市场情绪止盈
             'sentiment_signals': ['见顶信号', '顶部背离'],  # 固定触发信号
             'sentiment_position_side': 'long',  # 只平多单
             'max_position_value_usdt': float(data.get('maxPositionValueUsdt', 5.0)),
             'last_updated': last_updated,
-            'comment': '止盈止损配置 - 最大单笔保护 + RSI止盈 + 市场情绪止盈'
+            'comment': '止盈止损配置 - 最大单笔保护 + RSI多单止盈 + RSI空单止盈 + 市场情绪止盈'
         }
         
         # 保存到JSONL文件（覆盖第一行）
@@ -16384,6 +16390,8 @@ def save_okx_tpsl_settings(account_id):
             'stopLossEnabled': jsonl_settings['stop_loss_enabled'],
             'rsiTakeProfitThreshold': jsonl_settings['rsi_take_profit_threshold'],
             'rsiTakeProfitEnabled': jsonl_settings['rsi_take_profit_enabled'],
+            'rsiShortTakeProfitThreshold': jsonl_settings['rsi_short_take_profit_threshold'],
+            'rsiShortTakeProfitEnabled': jsonl_settings['rsi_short_take_profit_enabled'],
             'sentimentTakeProfitEnabled': jsonl_settings['sentiment_take_profit_enabled'],  # 🔥 市场情绪止盈
             'maxPositionValueUsdt': jsonl_settings['max_position_value_usdt'],
             'enabled': jsonl_settings['enabled'],
@@ -18003,7 +18011,9 @@ def close_okx_position():
 
 @app.route('/api/okx-trading/close-all-positions', methods=['POST'])
 def close_all_okx_positions():
-    """一键平仓所有持仓 - 遍历所有持仓并逐个平仓"""
+    """一键平仓所有持仓 - 遍历所有持仓并逐个平仓
+    支持按posSide过滤: 传入'long'只平多单, 传入'short'只平空单, 不传或传'all'平所有
+    """
     try:
         import hmac
         import base64
@@ -18015,6 +18025,7 @@ def close_all_okx_positions():
         secret_key = data.get('apiSecret', '')
         passphrase = data.get('passphrase', '')
         account_id = data.get('accountId', 'unknown')
+        filter_pos_side = data.get('posSide', 'all')  # 新增: 'long', 'short', 'all'
         
         if not api_key or not secret_key or not passphrase:
             return jsonify({
@@ -18057,16 +18068,22 @@ def close_all_okx_positions():
         # 过滤出有持仓的(pos != '0')
         active_positions = [pos for pos in positions_data if float(pos.get('pos', 0)) != 0]
         
+        # 根据posSide过滤持仓
+        if filter_pos_side and filter_pos_side != 'all':
+            active_positions = [pos for pos in active_positions if pos.get('posSide', '') == filter_pos_side]
+            print(f"[一键平仓] 按方向过滤: {filter_pos_side}, 剩余 {len(active_positions)} 个持仓")
+        
         if not active_positions:
             return jsonify({
                 'success': True,
-                'message': '当前没有持仓需要平仓',
+                'message': f'当前没有持仓需要平仓 (过滤条件: {filter_pos_side})',
                 'closedCount': 0,
                 'failedCount': 0,
+                'totalPositions': 0,
                 'results': []
             })
         
-        print(f"[一键平仓] 找到 {len(active_positions)} 个持仓需要平仓")
+        print(f"[一键平仓] 找到 {len(active_positions)} 个持仓需要平仓 (过滤: {filter_pos_side})")
         
         # 2. 获取账户持仓模式
         position_mode = 'long_short_mode'  # 默认双向持仓

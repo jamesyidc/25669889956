@@ -1243,6 +1243,27 @@
             transform: translateX(20px);
         }
         
+        /* RSI空单止盈开关 - 绿色 */
+        #rsiShortTakeProfitSwitch:checked + .slider-rsi-short-takeprofit {
+            background-color: #10b981 !important;
+        }
+        
+        .slider-rsi-short-takeprofit:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        #rsiShortTakeProfitSwitch:checked + .slider-rsi-short-takeprofit:before {
+            transform: translateX(20px);
+        }
+        
         /* 市场情绪止盈开关 - 红色 */
         #sentimentTakeProfitSwitch:checked + .slider-sentiment-takeprofit {
             background-color: #ef4444 !important;
@@ -3173,10 +3194,10 @@ data/
                         </div>
                     </div>
                     
-                    <!-- RSI止盈设置 -->
+                    <!-- RSI多单止盈设置 -->
                     <div style="margin-top: 10px; padding: 10px; background: rgba(251, 146, 60, 0.1); border-radius: 8px; border: 1px solid #fb923c;">
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                            <span style="color: #9a3412; font-weight: 600; font-size: 13px;">🎯 RSI止盈</span>
+                            <span style="color: #9a3412; font-weight: 600; font-size: 13px;">🎯 RSI多单止盈</span>
                             <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
                                 <input type="checkbox" id="rsiTakeProfitSwitch" style="opacity: 0; width: 0; height: 0;">
                                 <span class="slider slider-rsi-takeprofit" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px;"></span>
@@ -3189,7 +3210,27 @@ data/
                             <span style="color: #9a3412; font-size: 13px; font-weight: 600;">RSI</span>
                         </div>
                         <div style="font-size: 11px; color: #9a3412; margin-top: 6px;">
-                            RSI之和达到此阈值时触发自动止盈 (范围: 810-2700)
+                            RSI之和达到此阈值时触发多单止盈 (范围: 810-2700)
+                        </div>
+                    </div>
+                    
+                    <!-- RSI空单止盈设置 -->
+                    <div style="margin-top: 10px; padding: 10px; background: rgba(16, 185, 129, 0.1); border-radius: 8px; border: 1px solid #10b981;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: #065f46; font-weight: 600; font-size: 13px;">📉 RSI空单止盈</span>
+                            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+                                <input type="checkbox" id="rsiShortTakeProfitSwitch" style="opacity: 0; width: 0; height: 0;">
+                                <span class="slider slider-rsi-short-takeprofit" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px;"></span>
+                            </label>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <input type="number" id="rsiShortTakeProfitThreshold" value="810" step="10" min="810" max="2700" 
+                                   style="flex: 1; padding: 6px 10px; border: 1px solid #10b981; border-radius: 6px; font-size: 13px;"
+                                   placeholder="RSI阈值">
+                            <span style="color: #065f46; font-size: 13px; font-weight: 600;">RSI</span>
+                        </div>
+                        <div style="font-size: 11px; color: #065f46; margin-top: 6px;">
+                            RSI之和跌破此阈值时触发空单止盈 (范围: 810-2700)
                         </div>
                     </div>
                     
@@ -7083,6 +7124,10 @@ ${data.sMsg || result.message || ''}`);
                     document.getElementById('rsiTakeProfitThreshold').value = settings.rsiTakeProfitThreshold || 1900;
                     document.getElementById('rsiTakeProfitSwitch').checked = settings.rsiTakeProfitEnabled || false;
                     
+                    // 加载RSI空单止盈设置
+                    document.getElementById('rsiShortTakeProfitThreshold').value = settings.rsiShortTakeProfitThreshold || 810;
+                    document.getElementById('rsiShortTakeProfitSwitch').checked = settings.rsiShortTakeProfitEnabled || false;
+                    
                     // 🔥 加载市场情绪止盈设置
                     document.getElementById('sentimentTakeProfitSwitch').checked = settings.sentimentTakeProfitEnabled || false;
                     
@@ -7151,6 +7196,8 @@ ${data.sMsg || result.message || ''}`);
                 stopLossEnabled: document.getElementById('stopLossSwitch').checked,
                 rsiTakeProfitThreshold: parseFloat(document.getElementById('rsiTakeProfitThreshold').value),
                 rsiTakeProfitEnabled: document.getElementById('rsiTakeProfitSwitch').checked,
+                rsiShortTakeProfitThreshold: parseFloat(document.getElementById('rsiShortTakeProfitThreshold').value),
+                rsiShortTakeProfitEnabled: document.getElementById('rsiShortTakeProfitSwitch').checked,
                 sentimentTakeProfitEnabled: document.getElementById('sentimentTakeProfitSwitch').checked,  // 🔥 市场情绪止盈
                 maxPositionValueUsdt: parseFloat(document.getElementById('maxPositionValueInput').value)
             };

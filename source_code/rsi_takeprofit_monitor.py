@@ -123,14 +123,19 @@ def set_allowed_takeprofit(account_id, allowed, reason, rsi_value):
         return False
 
 
-def close_all_positions(account):
-    """执行一键平仓"""
+def close_all_positions(account, pos_side='all'):
+    """执行一键平仓
+    Args:
+        account: 账户信息
+        pos_side: 持仓方向 'long', 'short', 'all'
+    """
     try:
         data = {
             'apiKey': account['apiKey'],
             'apiSecret': account['apiSecret'],
             'passphrase': account['passphrase'],
-            'accountId': account['id']
+            'accountId': account['id'],
+            'posSide': pos_side  # 添加持仓方向过滤
         }
         response = requests.post(
             f"{API_BASE}/api/okx-trading/close-all-positions",
@@ -160,7 +165,7 @@ def send_telegram_message(message):
 
 
 def check_rsi_takeprofit():
-    """检查所有账户的RSI止盈条件"""
+    """检查所有账户的RSI止盈条件 (包括多单和空单)"""
     log("=" * 60)
     log("🔍 开始RSI止盈检查...")
     
@@ -186,74 +191,128 @@ def check_rsi_takeprofit():
         try:
             # 获取止盈止损设置
             settings = get_tpsl_settings(account_id)
-            rsi_enabled = settings.get('rsiTakeProfitEnabled', False)
-            rsi_threshold = float(settings.get('rsiTakeProfitThreshold', 1900))
             
-            # 如果未启用，跳过
-            if not rsi_enabled:
-                log(f"⏭️ [{account_name}] RSI止盈未启用")
-                continue
+            # ===== 1. 检查多单RSI止盈 =====
+            rsi_long_enabled = settings.get('rsiTakeProfitEnabled', False)
+            rsi_long_threshold = float(settings.get('rsiTakeProfitThreshold', 1900))
             
-            log(f"🎯 [{account_name}] RSI监控中 - 当前: {total_rsi:.2f}, 阈值: {rsi_threshold}")
-            
-            # 检查执行许可
-            allowed = check_allowed_takeprofit(account_id)
-            if not allowed:
-                log(f"⏸️ [{account_name}] 执行许可已禁用，跳过")
-                continue
-            
-            # 检查是否达到阈值
-            if total_rsi >= rsi_threshold:
-                # 防止短时间内重复触发
-                now = int(time.time() * 1000)
-                last_trigger = last_trigger_times.get(account_id, 0)
-                last_value = last_rsi_values.get(account_id, 0)
+            if rsi_long_enabled:
+                log(f"🎯 [{account_name}] RSI多单监控 - 当前: {total_rsi:.2f}, 阈值: {rsi_long_threshold}")
                 
-                if last_value == total_rsi or (now - last_trigger) < RSI_CHECK_COOLDOWN:
-                    log(f"⏳ [{account_name}] 冷却期内或相同RSI值，跳过")
-                    continue
-                
-                # 更新触发记录
-                last_trigger_times[account_id] = now
-                last_rsi_values[account_id] = total_rsi
-                
-                log(f"🚨 [{account_name}] RSI止盈触发！RSI={total_rsi:.2f} >= {rsi_threshold}")
-                
-                # 立即禁用执行许可
-                set_allowed_takeprofit(
-                    account_id,
-                    False,
-                    f"RSI止盈已触发并执行，RSI={total_rsi:.2f}",
-                    total_rsi
-                )
-                
-                # 执行平仓
-                log(f"🔄 [{account_name}] 开始执行平仓...")
-                close_result = close_all_positions(account)
-                
-                # 构建通知消息
-                message = f"🎯 RSI止盈触发（后台监控）\n账户：{account_name}\nRSI之和：{total_rsi:.2f}\n阈值：{rsi_threshold}\n\n"
-                
-                if close_result.get('success'):
-                    total_pos = close_result.get('totalPositions', 0)
-                    closed = close_result.get('closedCount', 0)
-                    failed = close_result.get('failedCount', 0)
+                # 检查执行许可
+                allowed = check_allowed_takeprofit(account_id)
+                if allowed and total_rsi >= rsi_long_threshold:
+                    # 防止短时间内重复触发
+                    now = int(time.time() * 1000)
+                    last_trigger = last_trigger_times.get(f"{account_id}_long", 0)
+                    last_value = last_rsi_values.get(f"{account_id}_long", 0)
                     
-                    message += f"✅ 平仓完成\n总持仓：{total_pos} 个\n成功平仓：{closed} 个\n失败：{failed} 个"
-                    
-                    if close_result.get('retryCount', 0) > 0:
-                        message += f"\n第二轮重试：{close_result.get('retrySuccess', 0)}/{close_result.get('retryCount', 0)} 成功"
-                    
-                    log(f"✅ [{account_name}] 平仓完成 - 成功: {closed}/{total_pos}")
-                else:
-                    error_msg = close_result.get('message') or close_result.get('error', '未知错误')
-                    message += f"❌ 平仓失败：{error_msg}"
-                    log(f"❌ [{account_name}] 平仓失败: {error_msg}")
+                    if last_value != total_rsi and (now - last_trigger) >= RSI_CHECK_COOLDOWN:
+                        # 更新触发记录
+                        last_trigger_times[f"{account_id}_long"] = now
+                        last_rsi_values[f"{account_id}_long"] = total_rsi
+                        
+                        log(f"🚨 [{account_name}] RSI多单止盈触发！RSI={total_rsi:.2f} >= {rsi_long_threshold}")
+                        
+                        # 立即禁用执行许可
+                        set_allowed_takeprofit(
+                            account_id,
+                            False,
+                            f"RSI多单止盈已触发，RSI={total_rsi:.2f}",
+                            total_rsi
+                        )
+                        
+                        # 执行多单平仓
+                        log(f"🔄 [{account_name}] 开始平掉所有多单...")
+                        close_result = close_all_positions(account, pos_side='long')
+                        
+                        # 构建通知消息
+                        message = f"🎯 RSI多单止盈触发（后台监控）\n账户：{account_name}\nRSI之和：{total_rsi:.2f}\n阈值：{rsi_long_threshold}\n\n"
+                        
+                        if close_result.get('success'):
+                            total_pos = close_result.get('totalPositions', 0)
+                            closed = close_result.get('closedCount', 0)
+                            failed = close_result.get('failedCount', 0)
+                            
+                            message += f"✅ 多单平仓完成\n总持仓：{total_pos} 个\n成功平仓：{closed} 个\n失败：{failed} 个"
+                            log(f"✅ [{account_name}] 多单平仓完成 - 成功: {closed}/{total_pos}")
+                        else:
+                            error_msg = close_result.get('message') or close_result.get('error', '未知错误')
+                            message += f"❌ 平仓失败：{error_msg}"
+                            log(f"❌ [{account_name}] 多单平仓失败: {error_msg}")
+                        
+                        # 发送Telegram通知
+                        log(f"📱 发送Telegram通知...")
+                        send_telegram_message(message)
+                        log(f"✅ [{account_name}] RSI多单止盈处理完成")
+                    else:
+                        log(f"⏳ [{account_name}] 多单冷却期内或相同RSI值，跳过")
+                elif not allowed:
+                    log(f"⏸️ [{account_name}] 多单执行许可已禁用，跳过")
+            else:
+                log(f"⏭️ [{account_name}] RSI多单止盈未启用")
+            
+            # ===== 2. 检查空单RSI止盈 =====
+            rsi_short_enabled = settings.get('rsiShortTakeProfitEnabled', False)
+            rsi_short_threshold = float(settings.get('rsiShortTakeProfitThreshold', 810))
+            
+            if rsi_short_enabled:
+                log(f"📉 [{account_name}] RSI空单监控 - 当前: {total_rsi:.2f}, 阈值: {rsi_short_threshold}")
                 
-                # 发送Telegram通知
-                log(f"📱 发送Telegram通知...")
-                send_telegram_message(message)
-                log(f"✅ [{account_name}] RSI止盈处理完成")
+                # 空单止盈使用独立的执行许可检查（可以考虑用不同的API）
+                # 这里暂时复用同一个许可，实际可以创建独立的检查
+                allowed_short = check_allowed_takeprofit(account_id)  # TODO: 可以添加独立的空单许可检查
+                
+                if allowed_short and total_rsi <= rsi_short_threshold:
+                    # 防止短时间内重复触发
+                    now = int(time.time() * 1000)
+                    last_trigger = last_trigger_times.get(f"{account_id}_short", 0)
+                    last_value = last_rsi_values.get(f"{account_id}_short", 0)
+                    
+                    if last_value != total_rsi and (now - last_trigger) >= RSI_CHECK_COOLDOWN:
+                        # 更新触发记录
+                        last_trigger_times[f"{account_id}_short"] = now
+                        last_rsi_values[f"{account_id}_short"] = total_rsi
+                        
+                        log(f"🚨 [{account_name}] RSI空单止盈触发！RSI={total_rsi:.2f} <= {rsi_short_threshold}")
+                        
+                        # 立即禁用执行许可（暂时复用同一个，实际可以独立）
+                        set_allowed_takeprofit(
+                            account_id,
+                            False,
+                            f"RSI空单止盈已触发，RSI={total_rsi:.2f}",
+                            total_rsi
+                        )
+                        
+                        # 执行空单平仓
+                        log(f"🔄 [{account_name}] 开始平掉所有空单...")
+                        close_result = close_all_positions(account, pos_side='short')
+                        
+                        # 构建通知消息
+                        message = f"📉 RSI空单止盈触发（后台监控）\n账户：{account_name}\nRSI之和：{total_rsi:.2f}\n阈值：{rsi_short_threshold}\n\n"
+                        
+                        if close_result.get('success'):
+                            total_pos = close_result.get('totalPositions', 0)
+                            closed = close_result.get('closedCount', 0)
+                            failed = close_result.get('failedCount', 0)
+                            
+                            message += f"✅ 空单平仓完成\n总持仓：{total_pos} 个\n成功平仓：{closed} 个\n失败：{failed} 个"
+                            log(f"✅ [{account_name}] 空单平仓完成 - 成功: {closed}/{total_pos}")
+                        else:
+                            error_msg = close_result.get('message') or close_result.get('error', '未知错误')
+                            message += f"❌ 平仓失败：{error_msg}"
+                            log(f"❌ [{account_name}] 空单平仓失败: {error_msg}")
+                        
+                        # 发送Telegram通知
+                        log(f"📱 发送Telegram通知...")
+                        send_telegram_message(message)
+                        log(f"✅ [{account_name}] RSI空单止盈处理完成")
+                    else:
+                        log(f"⏳ [{account_name}] 空单冷却期内或相同RSI值，跳过")
+                elif not allowed_short:
+                    log(f"⏸️ [{account_name}] 空单执行许可已禁用，跳过")
+            else:
+                log(f"⏭️ [{account_name}] RSI空单止盈未启用")
                 
         except Exception as e:
             log(f"❌ [{account_name}] 检查失败: {str(e)}")

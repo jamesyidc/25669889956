@@ -7970,7 +7970,7 @@ ${data.sMsg || result.message || ''}`);
                     // 保存设置
                     await saveTakeProfitStopLossSettings();
                     
-                    // 设置JSONL执行许可
+                    // 设置JSONL执行许可（多单）
                     const account = accounts.find(acc => acc.id === currentAccount);
                     if (!account) return;
                     
@@ -7983,16 +7983,61 @@ ${data.sMsg || result.message || ''}`);
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 allowed: enabled,
-                                reason: enabled ? `开启RSI止盈监控，阈值${rsiValue}` : '关闭RSI止盈监控',
+                                reason: enabled ? `开启RSI多单止盈监控，阈值${rsiValue}` : '关闭RSI多单止盈监控',
                                 takeprofitType: 'rsi',
-                                rsiValue: rsiValue
+                                rsiValue: rsiValue,
+                                posSide: 'long'  // 多单
                             })
                         });
                         
                         const result = await response.json();
-                        console.log(enabled ? `✅ 已开启RSI止盈监控` : `⚪ 已关闭RSI止盈监控`, result);
+                        console.log(enabled ? `✅ 已开启RSI多单止盈监控` : `⚪ 已关闭RSI多单止盈监控`, result);
                     } catch (e) {
-                        console.error('❌ 设置RSI止盈执行许可失败', e);
+                        console.error('❌ 设置RSI多单止盈执行许可失败', e);
+                    }
+                });
+            }
+            
+            // RSI空单止盈开关特殊处理：同时设置JSONL执行许可
+            const rsiShortTakeProfitSwitchEl = document.getElementById('rsiShortTakeProfitSwitch');
+            if (rsiShortTakeProfitSwitchEl) {
+                rsiShortTakeProfitSwitchEl.addEventListener('change', async function() {
+                    // 保存设置
+                    await saveTakeProfitStopLossSettings();
+                    
+                    // 设置JSONL执行许可（空单）
+                    const account = accounts.find(acc => acc.id === currentAccount);
+                    if (!account) return;
+                    
+                    const enabled = this.checked;
+                    const rsiValue = parseFloat(document.getElementById('rsiShortTakeProfitThreshold').value) || 810;
+                    
+                    try {
+                        const response = await fetch(`/api/okx-trading/set-allowed-takeprofit/${account.id}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                allowed: enabled,
+                                reason: enabled ? `开启RSI空单止盈监控，阈值${rsiValue}` : '关闭RSI空单止盈监控',
+                                takeprofitType: 'rsi',
+                                rsiValue: rsiValue,
+                                posSide: 'short'  // 空单
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        console.log(enabled ? `✅ 已开启RSI空单止盈监控` : `⚪ 已关闭RSI空单止盈监控`, result);
+                        
+                        // 显示用户提示
+                        if (result.success) {
+                            alert(enabled ? 
+                                `✅ 已开启RSI空单止盈监控\n\n账户：${account.name}\n阈值：${rsiValue}\n说明：当RSI跌破${rsiValue}时，将自动平掉所有空单` : 
+                                `⚪ 已关闭RSI空单止盈监控\n\n账户：${account.name}`
+                            );
+                        }
+                    } catch (e) {
+                        console.error('❌ 设置RSI空单止盈执行许可失败', e);
+                        alert('❌ 设置失败，请检查网络连接');
                     }
                 });
             }

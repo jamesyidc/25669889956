@@ -24923,6 +24923,9 @@ def api_market_sentiment_history():
         date_str = request.args.get('date', datetime.now(timezone(timedelta(hours=8))).strftime('%Y%m%d'))
         limit = int(request.args.get('limit', 100))
         
+        # 如果日期包含横线（YYYY-MM-DD），移除横线转换为YYYYMMDD
+        date_str = date_str.replace('-', '')
+        
         # 构建JSONL文件路径
         jsonl_path = Path(f'/home/user/webapp/data/market_sentiment/market_sentiment_{date_str}.jsonl')
         

@@ -7138,8 +7138,19 @@ ${data.sMsg || result.message || ''}`);
                     document.getElementById('rsiTakeProfitSwitch').checked = settings.rsiTakeProfitEnabled || false;
                     
                     // 加载RSI空单止盈设置
-                    document.getElementById('rsiShortTakeProfitThreshold').value = settings.rsiShortTakeProfitThreshold || 810;
-                    document.getElementById('rsiShortTakeProfitSwitch').checked = settings.rsiShortTakeProfitEnabled || false;
+                    const rsiShortThresholdInput = document.getElementById('rsiShortTakeProfitThreshold');
+                    const rsiShortSwitch = document.getElementById('rsiShortTakeProfitSwitch');
+                    
+                    if (rsiShortThresholdInput && rsiShortSwitch) {
+                        rsiShortThresholdInput.value = settings.rsiShortTakeProfitThreshold || 810;
+                        rsiShortSwitch.checked = settings.rsiShortTakeProfitEnabled || false;
+                        console.log(`📉 [RSI空单止盈] 已加载: 阈值=${rsiShortThresholdInput.value}, 启用=${rsiShortSwitch.checked}`);
+                    } else {
+                        console.error('❌ [RSI空单止盈] DOM元素未找到!', {
+                            threshold: rsiShortThresholdInput,
+                            switch: rsiShortSwitch
+                        });
+                    }
                     
                     // 🔥 加载市场情绪止盈设置
                     document.getElementById('sentimentTakeProfitSwitch').checked = settings.sentimentTakeProfitEnabled || false;
@@ -7214,6 +7225,11 @@ ${data.sMsg || result.message || ''}`);
                 sentimentTakeProfitEnabled: document.getElementById('sentimentTakeProfitSwitch').checked,  // 🔥 市场情绪止盈
                 maxPositionValueUsdt: parseFloat(document.getElementById('maxPositionValueInput').value)
             };
+            
+            console.log('💾 [保存设置] RSI空单止盈配置:', {
+                threshold: settings.rsiShortTakeProfitThreshold,
+                enabled: settings.rsiShortTakeProfitEnabled
+            });
             
             try {
                 // 1. 保存止盈止损设置

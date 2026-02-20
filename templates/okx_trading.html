@@ -3211,9 +3211,28 @@ data/
 
                 <!-- 止盈止损设置 -->
                 <div class="info-card" style="margin-top: 16px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 2px solid #22c55e;">
-                    <h3 style="color: #166534; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
-                        🎯 止盈止损设置
+                    <h3 style="color: #166534; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+                        <span style="display: flex; align-items: center; gap: 6px;">🎯 止盈止损设置</span>
+                        <button onclick="toggleAllAccountsOverview()" id="toggleAllAccountsBtn" style="background: #3b82f6; color: white; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600;">
+                            📊 查看所有账户状态
+                        </button>
                     </h3>
+                    
+                    <!-- 所有账户状态总览（可折叠） -->
+                    <div id="allAccountsOverview" style="display: none; margin-bottom: 12px; padding: 12px; background: rgba(59, 130, 246, 0.1); border-radius: 8px; border: 2px solid #3b82f6;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                            <h4 style="margin: 0; color: #1e40af; font-size: 13px; font-weight: 700;">📊 所有账户止盈止损状态总览</h4>
+                            <button onclick="refreshAllAccountsOverview()" style="background: #10b981; color: white; border: none; padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: 600;">🔄 刷新</button>
+                        </div>
+                        <div style="font-size: 10px; color: #1e40af; margin-bottom: 8px; opacity: 0.8;">
+                            💡 快速查看所有账户的策略开关状态，避免遗漏配置
+                        </div>
+                        <div id="allAccountsStatusList" style="display: grid; grid-template-columns: 1fr; gap: 8px;">
+                            <div style="text-align: center; color: #6b7280; padding: 20px; font-size: 12px;">
+                                ⏳ 正在加载...
+                            </div>
+                        </div>
+                    </div>
                     
                     <!-- 当前未实现盈亏 -->
                     <div class="info-row" style="margin-bottom: 12px; padding: 10px; background: rgba(255,255,255,0.6); border-radius: 6px; border: 2px dashed #22c55e;">
@@ -9423,6 +9442,150 @@ ${data.sMsg || result.message || ''}`);
             } catch (error) {
                 console.error('❌ 执行余额1%策略失败:', error);
                 alert(`❌ 执行失败: ${error.message}`);
+            }
+        }
+        
+        // ==================== 所有账户状态总览 ====================
+        
+        // 切换显示/隐藏所有账户状态总览
+        function toggleAllAccountsOverview() {
+            const overviewDiv = document.getElementById('allAccountsOverview');
+            const toggleBtn = document.getElementById('toggleAllAccountsBtn');
+            
+            if (overviewDiv.style.display === 'none') {
+                overviewDiv.style.display = 'block';
+                toggleBtn.textContent = '📊 隐藏所有账户状态';
+                // 首次打开时刷新数据
+                refreshAllAccountsOverview();
+            } else {
+                overviewDiv.style.display = 'none';
+                toggleBtn.textContent = '📊 查看所有账户状态';
+            }
+        }
+        
+        // 刷新所有账户的状态
+        async function refreshAllAccountsOverview() {
+            const listDiv = document.getElementById('allAccountsStatusList');
+            
+            if (!listDiv) {
+                console.error('❌ 找不到 allAccountsStatusList 元素');
+                return;
+            }
+            
+            listDiv.innerHTML = '<div style="text-align: center; color: #6b7280; padding: 20px; font-size: 12px;">⏳ 正在加载...</div>';
+            
+            try {
+                // 获取所有账户
+                if (!accounts || accounts.length === 0) {
+                    listDiv.innerHTML = '<div style="text-align: center; color: #6b7280; padding: 20px; font-size: 12px;">⚠️ 没有找到账户</div>';
+                    return;
+                }
+                
+                // 为每个账户获取设置
+                const accountsStatus = [];
+                
+                for (const account of accounts) {
+                    try {
+                        const response = await fetch(`/api/okx-trading/tpsl-settings/${account.id}`);
+                        const result = await response.json();
+                        
+                        if (result.success && result.settings) {
+                            accountsStatus.push({
+                                id: account.id,
+                                name: account.name,
+                                settings: result.settings
+                            });
+                        }
+                    } catch (e) {
+                        console.warn(`⚠️ 获取账户 ${account.name} 设置失败:`, e);
+                    }
+                }
+                
+                // 生成HTML
+                if (accountsStatus.length === 0) {
+                    listDiv.innerHTML = '<div style="text-align: center; color: #6b7280; padding: 20px; font-size: 12px;">⚠️ 无法加载账户设置</div>';
+                    return;
+                }
+                
+                let html = '';
+                
+                for (const account of accountsStatus) {
+                    const s = account.settings;
+                    const isCurrentAccount = account.id === currentAccount;
+                    
+                    // 统计启用的策略数量
+                    let enabledCount = 0;
+                    if (s.takeProfitEnabled) enabledCount++;
+                    if (s.stopLossEnabled) enabledCount++;
+                    if (s.rsiTakeProfitEnabled) enabledCount++;
+                    if (s.rsiShortTakeProfitEnabled) enabledCount++;
+                    if (s.sentimentTakeProfitEnabled) enabledCount++;
+                    if (s.top_signal_top8_short_enabled) enabledCount++;
+                    if (s.top_signal_bottom8_short_enabled) enabledCount++;
+                    
+                    const totalStrategies = 7;
+                    const enabledPercentage = (enabledCount / totalStrategies * 100).toFixed(0);
+                    
+                    // 背景色（当前账户高亮）
+                    const bgColor = isCurrentAccount ? 'rgba(59, 130, 246, 0.15)' : 'rgba(255, 255, 255, 0.6)';
+                    const borderColor = isCurrentAccount ? '#3b82f6' : '#d1d5db';
+                    const borderWidth = isCurrentAccount ? '2px' : '1px';
+                    
+                    html += `
+                    <div style="padding: 10px; background: ${bgColor}; border-radius: 6px; border: ${borderWidth} solid ${borderColor};">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 13px; font-weight: 700; color: #1f2937;">
+                                    ${isCurrentAccount ? '👉 ' : ''}${account.name}
+                                </span>
+                                <span style="font-size: 10px; padding: 2px 6px; border-radius: 4px; background: ${enabledCount > 0 ? 'rgba(34, 197, 94, 0.2)' : 'rgba(156, 163, 175, 0.2)'}; color: ${enabledCount > 0 ? '#166534' : '#6b7280'}; font-weight: 600;">
+                                    ${enabledCount}/${totalStrategies} 策略已启用
+                                </span>
+                            </div>
+                            <button onclick="selectAccount('${account.id}')" style="background: #3b82f6; color: white; border: none; padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: 600;">
+                                ${isCurrentAccount ? '✅ 当前' : '切换'}
+                            </button>
+                        </div>
+                        
+                        <!-- 进度条 -->
+                        <div style="height: 4px; background: rgba(209, 213, 219, 0.5); border-radius: 2px; overflow: hidden; margin-bottom: 8px;">
+                            <div style="height: 100%; width: ${enabledPercentage}%; background: linear-gradient(90deg, #10b981 0%, #22c55e 100%); transition: width 0.3s ease;"></div>
+                        </div>
+                        
+                        <!-- 策略列表 -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 10px;">
+                            <div style="display: flex; align-items: center; gap: 4px; color: ${s.takeProfitEnabled ? '#166534' : '#9ca3af'};">
+                                ${s.takeProfitEnabled ? '✅' : '⚪'} 止盈 (+${s.takeProfitThreshold || 50}U)
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 4px; color: ${s.stopLossEnabled ? '#991b1b' : '#9ca3af'};">
+                                ${s.stopLossEnabled ? '✅' : '⚪'} 止损 (${s.stopLossThreshold || -30}U)
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 4px; color: ${s.rsiTakeProfitEnabled ? '#9a3412' : '#9ca3af'};">
+                                ${s.rsiTakeProfitEnabled ? '✅' : '⚪'} RSI多单 (${s.rsiTakeProfitThreshold || 1900})
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 4px; color: ${s.rsiShortTakeProfitEnabled ? '#065f46' : '#9ca3af'};">
+                                ${s.rsiShortTakeProfitEnabled ? '✅' : '⚪'} RSI空单 (${s.rsiShortTakeProfitThreshold || 810})
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 4px; color: ${s.top_signal_top8_short_enabled ? '#991b1b' : '#9ca3af'};">
+                                ${s.top_signal_top8_short_enabled ? '✅' : '⚪'} 见顶前8空
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 4px; color: ${s.top_signal_bottom8_short_enabled ? '#7f1d1d' : '#9ca3af'};">
+                                ${s.top_signal_bottom8_short_enabled ? '✅' : '⚪'} 见顶后8空
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 4px; color: ${s.sentimentTakeProfitEnabled ? '#991b1b' : '#9ca3af'}; grid-column: span 2;">
+                                ${s.sentimentTakeProfitEnabled ? '✅' : '⚪'} 市场情绪止盈
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                }
+                
+                listDiv.innerHTML = html;
+                console.log(`✅ 已加载 ${accountsStatus.length} 个账户的状态`);
+                
+            } catch (error) {
+                console.error('❌ 刷新所有账户状态失败:', error);
+                listDiv.innerHTML = '<div style="text-align: center; color: #ef4444; padding: 20px; font-size: 12px;">❌ 加载失败，请重试</div>';
             }
         }
 

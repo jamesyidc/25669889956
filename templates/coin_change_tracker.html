@@ -3972,8 +3972,18 @@ pm2 status                                                # 查看所有进程�
                                             const time = beijingTime.split(' ')[1] || '';
                                             if (!time) return;
                                             
-                                            // 查找时间对应的索引
-                                            const timeIndex = times.indexOf(time);
+                                            // 提取小时和分钟（HH:MM）用于模糊匹配
+                                            const timeHHMM = time.substring(0, 5);  // '08:45:03' -> '08:45'
+                                            
+                                            // 查找时间对应的索引（模糊匹配：只比较HH:MM）
+                                            let timeIndex = -1;
+                                            for (let i = 0; i < times.length; i++) {
+                                                const chartTimeHHMM = times[i].substring(0, 5);
+                                                if (chartTimeHHMM === timeHHMM) {
+                                                    timeIndex = i;
+                                                    break;
+                                                }
+                                            }
                                             
                                             if (timeIndex >= 0 && changes[timeIndex] !== undefined) {
                                                 const isTopSignal = sentimentText.includes('见顶信号');

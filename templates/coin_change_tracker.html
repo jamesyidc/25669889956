@@ -4329,6 +4329,148 @@ pm2 status                                                # 查看所有进程�
                                 symbol: 'pin',
                                 symbolSize: 50
                             }
+                        },
+                        // 独立的市场情绪信号系列（不受图例切换影响）
+                        {
+                            name: '市场情绪信号',
+                            type: 'scatter',
+                            yAxisIndex: 0,  // 使用左轴（涨跌幅）
+                            data: (function() {
+                                // 收集所有市场情绪信号的数据点
+                                const signalPoints = [];
+                                
+                                if (sentimentData && sentimentData.length > 0) {
+                                    sentimentData.forEach((sentiment, idx) => {
+                                        const sentimentText = sentiment.sentiment || '';
+                                        const beijingTime = sentiment.beijing_time || '';
+                                        
+                                        // 检查是否为信号
+                                        const hasSignal = sentimentText.includes('见顶') || 
+                                                        sentimentText.includes('见底') || 
+                                                        sentimentText.includes('顶部背离') || 
+                                                        sentimentText.includes('底部背离');
+                                        
+                                        if (!hasSignal) return;
+                                        
+                                        // 提取时间并匹配索引
+                                        const time = beijingTime.split(' ')[1] || '';
+                                        if (!time) return;
+                                        
+                                        const timeHHMM = time.substring(0, 5);
+                                        let timeIndex = -1;
+                                        for (let i = 0; i < times.length; i++) {
+                                            const chartTimeHHMM = times[i].substring(0, 5);
+                                            if (chartTimeHHMM === timeHHMM) {
+                                                timeIndex = i;
+                                                break;
+                                            }
+                                        }
+                                        
+                                        if (timeIndex >= 0 && changes[timeIndex] !== undefined) {
+                                            const isTopSignal = sentimentText.includes('见顶信号');
+                                            const isBottomSignal = sentimentText.includes('见底信号');
+                                            const isTopDivergence = sentimentText.includes('顶部背离');
+                                            const isBottomDivergence = sentimentText.includes('底部背离');
+                                            
+                                            // 添加数据点 [x, y, 信号类型, 情绪文本]
+                                            signalPoints.push({
+                                                value: [timeIndex, changes[timeIndex]],
+                                                signalType: isTopSignal ? 'topSignal' : 
+                                                           isTopDivergence ? 'topDivergence' :
+                                                           isBottomSignal ? 'bottomSignal' : 'bottomDivergence',
+                                                sentiment: sentimentText,
+                                                time: beijingTime
+                                            });
+                                        }
+                                    });
+                                }
+                                
+                                return signalPoints;
+                            })(),
+                            symbolSize: function(data) {
+                                // 根据信号类型设置大小
+                                const type = data.signalType;
+                                return (type === 'topSignal' || type === 'bottomSignal') ? 24 : 18;
+                            },
+                            symbol: function(data) {
+                                // 根据信号类型设置形状
+                                const type = data.signalType;
+                                if (type === 'topSignal') return 'triangle';
+                                if (type === 'topDivergence') return 'circle';
+                                if (type === 'bottomSignal') return 'arrow';
+                                if (type === 'bottomDivergence') return 'diamond';
+                                return 'circle';
+                            },
+                            symbolRotate: function(data) {
+                                // 见顶信号和见底信号需要旋转
+                                const type = data.signalType;
+                                return (type === 'topSignal' || type === 'bottomSignal') ? 180 : 0;
+                            },
+                            itemStyle: {
+                                color: function(params) {
+                                    const type = params.data.signalType;
+                                    if (type === 'topSignal') return '#DC2626';
+                                    if (type === 'topDivergence') return '#F97316';
+                                    if (type === 'bottomSignal') return '#059669';
+                                    if (type === 'bottomDivergence') return '#10B981';
+                                    return '#6B7280';
+                                },
+                                borderColor: '#fff',
+                                borderWidth: 2
+                            },
+                            label: {
+                                show: true,
+                                position: function(params) {
+                                    const type = params.data.signalType;
+                                    return (type === 'topSignal' || type === 'topDivergence') ? 'top' : 'bottom';
+                                },
+                                formatter: function(params) {
+                                    const type = params.data.signalType;
+                                    if (type === 'topSignal') return '⚠️见顶';
+                                    if (type === 'topDivergence') return '⛔顶背';
+                                    if (type === 'bottomSignal') return '🔥见底';
+                                    if (type === 'bottomDivergence') return '🚀底背';
+                                    return '';
+                                },
+                                fontSize: function(params) {
+                                    const type = params.data.signalType;
+                                    return (type === 'topSignal' || type === 'bottomSignal') ? 13 : 11;
+                                },
+                                fontWeight: 'bold',
+                                color: function(params) {
+                                    const type = params.data.signalType;
+                                    if (type === 'topSignal') return '#DC2626';
+                                    if (type === 'topDivergence') return '#F97316';
+                                    if (type === 'bottomSignal') return '#059669';
+                                    if (type === 'bottomDivergence') return '#10B981';
+                                    return '#6B7280';
+                                },
+                                backgroundColor: function(params) {
+                                    const type = params.data.signalType;
+                                    if (type === 'topSignal') return '#FEE2E2';
+                                    if (type === 'topDivergence') return '#FFEDD5';
+                                    if (type === 'bottomSignal') return '#D1FAE5';
+                                    if (type === 'bottomDivergence') return '#ECFDF5';
+                                    return '#F3F4F6';
+                                },
+                                padding: function(params) {
+                                    const type = params.data.signalType;
+                                    return (type === 'topSignal' || type === 'bottomSignal') ? [4, 8] : [3, 6];
+                                },
+                                borderRadius: 4
+                            },
+                            tooltip: {
+                                formatter: function(params) {
+                                    const data = params.data;
+                                    return `<div style="padding: 8px;">
+                                        <div style="font-weight: bold; margin-bottom: 4px;">${data.sentiment}</div>
+                                        <div style="font-size: 12px; color: #6B7280;">时间: ${data.time}</div>
+                                        <div style="font-size: 12px; color: #6B7280;">涨跌幅: ${data.value[1].toFixed(2)}%</div>
+                                    </div>`;
+                                }
+                            },
+                            zlevel: 10,  // 确保在最上层显示
+                            silent: false  // 允许交互
                         }]
                     }, true, true); // notMerge=true, lazyUpdate=true
                     

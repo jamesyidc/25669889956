@@ -9111,26 +9111,43 @@ ${data.sMsg || result.message || ''}`);
                 
                 // 获取币种列表（涨幅前8或后8）
                 let symbols;
+                const response = await fetch('/api/coin-change-tracker/latest?limit=1');
+                const result = await response.json();
+                
+                console.log('📊 API返回数据:', result);
+                
+                if (!result.success || !result.data) {
+                    alert('❌ 无法获取币种数据');
+                    return;
+                }
+                
+                // 从changes对象中提取币种及其涨跌幅
+                const changes = result.data.changes;
+                if (!changes || Object.keys(changes).length === 0) {
+                    alert('❌ 币种数据为空');
+                    return;
+                }
+                
+                // 将changes转换为数组并按涨跌幅排序
+                const coinsArray = Object.entries(changes).map(([symbol, data]) => ({
+                    symbol: symbol,
+                    change_pct: data.change_pct,
+                    current_price: data.current_price
+                }));
+                
+                // 按涨跌幅降序排序
+                coinsArray.sort((a, b) => b.change_pct - a.change_pct);
+                
+                console.log('📈 排序后的币种列表:', coinsArray.map(c => `${c.symbol}(${c.change_pct.toFixed(2)}%)`));
+                
                 if (type === 'top8') {
                     // 获取涨幅前8名
-                    const response = await fetch('/api/coin-change-tracker/latest?limit=1');
-                    const result = await response.json();
-                    if (!result.success || !result.data || result.data.length === 0) {
-                        alert('❌ 无法获取币种数据');
-                        return;
-                    }
-                    const coins = result.data[0].sorted_coins;
-                    symbols = coins.slice(0, 8).map(c => c.symbol);
+                    symbols = coinsArray.slice(0, 8).map(c => c.symbol);
+                    console.log('✅ 涨幅前8名:', symbols);
                 } else {
-                    // 获取涨幅后8名
-                    const response = await fetch('/api/coin-change-tracker/latest?limit=1');
-                    const result = await response.json();
-                    if (!result.success || !result.data || result.data.length === 0) {
-                        alert('❌ 无法获取币种数据');
-                        return;
-                    }
-                    const coins = result.data[0].sorted_coins;
-                    symbols = coins.slice(-8).map(c => c.symbol);
+                    // 获取涨幅后8名（最后8个）
+                    symbols = coinsArray.slice(-8).map(c => c.symbol);
+                    console.log('✅ 涨幅后8名:', symbols);
                 }
                 
                 console.log(`📋 目标币种(${symbols.length}个):`, symbols);

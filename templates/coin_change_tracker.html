@@ -6,8 +6,34 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>27币涨跌幅追踪系统</title>
-    <!-- 版本: 2026-02-09 - 修复版本：移除HTML默认值、修复加载逻辑 -->
+    <title>27币涨跌幅追踪系统 v3.1.0</title>
+    <!-- 
+    版本: 2026-02-20 v3.1.0
+    
+    🔧 最新修复 (2026-02-20):
+    1. ✅ 市场情绪信号图标刷新后消失问题修复
+       - 修复日期参数解析，支持YYYYMMDD和YYYY-MM-DD两种格式
+       - 修复市场情绪API日期格式兼容性（自动移除横线）
+       - 页面刷新后信号图标正常显示
+       - 历史日期（如2月19日）数据能正确加载
+    
+    2. ✅ 市场情绪信号显示增强
+       - 增强调试日志，便于问题排查
+       - 信号统计：见顶、顶部背离、见底、底部背离
+       - scatter系列独立显示各类信号
+       - 支持查看任意历史日期的市场情绪分析
+    
+    3. 📊 信号图标说明:
+       ⚠️ 红色倒三角 = 见顶信号
+       ⛔ 橙色圆点 = 顶部背离
+       🔥 绿色上箭头 = 见底信号
+       🚀 青色菱形 = 底部背离
+    
+    历史版本:
+    - v3.0.9: 移除HTML默认值、修复加载逻辑
+    - v3.0.8: 波峰检测算法优化
+    - v3.0.7: RSI数据映射修复
+    -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">

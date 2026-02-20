@@ -8951,8 +8951,10 @@ ${data.sMsg || result.message || ''}`);
                 const totalAmount = availableBalance * 0.01;
                 console.log(`💵 使用金额(1%): ${totalAmount.toFixed(2)} USDT`);
                 
-                if (totalAmount < 5) {
-                    alert(`❌ 账户余额不足，1%金额(${totalAmount.toFixed(2)} USDT)小于最小要求(5 USDT)`);
+                // ✅ 移除5 USDT最小限制，只要余额足够开1张合约即可
+                // 实际的最小金额由各币种的minSz决定，不需要在这里硬编码限制
+                if (totalAmount < 0.1) {
+                    alert(`❌ 账户余额不足，1%金额(${totalAmount.toFixed(2)} USDT)太小，建议至少0.1 USDT`);
                     return;
                 }
                 
@@ -8960,6 +8962,7 @@ ${data.sMsg || result.message || ''}`);
                 const typeText = type === 'top8' ? '涨幅前8名' : '涨幅后8名';
                 const directionText = direction === 'long' ? '做多(开多单)' : '做空(开空单)';
                 const confirmMsg = `确认执行余额1%策略吗？\n\n策略类型：${typeText}\n交易方向：${directionText}\n账户余额：${availableBalance.toFixed(2)} USDT\n使用金额：${totalAmount.toFixed(2)} USDT (1%)\n单币金额：${(totalAmount / 8).toFixed(2)} USDT`;
+
                 
                 if (!confirm(confirmMsg)) {
                     console.log('❌ 用户取消执行');

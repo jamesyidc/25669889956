@@ -8289,12 +8289,16 @@ ${data.sMsg || result.message || ''}`);
             const topSignalTop8ShortSwitchEl = document.getElementById('topSignalTop8ShortSwitch');
             if (topSignalTop8ShortSwitchEl) {
                 topSignalTop8ShortSwitchEl.addEventListener('change', async function() {
+                    // 检查账户
+                    const account = accounts.find(acc => acc.id === currentAccount);
+                    if (!account) {
+                        alert('❌ 设置失败：请先选择账户\n\n请在页面左侧"账户管理"区域选择或添加账户后再操作');
+                        this.checked = false;  // 恢复开关状态
+                        return;
+                    }
+                    
                     // 保存设置
                     await saveTakeProfitStopLossSettings();
-                    
-                    // 设置JSONL执行许可
-                    const account = accounts.find(acc => acc.id === currentAccount);
-                    if (!account) return;
                     
                     const enabled = this.checked;
                     const currentRSI = parseFloat(document.getElementById('topSignalRSIDisplay1').textContent) || 0;
@@ -8333,12 +8337,16 @@ ${data.sMsg || result.message || ''}`);
             const topSignalBottom8ShortSwitchEl = document.getElementById('topSignalBottom8ShortSwitch');
             if (topSignalBottom8ShortSwitchEl) {
                 topSignalBottom8ShortSwitchEl.addEventListener('change', async function() {
+                    // 检查账户
+                    const account = accounts.find(acc => acc.id === currentAccount);
+                    if (!account) {
+                        alert('❌ 设置失败：请先选择账户\n\n请在页面左侧"账户管理"区域选择或添加账户后再操作');
+                        this.checked = false;  // 恢复开关状态
+                        return;
+                    }
+                    
                     // 保存设置
                     await saveTakeProfitStopLossSettings();
-                    
-                    // 设置JSONL执行许可
-                    const account = accounts.find(acc => acc.id === currentAccount);
-                    if (!account) return;
                     
                     const enabled = this.checked;
                     const currentRSI = parseFloat(document.getElementById('topSignalRSIDisplay2').textContent) || 0;

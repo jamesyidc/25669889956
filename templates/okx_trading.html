@@ -1277,6 +1277,74 @@
             transform: translateX(20px);
         }
         
+        /* 见顶信号做空开关 - 涨幅前8 - 深红色 */
+        #topSignalTop8ShortSwitch:checked + .slider-top-signal-top8-short {
+            background-color: #dc2626 !important;
+        }
+        
+        .slider-top-signal-top8-short {
+            position: absolute;
+            cursor: pointer !important;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+            z-index: 1;
+        }
+        
+        .slider-top-signal-top8-short:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        #topSignalTop8ShortSwitch:checked + .slider-top-signal-top8-short:before {
+            transform: translateX(20px);
+        }
+        
+        /* 见顶信号做空开关 - 涨幅后8 - 暗红色 */
+        #topSignalBottom8ShortSwitch:checked + .slider-top-signal-bottom8-short {
+            background-color: #b91c1c !important;
+        }
+        
+        .slider-top-signal-bottom8-short {
+            position: absolute;
+            cursor: pointer !important;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+            z-index: 1;
+        }
+        
+        .slider-top-signal-bottom8-short:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        #topSignalBottom8ShortSwitch:checked + .slider-top-signal-bottom8-short:before {
+            transform: translateX(20px);
+        }
+        
         /* 市场情绪止盈开关 - 红色 */
         #sentimentTakeProfitSwitch:checked + .slider-sentiment-takeprofit {
             background-color: #ef4444 !important;
@@ -3247,6 +3315,82 @@ data/
                         </div>
                     </div>
                     
+                    <!-- 见顶信号做空策略 - 涨幅前8 -->
+                    <div style="margin-top: 10px; padding: 10px; background: rgba(220, 38, 38, 0.1); border-radius: 8px; border: 1px solid #dc2626;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: #991b1b; font-weight: 600; font-size: 13px;">⚠️ 见顶信号+涨幅前8做空</span>
+                            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+                                <input type="checkbox" id="topSignalTop8ShortSwitch" style="opacity: 0; width: 0; height: 0;">
+                                <span class="slider slider-top-signal-top8-short" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px;"></span>
+                            </label>
+                        </div>
+                        <div style="font-size: 11px; color: #991b1b; line-height: 1.5;">
+                            <strong>触发条件：</strong>
+                            <ul style="margin: 4px 0; padding-left: 16px;">
+                                <li>出现<strong>"⚠️见顶信号"</strong></li>
+                                <li><strong>RSI总和 > 1800</strong></li>
+                                <li>自动对<strong>涨幅前8名币种</strong>开空单</li>
+                            </ul>
+                            <strong>资金配置：</strong>
+                            <ul style="margin: 4px 0; padding-left: 16px;">
+                                <li>总投入：可用余额的 <strong>1.5%</strong></li>
+                                <li>分配方式：平均分配给8个币种</li>
+                                <li>单币限额：最高 <strong>5.0 USDT</strong></li>
+                            </ul>
+                            <strong>监控频率：</strong>每60秒检查一次，触发后1小时内不重复执行
+                        </div>
+                        <!-- 当前市场状态显示 -->
+                        <div style="margin-top: 8px; padding: 8px; background: rgba(255, 255, 255, 0.6); border-radius: 4px; border-left: 3px solid #dc2626;">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <span style="font-size: 11px; color: #991b1b;">📊 当前市场情绪：</span>
+                                <span id="topSignalSentimentDisplay1" style="font-size: 12px; font-weight: 700; color: #991b1b;">--</span>
+                            </div>
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px;">
+                                <span style="font-size: 11px; color: #991b1b;">📈 当前RSI总和：</span>
+                                <span id="topSignalRSIDisplay1" style="font-size: 12px; font-weight: 700; color: #991b1b;">--</span>
+                            </div>
+                            <div style="margin-top: 4px; font-size: 10px; color: #991b1b; opacity: 0.8;" id="topSignalUpdateTime1">最后更新: --</div>
+                        </div>
+                    </div>
+                    
+                    <!-- 见顶信号做空策略 - 涨幅后8 -->
+                    <div style="margin-top: 10px; padding: 10px; background: rgba(185, 28, 28, 0.1); border-radius: 8px; border: 1px solid #b91c1c;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: #7f1d1d; font-weight: 600; font-size: 13px;">⚠️ 见顶信号+涨幅后8做空</span>
+                            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+                                <input type="checkbox" id="topSignalBottom8ShortSwitch" style="opacity: 0; width: 0; height: 0;">
+                                <span class="slider slider-top-signal-bottom8-short" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px;"></span>
+                            </label>
+                        </div>
+                        <div style="font-size: 11px; color: #7f1d1d; line-height: 1.5;">
+                            <strong>触发条件：</strong>
+                            <ul style="margin: 4px 0; padding-left: 16px;">
+                                <li>出现<strong>"⚠️见顶信号"</strong></li>
+                                <li><strong>RSI总和 > 1800</strong></li>
+                                <li>自动对<strong>涨幅后8名币种</strong>开空单</li>
+                            </ul>
+                            <strong>资金配置：</strong>
+                            <ul style="margin: 4px 0; padding-left: 16px;">
+                                <li>总投入：可用余额的 <strong>1.5%</strong></li>
+                                <li>分配方式：平均分配给8个币种</li>
+                                <li>单币限额：最高 <strong>5.0 USDT</strong></li>
+                            </ul>
+                            <strong>监控频率：</strong>每60秒检查一次，触发后1小时内不重复执行
+                        </div>
+                        <!-- 当前市场状态显示 -->
+                        <div style="margin-top: 8px; padding: 8px; background: rgba(255, 255, 255, 0.6); border-radius: 4px; border-left: 3px solid #b91c1c;">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <span style="font-size: 11px; color: #7f1d1d;">📊 当前市场情绪：</span>
+                                <span id="topSignalSentimentDisplay2" style="font-size: 12px; font-weight: 700; color: #7f1d1d;">--</span>
+                            </div>
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px;">
+                                <span style="font-size: 11px; color: #7f1d1d;">📈 当前RSI总和：</span>
+                                <span id="topSignalRSIDisplay2" style="font-size: 12px; font-weight: 700; color: #7f1d1d;">--</span>
+                            </div>
+                            <div style="margin-top: 4px; font-size: 10px; color: #7f1d1d; opacity: 0.8;" id="topSignalUpdateTime2">最后更新: --</div>
+                        </div>
+                    </div>
+                    
                     <!-- 🔥 市场情绪止盈设置 -->
                     <div style="margin-top: 10px; padding: 10px; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border: 1px solid #ef4444;">
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
@@ -4458,6 +4602,22 @@ data/
                         rsiStatusTag.textContent = statusText;
                         rsiStatusTag.style.background = statusBg;
                         rsiStatusTag.style.color = statusColor;
+                    }
+                    
+                    // ⚠️ 更新见顶信号做空策略的RSI显示
+                    const topSignalRSIDisplay1 = document.getElementById('topSignalRSIDisplay1');
+                    const topSignalRSIDisplay2 = document.getElementById('topSignalRSIDisplay2');
+                    
+                    if (topSignalRSIDisplay1) {
+                        topSignalRSIDisplay1.textContent = totalRSI.toFixed(2);
+                        // 根据RSI设置颜色
+                        topSignalRSIDisplay1.style.color = totalRSI > 1800 ? '#dc2626' : '#991b1b';
+                    }
+                    
+                    if (topSignalRSIDisplay2) {
+                        topSignalRSIDisplay2.textContent = totalRSI.toFixed(2);
+                        // 根据RSI设置颜色
+                        topSignalRSIDisplay2.style.color = totalRSI > 1800 ? '#b91c1c' : '#7f1d1d';
                     }
                 }
                 
@@ -7174,6 +7334,18 @@ ${data.sMsg || result.message || ''}`);
                     // 🔥 加载市场情绪止盈设置
                     document.getElementById('sentimentTakeProfitSwitch').checked = settings.sentimentTakeProfitEnabled || false;
                     
+                    // ⚠️ 加载见顶信号做空策略设置
+                    const topSignalTop8ShortSwitch = document.getElementById('topSignalTop8ShortSwitch');
+                    const topSignalBottom8ShortSwitch = document.getElementById('topSignalBottom8ShortSwitch');
+                    
+                    if (topSignalTop8ShortSwitch && topSignalBottom8ShortSwitch) {
+                        topSignalTop8ShortSwitch.checked = settings.top_signal_top8_short_enabled || false;
+                        topSignalBottom8ShortSwitch.checked = settings.top_signal_bottom8_short_enabled || false;
+                        console.log(`⚠️ [见顶信号做空] 已加载: 前8=${topSignalTop8ShortSwitch.checked}, 后8=${topSignalBottom8ShortSwitch.checked}`);
+                    } else {
+                        console.error('❌ [见顶信号做空] DOM元素未找到!');
+                    }
+                    
                     // 加载最大持仓限制
                     const maxPosValue = settings.maxPositionValueUsdt || 5.0;
                     document.getElementById('maxPositionValueInput').value = maxPosValue;
@@ -7218,6 +7390,27 @@ ${data.sMsg || result.message || ''}`);
                     if (timeDisplay) {
                         timeDisplay.textContent = `最后更新: ${latest.beijing_time || '--'}`;
                     }
+                    
+                    // ⚠️ 更新见顶信号做空策略的市场情绪显示
+                    const topSignalDisplay1 = document.getElementById('topSignalSentimentDisplay1');
+                    const topSignalDisplay2 = document.getElementById('topSignalSentimentDisplay2');
+                    const topSignalTime1 = document.getElementById('topSignalUpdateTime1');
+                    const topSignalTime2 = document.getElementById('topSignalUpdateTime2');
+                    
+                    if (topSignalDisplay1 && topSignalDisplay2) {
+                        const sentimentText = latest.sentiment || '--';
+                        topSignalDisplay1.textContent = sentimentText;
+                        topSignalDisplay2.textContent = sentimentText;
+                        
+                        // 根据情绪设置颜色
+                        const color = (sentimentText.includes('见顶') || sentimentText.includes('顶部背离')) ? '#dc2626' : 
+                                     (sentimentText.includes('见底') || sentimentText.includes('底部背离')) ? '#f59e0b' : '#16a34a';
+                        topSignalDisplay1.style.color = color;
+                        topSignalDisplay2.style.color = color;
+                        
+                        if (topSignalTime1) topSignalTime1.textContent = `最后更新: ${latest.beijing_time || '--'}`;
+                        if (topSignalTime2) topSignalTime2.textContent = `最后更新: ${latest.beijing_time || '--'}`;
+                    }
                 }
             } catch (e) {
                 console.warn('⚠️ 加载市场情绪失败', e);
@@ -7241,6 +7434,8 @@ ${data.sMsg || result.message || ''}`);
                 rsiTakeProfitEnabled: document.getElementById('rsiTakeProfitSwitch').checked,
                 rsiShortTakeProfitThreshold: parseFloat(document.getElementById('rsiShortTakeProfitThreshold').value),
                 rsiShortTakeProfitEnabled: document.getElementById('rsiShortTakeProfitSwitch').checked,
+                top_signal_top8_short_enabled: document.getElementById('topSignalTop8ShortSwitch').checked,  // ⚠️ 见顶信号+涨幅前8做空
+                top_signal_bottom8_short_enabled: document.getElementById('topSignalBottom8ShortSwitch').checked,  // ⚠️ 见顶信号+涨幅后8做空
                 sentimentTakeProfitEnabled: document.getElementById('sentimentTakeProfitSwitch').checked,  // 🔥 市场情绪止盈
                 maxPositionValueUsdt: parseFloat(document.getElementById('maxPositionValueInput').value)
             };

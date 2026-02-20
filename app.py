@@ -15824,16 +15824,22 @@ def place_okx_order():
         # 🔥 动态获取合约面值(ctVal)- 每张合约代表多少币
         # 不同币种的合约面值不同,必须从 API 获取,不能硬编码！
         coin_per_contract = None
+        min_sz = 0.01  # 默认最小下单量
+        lot_sz = 0.01  # 默认下单步长
+        
         try:
             instruments_path = f'/api/v5/public/instruments?instType=SWAP&instId={inst_id}'
             instruments_response = requests.get(base_url + instruments_path, timeout=5)
             instruments_data = instruments_response.json()
             
             if instruments_data.get('code') == '0' and instruments_data.get('data'):
-                ct_val = instruments_data['data'][0].get('ctVal', '')
+                instrument_info = instruments_data['data'][0]
+                ct_val = instrument_info.get('ctVal', '')
                 if ct_val:
                     coin_per_contract = float(ct_val)
-                    print(f"[合约规格] {inst_id} 每张合约面值: {coin_per_contract} 币")
+                    min_sz = float(instrument_info.get('minSz', 0.01))
+                    lot_sz = float(instrument_info.get('lotSz', 0.01))
+                    print(f"[合约规格] {inst_id} 每张合约面值: {coin_per_contract} 币, minSz: {min_sz}, lotSz: {lot_sz}")
         except Exception as e:
             print(f"[合约规格] 获取失败,使用回退逻辑: {str(e)}")
         
@@ -15855,15 +15861,39 @@ def place_okx_order():
         # 需要的合约张数 = 合约价值 / 每张合约价值
         contracts_count = contract_value_usdt / usdt_per_contract
         
-        # OKX允许小数张数（根据minSz，通常为0.01），向上取整到2位小数
-        # 移除错误的max(1, ...)逻辑，因为对于大面值合约（如XRP=100）会导致严重超额
-        contracts_count = round(contracts_count, 2)  # 保留2位小数
+        # 🔥 根据合约的minSz和lotSz动态调整精度
+        # minSz决定最小下单量，lotSz决定下单步长
+        # 例如：minSz=1, lotSz=1 → 必须是整数（1, 2, 3...）
+        #      minSz=0.1, lotSz=0.1 → 必须是0.1的倍数（0.1, 0.2, 0.3...）
+        #      minSz=0.01, lotSz=0.01 → 可以是0.01的倍数（0.01, 0.02, 0.03...）
         
-        # 如果计算结果小于最小下单量0.01张，则使用0.01张
-        if contracts_count < 0.01:
-            contracts_count = 0.01
+        # 确定精度位数（lotSz的小数位数）
+        if lot_sz >= 1:
+            # lotSz=1 → 整数，精度0位
+            decimal_places = 0
+        elif lot_sz >= 0.1:
+            # lotSz=0.1 → 精度1位
+            decimal_places = 1
+        else:
+            # lotSz=0.01 → 精度2位
+            decimal_places = 2
         
-        contracts_str = str(contracts_count)
+        # 按步长向上取整（确保不小于计算值）
+        import math
+        contracts_count = math.ceil(contracts_count / lot_sz) * lot_sz
+        
+        # 应用精度
+        contracts_count = round(contracts_count, decimal_places)
+        
+        # 确保不小于最小下单量
+        if contracts_count < min_sz:
+            contracts_count = min_sz
+        
+        # 转换为字符串（去除尾部多余的0）
+        if decimal_places == 0:
+            contracts_str = str(int(contracts_count))
+        else:
+            contracts_str = f"{contracts_count:.{decimal_places}f}".rstrip('0').rstrip('.')
         
         # 计算实际使用的USDT金额
         actual_contract_value = contracts_count * usdt_per_contract

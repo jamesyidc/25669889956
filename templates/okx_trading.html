@@ -5580,7 +5580,7 @@ data/
                         posSide: direction,
                         ordType: 'market',
                         sz: contractValuePerCoin,  // ✅ 传递合约价值（保证金 × 杠杆）
-                        maxOrderSize: contractValuePerCoin,  // ✅ 风控检查也使用合约价值
+                        maxOrderSize: maxOrderSize * 10,  // ✅ 风控检查：使用账户配置的maxOrderSize × 杠杆(合约价值上限)
                         lever: '10'
                     };
                     
@@ -5793,7 +5793,7 @@ data/
                         posSide: direction,
                         ordType: 'market',
                         sz: contractValuePerCoin,  // ✅ 传递合约价值（保证金 × 杠杆）
-                        maxOrderSize: contractValuePerCoin,  // ✅ 风控检查也使用合约价值
+                        maxOrderSize: maxOrderSize * 10,  // ✅ 风控检查：使用账户配置的maxOrderSize × 杠杆(合约价值上限)
                         lever: '10'
                     };
                     

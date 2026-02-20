@@ -8285,6 +8285,94 @@ ${data.sMsg || result.message || ''}`);
                 });
             }
             
+            // ⚠️ 见顶信号+涨幅前8做空开关：保存设置 + 设置JSONL执行许可
+            const topSignalTop8ShortSwitchEl = document.getElementById('topSignalTop8ShortSwitch');
+            if (topSignalTop8ShortSwitchEl) {
+                topSignalTop8ShortSwitchEl.addEventListener('change', async function() {
+                    // 保存设置
+                    await saveTakeProfitStopLossSettings();
+                    
+                    // 设置JSONL执行许可
+                    const account = accounts.find(acc => acc.id === currentAccount);
+                    if (!account) return;
+                    
+                    const enabled = this.checked;
+                    const currentRSI = parseFloat(document.getElementById('topSignalRSIDisplay1').textContent) || 0;
+                    const currentSentiment = document.getElementById('topSignalSentimentDisplay1').textContent || '--';
+                    
+                    try {
+                        const response = await fetch(`/api/okx-trading/set-allowed-top-signal/${account.id}/top8_short`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                allowed: enabled,
+                                reason: enabled ? `开启见顶信号+涨幅前8做空监控，RSI阈值1800` : '关闭见顶信号+涨幅前8做空监控',
+                                rsiValue: currentRSI,
+                                sentiment: currentSentiment
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        console.log(enabled ? `✅ 已开启见顶信号+涨幅前8做空监控` : `⚪ 已关闭见顶信号+涨幅前8做空监控`, result);
+                        
+                        // 显示用户提示
+                        if (result.success) {
+                            alert(enabled ? 
+                                `✅ 已开启见顶信号+涨幅前8做空监控\n\n账户：${account.name}\n触发条件：见顶信号 + RSI > 1800\n资金配置：余额1.5%，单币限额5U\n说明：当出现见顶信号且RSI>1800时，自动对涨幅前8名币种开空单` : 
+                                `⚪ 已关闭见顶信号+涨幅前8做空监控\n\n账户：${account.name}`
+                            );
+                        }
+                    } catch (e) {
+                        console.error('❌ 设置见顶信号+涨幅前8做空执行许可失败', e);
+                        alert('❌ 设置失败，请检查网络连接');
+                    }
+                });
+            }
+            
+            // ⚠️ 见顶信号+涨幅后8做空开关：保存设置 + 设置JSONL执行许可
+            const topSignalBottom8ShortSwitchEl = document.getElementById('topSignalBottom8ShortSwitch');
+            if (topSignalBottom8ShortSwitchEl) {
+                topSignalBottom8ShortSwitchEl.addEventListener('change', async function() {
+                    // 保存设置
+                    await saveTakeProfitStopLossSettings();
+                    
+                    // 设置JSONL执行许可
+                    const account = accounts.find(acc => acc.id === currentAccount);
+                    if (!account) return;
+                    
+                    const enabled = this.checked;
+                    const currentRSI = parseFloat(document.getElementById('topSignalRSIDisplay2').textContent) || 0;
+                    const currentSentiment = document.getElementById('topSignalSentimentDisplay2').textContent || '--';
+                    
+                    try {
+                        const response = await fetch(`/api/okx-trading/set-allowed-top-signal/${account.id}/bottom8_short`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                allowed: enabled,
+                                reason: enabled ? `开启见顶信号+涨幅后8做空监控，RSI阈值1800` : '关闭见顶信号+涨幅后8做空监控',
+                                rsiValue: currentRSI,
+                                sentiment: currentSentiment
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        console.log(enabled ? `✅ 已开启见顶信号+涨幅后8做空监控` : `⚪ 已关闭见顶信号+涨幅后8做空监控`, result);
+                        
+                        // 显示用户提示
+                        if (result.success) {
+                            alert(enabled ? 
+                                `✅ 已开启见顶信号+涨幅后8做空监控\n\n账户：${account.name}\n触发条件：见顶信号 + RSI > 1800\n资金配置：余额1.5%，单币限额5U\n说明：当出现见顶信号且RSI>1800时，自动对涨幅后8名币种开空单` : 
+                                `⚪ 已关闭见顶信号+涨幅后8做空监控\n\n账户：${account.name}`
+                            );
+                        }
+                    } catch (e) {
+                        console.error('❌ 设置见顶信号+涨幅后8做空执行许可失败', e);
+                        alert('❌ 设置失败，请检查网络连接');
+                    }
+                });
+            }
+            
             // 添加自动交易策略设置的事件监听器
             const autoTriggerPriceEl = document.getElementById('autoTriggerPrice');
             if (autoTriggerPriceEl) {

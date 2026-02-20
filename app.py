@@ -16930,6 +16930,119 @@ def set_upratio0_strategy_allowed(account_id, strategy_type):
             'traceback': traceback.format_exc()
         })
 
+@app.route('/api/okx-trading/check-allowed-top-signal/<account_id>/<strategy_type>', methods=['GET'])
+def check_top_signal_strategy_allowed(account_id, strategy_type):
+    """检查见顶信号做空策略是否允许执行（从JSONL读取）
+    strategy_type: 'top8_short' 或 'bottom8_short'
+    """
+    try:
+        import json
+        import os
+        from datetime import datetime
+        
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        jsonl_dir = os.path.join(current_dir, 'data', 'okx_auto_strategy')
+        os.makedirs(jsonl_dir, exist_ok=True)
+        
+        jsonl_file = os.path.join(jsonl_dir, f'{account_id}_top_signal_{strategy_type}_execution.jsonl')
+        
+        # 如果文件不存在，返回默认允许（首次执行）
+        if not os.path.exists(jsonl_file):
+            return jsonify({
+                'success': True,
+                'allowed': True,
+                'reason': 'No execution record found - first time execution allowed',
+                'lastRecord': None
+            })
+        
+        # 读取第一行（文件头）
+        with open(jsonl_file, 'r', encoding='utf-8') as f:
+            first_line = f.readline().strip()
+            if not first_line:
+                return jsonify({
+                    'success': True,
+                    'allowed': True,
+                    'reason': 'Empty execution file - first time execution allowed',
+                    'lastRecord': None
+                })
+            
+            first_record = json.loads(first_line)
+        
+        # 返回第一行记录的allowed状态
+        return jsonify({
+            'success': True,
+            'allowed': first_record.get('allowed', False),
+            'reason': 'Read from JSONL header',
+            'lastRecord': first_record
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        })
+
+@app.route('/api/okx-trading/set-allowed-top-signal/<account_id>/<strategy_type>', methods=['POST'])
+def set_top_signal_strategy_allowed(account_id, strategy_type):
+    """设置见顶信号做空策略的执行允许状态（写入JSONL文件头）
+    strategy_type: 'top8_short' 或 'bottom8_short'
+    """
+    try:
+        import json
+        import os
+        from datetime import datetime
+        
+        data = request.get_json()
+        allowed = bool(data.get('allowed', False))
+        reason = data.get('reason', 'Manual update')
+        
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        jsonl_dir = os.path.join(current_dir, 'data', 'okx_auto_strategy')
+        os.makedirs(jsonl_dir, exist_ok=True)
+        
+        jsonl_file = os.path.join(jsonl_dir, f'{account_id}_top_signal_{strategy_type}_execution.jsonl')
+        
+        # 读取现有记录（除了第一行）
+        existing_records = []
+        if os.path.exists(jsonl_file):
+            with open(jsonl_file, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+                if len(lines) > 1:
+                    existing_records = lines[1:]  # 跳过第一行
+        
+        # 创建新的文件头记录
+        header_record = {
+            'timestamp': datetime.now().isoformat(),
+            'time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'account_id': account_id,
+            'strategy_type': strategy_type,
+            'allowed': allowed,
+            'reason': reason,
+            'rsi_value': data.get('rsiValue'),
+            'sentiment': data.get('sentiment')
+        }
+        
+        # 写入新的文件头和原有记录
+        with open(jsonl_file, 'w', encoding='utf-8') as f:
+            f.write(json.dumps(header_record, ensure_ascii=False) + '\n')
+            # 写回其他记录
+            for line in existing_records:
+                f.write(line)
+        
+        return jsonify({
+            'success': True,
+            'message': f'Top signal {strategy_type} execution allowed status set to {allowed}',
+            'record': header_record
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        })
+
 @app.route('/api/okx-trading/market-tickers', methods=['GET'])
 def get_okx_market_tickers():
     """获取OKX市场行情数据"""

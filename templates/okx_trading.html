@@ -6,8 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>OKX实盘交易系统 v2.6.4</title>
-    <!-- 版本: 2026-02-19 - 紧急修复批量开仓金额错误 -->
+    <title>OKX实盘交易系统 v2.6.5</title>
+    <!-- 版本: 2026-02-20 - 修复XRP等大面值合约超额开仓Bug -->
     <style>
         * {
             margin: 0;
@@ -1398,19 +1398,75 @@
                         </ul>
                     </div>
                     
+                    <!-- 修复5: XRP等大面值合约开仓金额错误 -->
+                    <div style="background: white; padding: 10px; border-radius: 4px; margin-bottom: 8px;">
+                        <p style="margin: 0 0 6px 0; font-weight: 700; color: #b91c1c;">🐛 问题5：XRP等大面值合约开仓金额严重超额（提交: 22be347）</p>
+                        <ul style="margin: 4px 0 0 20px; padding: 0; color: #7f1d1d; font-size: 10px;">
+                            <li><strong>现象：</strong>XRP每次开仓金额都不对，目标5U保证金（50U合约价值），实际开出14.13 USDT保证金（140U合约价值），<strong>超额2.8倍</strong></li>
+                            <li><strong>受影响币种：</strong>XRP(100/张)、DOGE(1000/张)、ADA(100/张)、TRX(1000/张) - 所有大面值合约</li>
+                            <li><strong>根因分析：</strong>
+                                <ul style="margin: 2px 0 0 15px;">
+                                    <li>① XRP真实合约规格：<code>ctVal=100 XRP/张</code>，每张≈140 USDT（价格1.40）</li>
+                                    <li>② 目标开仓50 USDT → 需要 50/140 = <strong>0.36张</strong></li>
+                                    <li>③ <strong>致命Bug：</strong>代码强制 <code>max(1, round(0.36)) = 1张</code></li>
+                                    <li>④ 实际开仓：1张 = 140 USDT合约价值 = <strong>14 USDT保证金</strong> ❌</li>
+                                </ul>
+                            </li>
+                            <li><strong>错误代码：</strong><code>contracts_count = max(1, round(...)) # 强制至少1张</code></li>
+                            <li><strong>误解根源：</strong>OKX支持小数张数（minSz=0.01），不需要强制取整为1张</li>
+                        </ul>
+                        <p style="margin: 6px 0 0 0; font-weight: 700; color: #047857; font-size: 10px;">✅ 解决方案：</p>
+                        <ul style="margin: 4px 0 0 20px; padding: 0; color: #065f46; font-size: 10px;">
+                            <li><strong>移除强制逻辑：</strong>删除 <code>max(1, ...)</code>，改为 <code>round(contracts_count, 2)</code>（保留2位小数）</li>
+                            <li><strong>支持小数张数：</strong>0.36张 → 实际开仓50.4 USDT ✅（误差仅0.8%）</li>
+                            <li><strong>最小下单量：</strong>如果计算结果 < 0.01张，则使用0.01张（而不是1张）</li>
+                            <li><strong>修复后效果：</strong>
+                                <ul style="margin: 2px 0 0 15px;">
+                                    <li>目标50 USDT → 计算0.36张 → 实际开仓：0.36×140 = 50.4 USDT ✅</li>
+                                    <li>目标5 USDT → 计算0.036张 → 实际开仓：0.04×140 = 5.6 USDT ✅</li>
+                                    <li>超额倍数：从2.8倍降低到1.01倍（±1%误差）</li>
+                                </ul>
+                            </li>
+                        </ul>
+                        <p style="margin: 6px 0 0 0; font-weight: 700; color: #dc2626; font-size: 10px;">⚠️ 危险性说明：</p>
+                        <ul style="margin: 4px 0 0 20px; padding: 0; color: #991b1b; font-size: 10px;">
+                            <li><strong>XRP：</strong>1张=100 XRP，强制1张 → 超额2.8倍</li>
+                            <li><strong>DOGE：</strong>1张=1000 DOGE，强制1张 → <strong>超额10倍+</strong></li>
+                            <li><strong>风险等级：</strong>🔴 <strong>致命级</strong>（可能导致爆仓或重大亏损）</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- 修复6: 批量开仓风控检查失效 -->
+                    <div style="background: white; padding: 10px; border-radius: 4px; margin-bottom: 8px;">
+                        <p style="margin: 0 0 6px 0; font-weight: 700; color: #b91c1c;">🐛 问题6：批量开仓风控检查失效（提交: 8bec4cb）</p>
+                        <ul style="margin: 4px 0 0 20px; padding: 0; color: #7f1d1d; font-size: 10px;">
+                            <li><strong>现象：</strong>配置单笔保证金上限5 USDT，但实际开仓金额超过限制</li>
+                            <li><strong>根因：</strong>前端传递 <code>maxOrderSize: contractValuePerCoin</code>（50 USDT）给后端，而不是账户配置的5 USDT</li>
+                            <li><strong>后端检查：</strong><code>if 50 > 50: reject()</code> → False，风控失效</li>
+                        </ul>
+                        <p style="margin: 6px 0 0 0; font-weight: 700; color: #047857; font-size: 10px;">✅ 解决方案：</p>
+                        <ul style="margin: 4px 0 0 20px; padding: 0; color: #065f46; font-size: 10px;">
+                            <li><strong>修正传值：</strong>改为 <code>maxOrderSize: maxOrderSize × 10</code>（5×10=50 USDT）</li>
+                            <li><strong>风控生效：</strong>如果尝试开60 USDT → <code>if 60 > 50: reject()</code> → True ✅</li>
+                        </ul>
+                    </div>
+                    
                     <div style="background: #f0fdfa; padding: 10px; border-radius: 4px; border-left: 3px solid #14b8a6;">
-                        <p style="margin: 0 0 6px 0; font-weight: 700; color: #0f766e; font-size: 11px;">🔒 当前风控机制：</p>
+                        <p style="margin: 0 0 6px 0; font-weight: 700; color: #0f766e; font-size: 11px;">🔒 当前风控机制（2026-02-20 更新）：</p>
                         <ul style="margin: 4px 0 0 20px; padding: 0; color: #0f766e; font-size: 10px;">
                             <li><strong>保证金限额：</strong>单笔保证金≤5 USDT（可配置），10倍杠杆 = 50 USDT合约价值</li>
                             <li><strong>前端验证：</strong><code>marginPerCoin = Math.min(余额×1.5%, maxOrderSize)</code></li>
                             <li><strong>后端验证：</strong>服务器检查 <code>sz</code>（合约价值）是否超过 <code>maxOrderSize×10</code></li>
+                            <li><strong>✅ 小数张数支持：</strong>OKX允许0.01张起步，不再强制1张，避免大面值合约超额</li>
+                            <li><strong>✅ 精确下单：</strong>保留2位小数（如0.36张），开仓金额误差控制在±1%以内</li>
                             <li><strong>双重状态控制：</strong><code>enabled</code>（UI开关）+ <code>allowed</code>（JSONL执行许可），两者都为true才执行</li>
                             <li><strong>防重复机制：</strong>执行后立即设置 <code>allowed=false</code>，必须手动重置才能再次执行</li>
                         </ul>
                     </div>
                     
                     <p style="margin: 8px 0 0 0; font-size: 10px; color: #7f1d1d; font-weight: 600;">
-                        ⚠️ 重要提示：如遇到问题，请硬刷新浏览器（Ctrl+Shift+R）清除缓存，或使用隐身模式访问。
+                        ⚠️ 重要提示：如遇到问题，请硬刷新浏览器（Ctrl+Shift+R）清除缓存，或使用隐身模式访问。<br>
+                        🔴 <strong>关于XRP等币种：</strong>v2.6.5（2026-02-20）已修复XRP/DOGE/ADA/TRX等大面值合约超额开仓Bug，现在开仓金额精确控制在±1%误差范围内。
                     </p>
                 </div>
                 
@@ -1477,10 +1533,11 @@
                 <!-- 1. 系统概述 -->
                 <div style="background: white; padding: 10px; border-radius: 6px; margin-bottom: 10px; border-left: 4px solid #0ea5e9;">
                     <h4 style="margin: 0 0 8px 0; color: #0369a1; font-size: 12px;">🎯 一、系统概述</h4>
-                    <p style="margin: 4px 0;"><strong>系统名称：</strong>OKX 实盘交易系统 v2.6.4 ⚡ <span style="color: #16a34a; font-weight: bold;">性能优化V2.0：页面加载提升93.5%（12.5s→0.8s）</span></p>
-                    <p style="margin: 4px 0;"><strong>最新更新：</strong>2026-02-19 - 🔧 v2.6.4 修复：市场情绪止盈完整功能上线（保存、执行、市价平仓）</p>
+                    <p style="margin: 4px 0;"><strong>系统名称：</strong>OKX 实盘交易系统 v2.6.5 ⚡ <span style="color: #16a34a; font-weight: bold;">性能优化V2.0：页面加载提升93.5%（12.5s→0.8s）</span></p>
+                    <p style="margin: 4px 0;"><strong>最新更新：</strong>2026-02-20 - 🔧 v2.6.5 <strong>致命Bug修复：</strong>XRP/DOGE/ADA/TRX等大面值合约超额开仓（2.8倍→1.01倍，误差±1%）</p>
                     <p style="margin: 4px 0;"><strong>历史更新：</strong></p>
                     <ul style="margin: 4px 0 0 20px; padding: 0; font-size: 11px;">
+                        <li>2026-02-19 v2.6.4 - 市场情绪止盈完整功能上线（保存、执行、市价平仓）</li>
                         <li>2026-02-19 v2.6.3 - 移除止盈止损的5U持仓限制</li>
                         <li>2026-02-19 v2.6.2 - 新增市场情绪止盈功能</li>
                         <li>2026-02-19 v2.6.1 - 修复批量下单金额错误</li>

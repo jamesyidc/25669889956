@@ -15855,9 +15855,15 @@ def place_okx_order():
         # 需要的合约张数 = 合约价值 / 每张合约价值
         contracts_count = contract_value_usdt / usdt_per_contract
         
-        # OKX要求sz必须是整数张数,四舍五入
-        contracts_count = max(1, round(contracts_count))
-        contracts_str = str(int(contracts_count))
+        # OKX允许小数张数（根据minSz，通常为0.01），向上取整到2位小数
+        # 移除错误的max(1, ...)逻辑，因为对于大面值合约（如XRP=100）会导致严重超额
+        contracts_count = round(contracts_count, 2)  # 保留2位小数
+        
+        # 如果计算结果小于最小下单量0.01张，则使用0.01张
+        if contracts_count < 0.01:
+            contracts_count = 0.01
+        
+        contracts_str = str(contracts_count)
         
         # 计算实际使用的USDT金额
         actual_contract_value = contracts_count * usdt_per_contract

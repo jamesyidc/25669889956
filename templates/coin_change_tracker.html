@@ -2988,8 +2988,18 @@ pm2 status                                                # 查看所有进程�
             return `${year}-${month}-${day}`;
         }
         
-        // 解析日期字符串
+        // 解析日期字符串，支持两种格式: YYYYMMDD 或 YYYY-MM-DD
         function parseDate(dateStr) {
+            if (!dateStr) return new Date();
+            
+            // 如果是 YYYYMMDD 格式（8位数字），转换为 YYYY-MM-DD
+            if (/^\d{8}$/.test(dateStr)) {
+                const year = dateStr.substring(0, 4);
+                const month = dateStr.substring(4, 6);
+                const day = dateStr.substring(6, 8);
+                dateStr = `${year}-${month}-${day}`;
+            }
+            
             return new Date(dateStr + 'T00:00:00');
         }
         

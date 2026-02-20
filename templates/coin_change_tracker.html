@@ -3549,7 +3549,7 @@ pm2 status                                                # 查看所有进程�
                         }
                         sentimentUrl += `&_t=${Date.now()}`;
                         
-                        console.log('Fetching sentiment data from:', sentimentUrl);
+                        console.log('📡 Fetching sentiment data from:', sentimentUrl);
                         
                         const sentimentResponse = await fetch(sentimentUrl, {
                             cache: 'no-store',
@@ -3561,6 +3561,12 @@ pm2 status                                                # 查看所有进程�
                         });
                         const sentimentResult = await sentimentResponse.json();
                         
+                        console.log('📡 Sentiment API response:', {
+                            success: sentimentResult.success,
+                            dataCount: sentimentResult.data ? sentimentResult.data.length : 0,
+                            dataType: Array.isArray(sentimentResult.data) ? 'array' : typeof sentimentResult.data
+                        });
+                        
                         if (sentimentResult.success && sentimentResult.data) {
                             // 市场情绪数据可能返回单个对象或数组
                             sentimentData = Array.isArray(sentimentResult.data) ? sentimentResult.data : [sentimentResult.data];
@@ -3569,13 +3575,21 @@ pm2 status                                                # 查看所有进程�
                             // 过滤出见顶/见底信号
                             const topSignals = sentimentData.filter(s => s.sentiment && s.sentiment.includes('见顶'));
                             const bottomSignals = sentimentData.filter(s => s.sentiment && (s.sentiment.includes('见底') || s.sentiment.includes('底部背离')));
-                            console.log('📊 见顶信号数量:', topSignals.length);
-                            console.log('📊 见底信号数量:', bottomSignals.length);
+                            const topDivergence = sentimentData.filter(s => s.sentiment && s.sentiment.includes('顶部背离'));
+                            const bottomDivergence = sentimentData.filter(s => s.sentiment && s.sentiment.includes('底部背离'));
+                            
+                            console.log('📊 市场情绪信号统计:', {
+                                见顶信号: topSignals.length,
+                                顶部背离: topDivergence.length,
+                                见底信号: bottomSignals.length,
+                                底部背离: bottomDivergence.length,
+                                总计: topSignals.length + topDivergence.length + bottomSignals.length + bottomDivergence.length
+                            });
                         } else {
-                            console.log('⚠️ 市场情绪数据为空或加载失败');
+                            console.log('⚠️ 市场情绪数据为空或加载失败，返回数据:', sentimentResult);
                         }
                     } catch (e) {
-                        console.warn('⚠️ 市场情绪数据加载失败:', e);
+                        console.error('❌ 市场情绪数据加载失败:', e);
                     }
                     
                     // 找出最高价和最低价
@@ -4336,10 +4350,29 @@ pm2 status                                                # 查看所有进程�
                             type: 'scatter',
                             yAxisIndex: 0,  // 使用左轴（涨跌幅）
                             data: (function() {
+                                console.log('🔍 开始生成市场情绪scatter系列数据...');
+                                console.log('📊 sentimentData:', {
+                                    exists: !!sentimentData,
+                                    isArray: Array.isArray(sentimentData),
+                                    length: sentimentData ? sentimentData.length : 0
+                                });
+                                console.log('📊 times:', {
+                                    exists: !!times,
+                                    isArray: Array.isArray(times),
+                                    length: times ? times.length : 0
+                                });
+                                console.log('📊 changes:', {
+                                    exists: !!changes,
+                                    isArray: Array.isArray(changes),
+                                    length: changes ? changes.length : 0
+                                });
+                                
                                 // 收集所有市场情绪信号的数据点
                                 const signalPoints = [];
                                 
                                 if (sentimentData && sentimentData.length > 0) {
+                                    console.log('✅ sentimentData有数据，开始处理...');
+                                    
                                     sentimentData.forEach((sentiment, idx) => {
                                         const sentimentText = sentiment.sentiment || '';
                                         const beijingTime = sentiment.beijing_time || '';
@@ -4354,7 +4387,10 @@ pm2 status                                                # 查看所有进程�
                                         
                                         // 提取时间并匹配索引
                                         const time = beijingTime.split(' ')[1] || '';
-                                        if (!time) return;
+                                        if (!time) {
+                                            console.warn(`⚠️ 信号 ${idx} 缺少时间: ${beijingTime}`);
+                                            return;
+                                        }
                                         
                                         const timeHHMM = time.substring(0, 5);
                                         let timeIndex = -1;
@@ -4381,10 +4417,23 @@ pm2 status                                                # 查看所有进程�
                                                 sentiment: sentimentText,
                                                 time: beijingTime
                                             });
+                                            
+                                            if (idx < 5) {  // 只记录前5个信号的详细信息
+                                                console.log(`✅ 添加信号点 ${idx}: ${sentimentText} @ ${beijingTime}, 索引=${timeIndex}, 涨跌幅=${changes[timeIndex].toFixed(2)}%`);
+                                            }
+                                        } else {
+                                            if (idx < 5) {
+                                                console.warn(`⚠️ 信号 ${idx} 无法匹配时间: ${beijingTime}, 提取的HHMM=${timeHHMM}, 索引=${timeIndex}`);
+                                            }
                                         }
                                     });
+                                    
+                                    console.log('✅ 市场情绪scatter系列数据生成完成，总点数:', signalPoints.length);
+                                } else {
+                                    console.warn('⚠️ sentimentData为空或不存在，无法生成市场情绪信号');
                                 }
                                 
+                                console.log('📊 最终返回的信号点数:', signalPoints.length);
                                 return signalPoints;
                             })(),
                             symbolSize: function(data) {

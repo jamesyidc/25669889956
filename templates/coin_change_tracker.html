@@ -3537,6 +3537,47 @@ pm2 status                                                # 查看所有进程�
                         console.warn('⚠️ 波峰数据加载失败:', e);
                     }
                     
+                    // 加载市场情绪数据
+                    let sentimentData = [];
+                    try {
+                        let sentimentUrl = '/api/market-sentiment/history?limit=1440';
+                        if (date) {
+                            sentimentUrl += `&date=${formatDate(date)}`;
+                            console.log('🔍 查询历史情绪数据，日期:', formatDate(date));
+                        } else {
+                            console.log('🔍 查询今日情绪数据（无date参数）');
+                        }
+                        sentimentUrl += `&_t=${Date.now()}`;
+                        
+                        console.log('Fetching sentiment data from:', sentimentUrl);
+                        
+                        const sentimentResponse = await fetch(sentimentUrl, {
+                            cache: 'no-store',
+                            headers: {
+                                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                                'Pragma': 'no-cache',
+                                'Expires': '0'
+                            }
+                        });
+                        const sentimentResult = await sentimentResponse.json();
+                        
+                        if (sentimentResult.success && sentimentResult.data) {
+                            // 市场情绪数据可能返回单个对象或数组
+                            sentimentData = Array.isArray(sentimentResult.data) ? sentimentResult.data : [sentimentResult.data];
+                            console.log('✅ 市场情绪数据加载成功，数据点:', sentimentData.length);
+                            
+                            // 过滤出见顶/见底信号
+                            const topSignals = sentimentData.filter(s => s.sentiment && s.sentiment.includes('见顶'));
+                            const bottomSignals = sentimentData.filter(s => s.sentiment && (s.sentiment.includes('见底') || s.sentiment.includes('底部背离')));
+                            console.log('📊 见顶信号数量:', topSignals.length);
+                            console.log('📊 见底信号数量:', bottomSignals.length);
+                        } else {
+                            console.log('⚠️ 市场情绪数据为空或加载失败');
+                        }
+                    } catch (e) {
+                        console.warn('⚠️ 市场情绪数据加载失败:', e);
+                    }
+                    
                     // 找出最高价和最低价
                     const maxChange = Math.max(...changes);
                     const minChange = Math.min(...changes);
@@ -3907,6 +3948,95 @@ pm2 status                                                # 查看所有进程�
                                         }
                                         
                                         console.log('✅ 未完成B-A波峰标记点添加完成');
+                                    }
+                                    
+                                    // 添加市场情绪信号标记（见顶/见底信号）
+                                    if (sentimentData && sentimentData.length > 0) {
+                                        console.log('🔍 开始添加市场情绪信号标记，数据点:', sentimentData.length);
+                                        
+                                        sentimentData.forEach((sentiment, idx) => {
+                                            const sentimentText = sentiment.sentiment || '';
+                                            const beijingTime = sentiment.beijing_time || '';
+                                            
+                                            // 只标记见顶/见底信号
+                                            if (!sentimentText.includes('见顶') && !sentimentText.includes('见底') && !sentimentText.includes('底部背离')) {
+                                                return;
+                                            }
+                                            
+                                            // 提取时间（HH:MM:SS）
+                                            const time = beijingTime.split(' ')[1] || '';
+                                            if (!time) return;
+                                            
+                                            // 查找时间对应的索引
+                                            const timeIndex = times.indexOf(time);
+                                            
+                                            if (timeIndex >= 0 && changes[timeIndex] !== undefined) {
+                                                const isTopSignal = sentimentText.includes('见顶');
+                                                const isBottomSignal = sentimentText.includes('见底') || sentimentText.includes('底部背离');
+                                                
+                                                console.log(`🔍 情绪信号: ${sentimentText} @ ${beijingTime}, 索引=${timeIndex}, 涨跌幅=${changes[timeIndex].toFixed(2)}%`);
+                                                
+                                                // 见顶信号 - 红色倒三角
+                                                if (isTopSignal) {
+                                                    points.push({
+                                                        name: '⚠️见顶信号',
+                                                        value: `见顶\n${changes[timeIndex].toFixed(1)}%`,
+                                                        xAxis: timeIndex,
+                                                        yAxis: changes[timeIndex],
+                                                        itemStyle: {
+                                                            color: '#DC2626',
+                                                            borderColor: '#fff',
+                                                            borderWidth: 2
+                                                        },
+                                                        label: {
+                                                            formatter: '{b}',
+                                                            fontSize: 13,
+                                                            fontWeight: 'bold',
+                                                            color: '#DC2626',
+                                                            show: true,
+                                                            position: 'top',
+                                                            backgroundColor: '#FEE2E2',
+                                                            padding: [4, 8],
+                                                            borderRadius: 4
+                                                        },
+                                                        symbol: 'triangle',  // 倒三角
+                                                        symbolRotate: 180,
+                                                        symbolSize: 22
+                                                    });
+                                                }
+                                                
+                                                // 见底信号 - 绿色火箭
+                                                if (isBottomSignal) {
+                                                    points.push({
+                                                        name: '🔥见底信号',
+                                                        value: `见底\n${changes[timeIndex].toFixed(1)}%`,
+                                                        xAxis: timeIndex,
+                                                        yAxis: changes[timeIndex],
+                                                        itemStyle: {
+                                                            color: '#059669',
+                                                            borderColor: '#fff',
+                                                            borderWidth: 2
+                                                        },
+                                                        label: {
+                                                            formatter: '{b}',
+                                                            fontSize: 13,
+                                                            fontWeight: 'bold',
+                                                            color: '#059669',
+                                                            show: true,
+                                                            position: 'bottom',
+                                                            backgroundColor: '#D1FAE5',
+                                                            padding: [4, 8],
+                                                            borderRadius: 4
+                                                        },
+                                                        symbol: 'arrow',  // 向上箭头
+                                                        symbolRotate: 180,
+                                                        symbolSize: 22
+                                                    });
+                                                }
+                                            }
+                                        });
+                                        
+                                        console.log('✅ 市场情绪信号标记添加完成');
                                     }
                                     
                                     console.log('✅ 所有波峰标记点添加完成，总标记点数:', points.length);

@@ -5319,6 +5319,9 @@ pm2 status                                                # 查看所有进程�
                 currentDate = selectedDate;
                 updateDateSelector();
                 updateHistoryData(currentDate);
+                
+                // 🆕 同时刷新市场情绪历史数据
+                loadSentimentHistory();
             } else {
                 // 恢复为今天
                 e.target.value = formatDate(currentDate);
@@ -5448,7 +5451,9 @@ pm2 status                                                # 查看所有进程�
         // 加载市场情绪历史数据
         async function loadSentimentHistory(limit = 20) {
             try {
-                const response = await fetch(`/api/market-sentiment/history?limit=${limit}&_t=${Date.now()}`, {
+                // 获取当前选择的日期（格式：YYYYMMDD）
+                const date = formatDate(currentDate).replace(/-/g, '');
+                const response = await fetch(`/api/market-sentiment/history?date=${date}&limit=${limit}&_t=${Date.now()}`, {
                     cache: 'no-store'
                 });
                 const result = await response.json();

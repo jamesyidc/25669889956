@@ -3958,8 +3958,13 @@ pm2 status                                                # 查看所有进程�
                                             const sentimentText = sentiment.sentiment || '';
                                             const beijingTime = sentiment.beijing_time || '';
                                             
-                                            // 只标记见顶/见底信号
-                                            if (!sentimentText.includes('见顶') && !sentimentText.includes('见底') && !sentimentText.includes('底部背离')) {
+                                            // 标记所有市场情绪信号：见顶、见底、顶部背离、底部背离
+                                            const hasSignal = sentimentText.includes('见顶') || 
+                                                            sentimentText.includes('见底') || 
+                                                            sentimentText.includes('顶部背离') || 
+                                                            sentimentText.includes('底部背离');
+                                            
+                                            if (!hasSignal) {
                                                 return;
                                             }
                                             
@@ -3971,12 +3976,14 @@ pm2 status                                                # 查看所有进程�
                                             const timeIndex = times.indexOf(time);
                                             
                                             if (timeIndex >= 0 && changes[timeIndex] !== undefined) {
-                                                const isTopSignal = sentimentText.includes('见顶');
-                                                const isBottomSignal = sentimentText.includes('见底') || sentimentText.includes('底部背离');
+                                                const isTopSignal = sentimentText.includes('见顶信号');
+                                                const isBottomSignal = sentimentText.includes('见底信号');
+                                                const isTopDivergence = sentimentText.includes('顶部背离');
+                                                const isBottomDivergence = sentimentText.includes('底部背离');
                                                 
                                                 console.log(`🔍 情绪信号: ${sentimentText} @ ${beijingTime}, 索引=${timeIndex}, 涨跌幅=${changes[timeIndex].toFixed(2)}%`);
                                                 
-                                                // 见顶信号 - 红色倒三角
+                                                // ⚠️ 见顶信号 - 深红色倒三角（最强烈的顶部警告）
                                                 if (isTopSignal) {
                                                     points.push({
                                                         name: '⚠️见顶信号',
@@ -3999,13 +4006,41 @@ pm2 status                                                # 查看所有进程�
                                                             padding: [4, 8],
                                                             borderRadius: 4
                                                         },
-                                                        symbol: 'triangle',  // 倒三角
+                                                        symbol: 'triangle',
                                                         symbolRotate: 180,
-                                                        symbolSize: 22
+                                                        symbolSize: 24
                                                     });
                                                 }
                                                 
-                                                // 见底信号 - 绿色火箭
+                                                // ⛔ 顶部背离 - 橙红色圆圈（顶部预警）
+                                                if (isTopDivergence) {
+                                                    points.push({
+                                                        name: '⛔顶部背离',
+                                                        value: `顶背\n${changes[timeIndex].toFixed(1)}%`,
+                                                        xAxis: timeIndex,
+                                                        yAxis: changes[timeIndex],
+                                                        itemStyle: {
+                                                            color: '#F97316',
+                                                            borderColor: '#fff',
+                                                            borderWidth: 2
+                                                        },
+                                                        label: {
+                                                            formatter: '{b}',
+                                                            fontSize: 11,
+                                                            fontWeight: 'bold',
+                                                            color: '#F97316',
+                                                            show: true,
+                                                            position: 'top',
+                                                            backgroundColor: '#FFEDD5',
+                                                            padding: [3, 6],
+                                                            borderRadius: 4
+                                                        },
+                                                        symbol: 'circle',
+                                                        symbolSize: 18
+                                                    });
+                                                }
+                                                
+                                                // 🔥 见底信号 - 深绿色向上箭头（最强烈的底部机会）
                                                 if (isBottomSignal) {
                                                     points.push({
                                                         name: '🔥见底信号',
@@ -4028,9 +4063,37 @@ pm2 status                                                # 查看所有进程�
                                                             padding: [4, 8],
                                                             borderRadius: 4
                                                         },
-                                                        symbol: 'arrow',  // 向上箭头
+                                                        symbol: 'arrow',
                                                         symbolRotate: 180,
-                                                        symbolSize: 22
+                                                        symbolSize: 24
+                                                    });
+                                                }
+                                                
+                                                // 🚀 底部背离 - 青绿色菱形（底部预期反弹）
+                                                if (isBottomDivergence) {
+                                                    points.push({
+                                                        name: '🚀底部背离',
+                                                        value: `底背\n${changes[timeIndex].toFixed(1)}%`,
+                                                        xAxis: timeIndex,
+                                                        yAxis: changes[timeIndex],
+                                                        itemStyle: {
+                                                            color: '#10B981',
+                                                            borderColor: '#fff',
+                                                            borderWidth: 2
+                                                        },
+                                                        label: {
+                                                            formatter: '{b}',
+                                                            fontSize: 11,
+                                                            fontWeight: 'bold',
+                                                            color: '#10B981',
+                                                            show: true,
+                                                            position: 'bottom',
+                                                            backgroundColor: '#ECFDF5',
+                                                            padding: [3, 6],
+                                                            borderRadius: 4
+                                                        },
+                                                        symbol: 'diamond',
+                                                        symbolSize: 18
                                                     });
                                                 }
                                             }

@@ -6121,6 +6121,25 @@ data/
             
             alert(resultMsg);
             
+            // 发送Telegram通知
+            try {
+                const tgResponse = await fetch('/api/telegram/send-message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: resultMsg
+                    })
+                });
+                const tgResult = await tgResponse.json();
+                if (tgResult.success) {
+                    console.log('✅ Telegram通知已发送');
+                } else {
+                    console.warn('⚠️ Telegram通知发送失败:', tgResult.error);
+                }
+            } catch (e) {
+                console.error('❌ 发送Telegram通知异常:', e);
+            }
+            
             // 刷新当前账户数据
             await refreshAccountData();
             await loadPendingOrders();

@@ -2869,7 +2869,19 @@ pm2 status                                                # 查看所有进程�
                                     市场情绪历史记录
                                     <span class="text-xs text-gray-500 ml-2">(显示最近 <span id="sentimentLimit">20</span> 条)</span>
                                 </span>
-                                <div class="flex items-center space-x-2">
+                                <div class="flex items-center space-x-3">
+                                    <div class="flex items-center space-x-2">
+                                        <label class="text-xs text-gray-600">选择日期:</label>
+                                        <input type="date" 
+                                               id="sentimentDatePicker" 
+                                               class="text-xs border border-gray-300 rounded px-2 py-1"
+                                               onchange="changeSentimentDate()">
+                                        <button onclick="resetSentimentDate()" 
+                                                class="text-xs bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded"
+                                                title="返回今天">
+                                            今天
+                                        </button>
+                                    </div>
                                     <span class="text-xs text-gray-500">
                                         🔥 见底信号 | ⚠️ 见顶信号 | 每15分钟检查
                                     </span>
@@ -5485,6 +5497,77 @@ pm2 status                                                # 查看所有进程�
             loadSentimentHistory(limit);
         }
         
+        // 切换日期
+        function changeSentimentDate() {
+            const datePicker = document.getElementById('sentimentDatePicker');
+            const selectedDate = datePicker.value; // 格式: YYYY-MM-DD
+            
+            if (!selectedDate) return;
+            
+            const limit = parseInt(document.getElementById('sentimentLimitSelect').value) || 20;
+            
+            // 将YYYY-MM-DD转换为YYYYMMDD
+            const dateStr = selectedDate.replace(/-/g, '');
+            
+            console.log(`📅 切换到日期: ${selectedDate} (${dateStr})`);
+            
+            // 加载指定日期的数据
+            loadSentimentHistoryByDate(dateStr, limit);
+        }
+        
+        // 返回今天
+        function resetSentimentDate() {
+            const datePicker = document.getElementById('sentimentDatePicker');
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
+            
+            datePicker.value = todayStr;
+            
+            const limit = parseInt(document.getElementById('sentimentLimitSelect').value) || 20;
+            loadSentimentHistory(limit);
+            
+            console.log('📅 已返回今天的数据');
+        }
+        
+        // 按日期加载市场情绪历史数据
+        async function loadSentimentHistoryByDate(dateStr, limit = 20) {
+            try {
+                console.log(`📊 加载日期 ${dateStr} 的历史数据，条数: ${limit}`);
+                
+                const response = await fetch(`/api/market-sentiment/history?date=${dateStr}&limit=${limit}&_t=${Date.now()}`, {
+                    cache: 'no-store'
+                });
+                const result = await response.json();
+                
+                if (result.success && result.data && result.data.length > 0) {
+                    updateSentimentHistoryTable(result.data);
+                    console.log(`✅ 成功加载 ${result.data.length} 条记录`);
+                } else {
+                    document.getElementById('sentimentHistoryTable').innerHTML = `
+                        <tr>
+                            <td colspan="5" class="px-3 py-4 text-center text-gray-500">
+                                ${dateStr} 暂无历史数据
+                                <br>
+                                <span class="text-xs">请选择其他日期或返回今天</span>
+                            </td>
+                        </tr>
+                    `;
+                    console.warn(`⚠️ ${dateStr} 无数据`);
+                }
+            } catch (error) {
+                console.error('❌ 加载历史数据失败:', error);
+                document.getElementById('sentimentHistoryTable').innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-3 py-4 text-center text-red-500">
+                            加载失败: ${error.message}
+                            <br>
+                            <span class="text-xs">请检查日期格式或网络连接</span>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+        
         // 更新历史数据表格
         function updateSentimentHistoryTable(historyData) {
             const tbody = document.getElementById('sentimentHistoryTable');
@@ -5774,6 +5857,16 @@ pm2 status                                                # 查看所有进程�
             
             // 第4步：更新日期选择器（无需等待）
             updateDateSelector();
+            
+            // 初始化市场情绪历史日期选择器
+            const sentimentDatePicker = document.getElementById('sentimentDatePicker');
+            if (sentimentDatePicker) {
+                const today = new Date();
+                const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
+                sentimentDatePicker.value = todayStr;
+                sentimentDatePicker.max = todayStr; // 限制最大日期为今天
+                console.log('✅ 市场情绪日期选择器已初始化:', todayStr);
+            }
             
             // 第5步：后台懒加载账户余额信息（不阻塞页面显示）
             setTimeout(() => {

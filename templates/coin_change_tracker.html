@@ -2876,6 +2876,11 @@ pm2 status                                                # 查看所有进程�
                                                id="sentimentDatePicker" 
                                                class="text-xs border border-gray-300 rounded px-2 py-1"
                                                onchange="changeSentimentDate()">
+                                        <button onclick="goToYesterday()" 
+                                                class="text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 px-2 py-1 rounded"
+                                                title="查看昨天的数据">
+                                            昨天
+                                        </button>
                                         <button onclick="resetSentimentDate()" 
                                                 class="text-xs bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded"
                                                 title="返回今天">
@@ -5527,6 +5532,26 @@ pm2 status                                                # 查看所有进程�
             loadSentimentHistory(limit);
             
             console.log('📅 已返回今天的数据');
+        }
+        
+        // 切换到昨天
+        function goToYesterday() {
+            const datePicker = document.getElementById('sentimentDatePicker');
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = yesterday.toISOString().split('T')[0]; // YYYY-MM-DD
+            
+            datePicker.value = yesterdayStr;
+            
+            const limit = parseInt(document.getElementById('sentimentLimitSelect').value) || 20;
+            
+            // 将YYYY-MM-DD转换为YYYYMMDD
+            const dateStr = yesterdayStr.replace(/-/g, '');
+            
+            console.log(`📅 切换到昨天: ${yesterdayStr} (${dateStr})`);
+            
+            // 加载昨天的数据
+            loadSentimentHistoryByDate(dateStr, limit);
         }
         
         // 按日期加载市场情绪历史数据

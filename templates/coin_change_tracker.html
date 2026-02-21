@@ -3857,6 +3857,11 @@ pm2 status                                                # 查看所有进程�
                                             <span style="color: #6B7280;">上涨占比:</span>
                                             <span style="font-weight: 600; color: #10B981;">${upRatio}</span>
                                         </div>
+                                        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; margin-top: 2px; color: #9CA3AF;">
+                                            <span>平均: ${upRatioStats.avg !== null ? upRatioStats.avg.toFixed(1) + '%' : '--'}</span>
+                                            <span>最小: ${upRatioStats.min !== null ? upRatioStats.min.toFixed(1) + '%' : '--'}</span>
+                                            <span>最大: ${upRatioStats.max !== null ? upRatioStats.max.toFixed(1) + '%' : '--'}</span>
+                                        </div>
                                     </div>`;
                                 }
                                 

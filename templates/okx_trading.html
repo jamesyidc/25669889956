@@ -5536,6 +5536,88 @@ data/
                 mainContent.style.opacity = '1';
             }
         }
+        
+        // ✅ 显示成功提示的 Toast 通知
+        function showSuccessToast(message, duration = 3000) {
+            // 移除旧的 toast（如果存在）
+            const oldToast = document.getElementById('successToast');
+            if (oldToast) {
+                oldToast.remove();
+            }
+            
+            // 创建新的 toast 元素
+            const toast = document.createElement('div');
+            toast.id = 'successToast';
+            toast.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+                color: white;
+                padding: 16px 24px;
+                border-radius: 12px;
+                box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+                font-size: 15px;
+                font-weight: 500;
+                z-index: 10000;
+                animation: slideInRight 0.3s ease-out;
+                min-width: 280px;
+                max-width: 400px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                border: 2px solid rgba(255, 255, 255, 0.3);
+            `;
+            
+            // 添加图标和消息
+            toast.innerHTML = `
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                <span>${message}</span>
+            `;
+            
+            // 添加 CSS 动画
+            if (!document.getElementById('toastAnimations')) {
+                const style = document.createElement('style');
+                style.id = 'toastAnimations';
+                style.textContent = `
+                    @keyframes slideInRight {
+                        from {
+                            transform: translateX(400px);
+                            opacity: 0;
+                        }
+                        to {
+                            transform: translateX(0);
+                            opacity: 1;
+                        }
+                    }
+                    @keyframes slideOutRight {
+                        from {
+                            transform: translateX(0);
+                            opacity: 1;
+                        }
+                        to {
+                            transform: translateX(400px);
+                            opacity: 0;
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            // 添加到页面
+            document.body.appendChild(toast);
+            
+            // 自动移除
+            setTimeout(() => {
+                toast.style.animation = 'slideOutRight 0.3s ease-out';
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, duration);
+        }
 
         async function init() {
             const startTime = Date.now();
@@ -7941,7 +8023,7 @@ ${data.sMsg || result.message || ''}`);
                     
                     // 只有在非静默模式下才显示提示
                     if (!silent) {
-                        alert(`✅ 账户「${account.name}」的止盈止损设置已保存到服务器！`);
+                        showSuccessToast(`✅ 止盈止损设置已保存到服务器！`);
                     }
                     console.log(`✅ 已保存账户 ${account.name} 的止盈止损设置到服务器`, settings);
                     
@@ -8516,9 +8598,13 @@ ${data.sMsg || result.message || ''}`);
                     const saved = await saveSingleSwitchSetting('takeProfitEnabled', enabled, true);
                     if (!saved) {
                         console.error('❌ 止盈开关保存失败');
+                        alert('❌ 保存失败，请重试');
                         this.checked = !enabled;  // 恢复原状态
                         return;
                     }
+                    
+                    // ✅ 显示保存成功的确认信息
+                    showSuccessToast(`✅ 止盈设置已保存：${enabled ? '已启用' : '已停用'}，阈值 ${threshold} USDT`);
                     
                     // 记录策略日志
                     try {
@@ -8569,9 +8655,13 @@ ${data.sMsg || result.message || ''}`);
                     const saved = await saveSingleSwitchSetting('stopLossEnabled', enabled, true);
                     if (!saved) {
                         console.error('❌ 止损开关保存失败');
+                        alert('❌ 保存失败，请重试');
                         this.checked = !enabled;  // 恢复原状态
                         return;
                     }
+                    
+                    // ✅ 显示保存成功的确认信息
+                    showSuccessToast(`✅ 止损设置已保存：${enabled ? '已启用' : '已停用'}，阈值 ${threshold} USDT`);
                     
                     // 记录策略日志
                     try {
@@ -8622,9 +8712,13 @@ ${data.sMsg || result.message || ''}`);
                     const saved = await saveSingleSwitchSetting('rsiTakeProfitEnabled', enabled, true);
                     if (!saved) {
                         console.error('❌ RSI多单止盈开关保存失败');
+                        alert('❌ 保存失败，请重试');
                         this.checked = !enabled;  // 恢复原状态
                         return;
                     }
+                    
+                    // ✅ 显示保存成功的确认信息
+                    showSuccessToast(`✅ RSI多单止盈已保存：${enabled ? '已启用' : '已停用'}，阈值 ${rsiValue}`);
                     
                     // 2. 设置JSONL执行许可（多单）
                     try {
@@ -8695,9 +8789,13 @@ ${data.sMsg || result.message || ''}`);
                     const saved = await saveSingleSwitchSetting('rsiShortTakeProfitEnabled', enabled, true);
                     if (!saved) {
                         console.error('❌ RSI空单止盈开关保存失败');
+                        alert('❌ 保存失败，请重试');
                         this.checked = !enabled;  // 恢复原状态
                         return;
                     }
+                    
+                    // ✅ 显示保存成功的确认信息
+                    showSuccessToast(`✅ RSI空单止盈已保存：${enabled ? '已启用' : '已停用'}，阈值 ${rsiValue}`);
                     
                     // 2. 设置JSONL执行许可（空单）
                     try {
@@ -8776,9 +8874,13 @@ ${data.sMsg || result.message || ''}`);
                     const saved = await saveSingleSwitchSetting('sentimentTakeProfitEnabled', enabled, true);
                     if (!saved) {
                         console.error('❌ 市场情绪止盈开关保存失败');
+                        alert('❌ 保存失败，请重试');
                         this.checked = !enabled;  // 恢复原状态
                         return;
                     }
+                    
+                    // ✅ 显示保存成功的确认信息
+                    showSuccessToast(`✅ 市场情绪止盈已保存：${enabled ? '已启用' : '已停用'}`);
                     
                     // 2. 记录策略日志
                     try {

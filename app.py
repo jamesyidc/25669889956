@@ -14772,6 +14772,15 @@ def okx_trading_marks_v3():
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     return response
 
+@app.route('/position-check')
+def position_check():
+    """持仓检查页面 - 实时监控当前持仓"""
+    response = make_response(render_template('position_check.html'))
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '-1'
+    return response
+
 @app.route('/server-test')
 def server_test():
     """服务器测试页面 - 验证服务器是否可访问"""

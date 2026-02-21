@@ -310,6 +310,20 @@ module.exports = {
       max_memory_restart: '300M',
       error_file: '/home/user/webapp/logs/signal-stats-error.log',
       out_file: '/home/user/webapp/logs/signal-stats-out.log'
+    },
+    
+    // Bottom Signal Long Monitor - 见底信号做多监控器
+    {
+      name: 'bottom-signal-long-monitor',
+      script: 'source_code/bottom_signal_long_monitor.py',
+      interpreter: 'python3',
+      cwd: '/home/user/webapp',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '500M',
+      error_file: '/home/user/webapp/logs/bottom-signal-long-error.log',
+      out_file: '/home/user/webapp/logs/bottom-signal-long-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss'
     }
   ]
 };

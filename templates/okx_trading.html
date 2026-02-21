@@ -428,6 +428,18 @@
         .btn-delete:hover {
             background: #dc2626;
         }
+        
+        /* RSI策略重置按钮样式 */
+        .btn-reset-rsi:hover {
+            background: #d97706 !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-reset-rsi:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
 
         .account-form {
             background: #f8fafc;
@@ -3239,6 +3251,11 @@ data/
                 <div class="info-card" style="margin-top: 16px; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b;">
                     <h3 style="color: #92400e; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
                         <span style="display: flex; align-items: center; gap: 6px;">🚀 RSI自动开仓策略</span>
+                        <button onclick="resetRsiStrategyExecution()" 
+                                class="btn-reset-rsi"
+                                style="padding: 4px 12px; background: #f59e0b; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600; transition: all 0.3s;">
+                            🔄 重置执行许可
+                        </button>
                     </h3>
                     
                     <div style="font-size: 11px; color: #92400e; margin-bottom: 12px; padding: 8px; background: rgba(255, 255, 255, 0.5); border-radius: 4px; border-left: 3px solid #f59e0b;">
@@ -7910,6 +7927,63 @@ ${data.sMsg || result.message || ''}`);
                 console.error('读取设置数据失败:', e);
             }
             return null;
+        }
+        
+        // 重置RSI策略执行许可
+        async function resetRsiStrategyExecution() {
+            const account = accounts.find(acc => acc.id === currentAccount);
+            if (!account) {
+                alert('❌ 请先选择账户');
+                return;
+            }
+            
+            // 确认操作
+            if (!confirm('确认重置执行许可吗？\n\n重置后，已触发的策略将可以再次执行。')) {
+                return;
+            }
+            
+            try {
+                // 重置两个策略的执行许可
+                const strategies = ['top8_short', 'bottom8_short'];
+                let successCount = 0;
+                let errors = [];
+                
+                for (const strategy of strategies) {
+                    try {
+                        const response = await fetch(`/api/okx-trading/set-allowed-top-signal/${account.id}/${strategy}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                allowed: true,
+                                reason: '用户手动重置执行许可'
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        if (result.success) {
+                            successCount++;
+                        } else {
+                            errors.push(`${strategy}: ${result.error || '未知错误'}`);
+                        }
+                    } catch (e) {
+                        errors.push(`${strategy}: ${e.message}`);
+                    }
+                }
+                
+                // 显示结果
+                if (successCount === strategies.length) {
+                    alert(`✅ 重置成功！\n\n账户：${account.name}\n已重置 ${successCount} 个策略的执行许可`);
+                } else if (successCount > 0) {
+                    alert(`⚠️ 部分成功\n\n成功：${successCount} 个\n失败：${errors.length} 个\n\n错误：\n${errors.join('\n')}`);
+                } else {
+                    alert(`❌ 重置失败\n\n${errors.join('\n')}`);
+                }
+                
+            } catch (e) {
+                alert(`❌ 重置失败: ${e.message}`);
+            }
         }
         
         // 更新自动交易状态显示

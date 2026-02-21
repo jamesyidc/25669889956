@@ -1596,6 +1596,108 @@
             </div>
             <div id="systemArchitecture" style="margin-top: 12px; max-height: 500px; overflow-y: auto; color: #0c4a6e; font-size: 11px; line-height: 1.8;">
                 
+                <!-- 🎉 v2.7.0 最新功能 (2026-02-21) -->
+                <div style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); padding: 12px; border-radius: 6px; margin-bottom: 12px; border: 2px solid #10b981; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);">
+                    <h4 style="margin: 0 0 8px 0; color: #065f46; font-size: 13px; font-weight: 800;">🎉 v2.7.0 重大更新 - 见底信号做多策略 + RSI阈值弹窗编辑 (2026-02-21)</h4>
+                    
+                    <!-- 功能1: 见底信号做多策略 -->
+                    <div style="background: white; padding: 10px; border-radius: 4px; margin-bottom: 8px;">
+                        <p style="margin: 0 0 6px 0; font-weight: 700; color: #059669;">📈 功能一：见底信号做多策略（智能抄底）</p>
+                        <ul style="margin: 4px 0 0 20px; padding: 0; color: #065f46; font-size: 10px;">
+                            <li><strong>策略位置：</strong>页面顶部，"📊 RSI数据记录"卡片上方的两个绿色策略卡片</li>
+                            <li><strong>策略1：</strong>见底信号+涨幅前8做多（绿色卡片）- 选择涨幅最高的8个币</li>
+                            <li><strong>策略2：</strong>见底信号+涨幅后8做多（深绿色卡片）- 选择涨幅最低的8个币</li>
+                        </ul>
+                        <div class="mt-3 p-3" style="background: #ecfdf5; border-radius: 4px; padding: 8px; margin-top: 6px;">
+                            <p style="margin: 0 0 4px 0; font-weight: 700; color: #047857; font-size: 10px;">🎯 触发条件（三个同时满足）：</p>
+                            <ul style="margin: 2px 0 0 15px; padding: 0; color: #065f46; font-size: 10px;">
+                                <li>① 市场情绪出现<strong>"✅见底信号"</strong>或<strong>"📉底部背离"</strong></li>
+                                <li>② RSI总和 &lt; 阈值（默认800，可调整300-1500）</li>
+                                <li>③ 自动选择15个常用币种中涨幅前8名或后8名</li>
+                            </ul>
+                        </div>
+                        <div style="background: #fef3c7; border-radius: 4px; padding: 8px; margin-top: 6px;">
+                            <p style="margin: 0 0 4px 0; font-weight: 700; color: #92400e; font-size: 10px;">💰 资金配置：</p>
+                            <ul style="margin: 2px 0 0 15px; padding: 0; color: #92400e; font-size: 10px;">
+                                <li><strong>总投入：</strong>可用余额的 1.5%</li>
+                                <li><strong>杠杆倍数：</strong>10倍</li>
+                                <li><strong>单币限额：</strong>默认 5 USDT（可调整1-100 USDT）</li>
+                                <li><strong>分配方式：</strong>平均分配给8个币种</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- 功能2: RSI阈值弹窗编辑 -->
+                    <div style="background: white; padding: 10px; border-radius: 4px; margin-bottom: 8px;">
+                        <p style="margin: 0 0 6px 0; font-weight: 700; color: #0284c7;">⚙️ 功能二：RSI阈值弹窗编辑（灵活配置）</p>
+                        <ul style="margin: 4px 0 0 20px; padding: 0; color: #0c4a6e; font-size: 10px;">
+                            <li><strong>编辑入口：</strong>点击策略卡片中的<strong>✏️铅笔图标</strong>，打开配置弹窗</li>
+                            <li><strong>RSI阈值：</strong>可调整范围 300-1500，默认800，步进10</li>
+                            <li><strong>单币限额：</strong>可调整范围 1-100 USDT，默认5.0，步进0.1</li>
+                            <li><strong>实时保存：</strong>修改后自动保存到服务器，立即生效</li>
+                        </ul>
+                        <div style="background: #e0f2fe; border-radius: 4px; padding: 8px; margin-top: 6px;">
+                            <p style="margin: 0 0 4px 0; font-weight: 700; color: #0369a1; font-size: 10px;">📋 弹窗功能：</p>
+                            <ul style="margin: 2px 0 0 15px; padding: 0; color: #0c4a6e; font-size: 10px;">
+                                <li><strong>绿色渐变UI：</strong>视觉清晰，操作简便</li>
+                                <li><strong>输入验证：</strong>自动验证输入范围，防止错误配置</li>
+                                <li><strong>点击外部关闭：</strong>点击弹窗外部区域自动关闭</li>
+                                <li><strong>ESC快捷键：</strong>按ESC键快速关闭弹窗</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- 监控与日志 -->
+                    <div style="background: white; padding: 10px; border-radius: 4px; margin-bottom: 8px;">
+                        <p style="margin: 0 0 6px 0; font-weight: 700; color: #7c2d12;">🔍 监控与日志：</p>
+                        <ul style="margin: 4px 0 0 20px; padding: 0; color: #7c2d12; font-size: 10px;">
+                            <li><strong>PM2进程：</strong>bottom-signal-long-monitor（后台自动运行）</li>
+                            <li><strong>监控频率：</strong>每60秒检查一次市场情绪和RSI</li>
+                            <li><strong>冷却时间：</strong>触发后1小时内不重复执行</li>
+                            <li><strong>实时显示：</strong>策略卡片上显示当前市场情绪和RSI总和</li>
+                            <li><strong>Telegram推送：</strong>开仓成功后发送详细通知</li>
+                            <li><strong>JSONL日志：</strong>执行记录保存到data/okx_strategy_logs/</li>
+                        </ul>
+                    </div>
+
+                    <!-- API端点 -->
+                    <div style="background: white; padding: 10px; border-radius: 4px; margin-bottom: 8px;">
+                        <p style="margin: 0 0 6px 0; font-weight: 700; color: #581c87;">🔧 API端点：</p>
+                        <ul style="margin: 4px 0 0 20px; padding: 0; color: #581c87; font-size: 10px;">
+                            <li><strong>GET/POST</strong> /api/okx-trading/bottom-signal-long-top8/&lt;account_id&gt; - 涨幅前8配置</li>
+                            <li><strong>GET/POST</strong> /api/okx-trading/bottom-signal-long-bottom8/&lt;account_id&gt; - 涨幅后8配置</li>
+                            <li><strong>GET</strong> /api/okx-trading/check-allowed-bottom-signal/&lt;account_id&gt;/&lt;strategy_type&gt; - 检查执行许可</li>
+                            <li><strong>POST</strong> /api/okx-trading/set-allowed-bottom-signal/&lt;account_id&gt;/&lt;strategy_type&gt; - 设置执行许可</li>
+                            <li><strong>POST</strong> /api/market-sentiment/insert-test - 插入测试情绪数据（调试用）</li>
+                        </ul>
+                    </div>
+
+                    <!-- 使用流程 -->
+                    <div style="background: #fef2f2; padding: 10px; border-radius: 4px; border-left: 3px solid #dc2626;">
+                        <p style="margin: 0 0 6px 0; font-weight: 700; color: #991b1b; font-size: 10px;">📝 完整使用流程：</p>
+                        <ol style="margin: 4px 0 0 20px; padding: 0; color: #991b1b; font-size: 10px;">
+                            <li><strong>步骤1：</strong>选择账户（下拉框选择交易账户）</li>
+                            <li><strong>步骤2：</strong>点击✏️图标，打开配置弹窗</li>
+                            <li><strong>步骤3：</strong>设置RSI阈值（如800）和单币限额（如5 USDT）</li>
+                            <li><strong>步骤4：</strong>点击"保存"按钮，配置立即生效</li>
+                            <li><strong>步骤5：</strong>打开策略开关（绿色=启用，灰色=禁用）</li>
+                            <li><strong>步骤6：</strong>等待市场出现见底信号（实时显示在卡片上）</li>
+                            <li><strong>步骤7：</strong>满足条件时自动开仓，Telegram通知</li>
+                        </ol>
+                    </div>
+
+                    <!-- Git提交记录 -->
+                    <div style="background: #f3f4f6; padding: 10px; border-radius: 4px;">
+                        <p style="margin: 0 0 6px 0; font-weight: 700; color: #374151; font-size: 10px;">📌 相关Git提交：</p>
+                        <ul style="margin: 2px 0 0 15px; padding: 0; color: #4b5563; font-size: 9px; font-family: monospace;">
+                            <li>470ca85 - feat: 添加RSI阈值弹窗编辑功能和更新文档</li>
+                            <li>e5ccb36 - feat: 添加见底信号做多策略监控器</li>
+                            <li>c96365b - feat: 添加见底信号做多策略（top8/bottom8）</li>
+                            <li>e310afc - feat: 删除上涨占比0策略，替换为见底信号做多</li>
+                        </ul>
+                    </div>
+                </div>
+                
                 <!-- 🔴 重要更新通知 -->
                 <div style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); padding: 12px; border-radius: 6px; margin-bottom: 12px; border: 2px solid #dc2626; box-shadow: 0 2px 8px rgba(220, 38, 38, 0.2);">
                     <h4 style="margin: 0 0 8px 0; color: #991b1b; font-size: 13px; font-weight: 800;">🚨 重要修复合集（2026-02-19）</h4>

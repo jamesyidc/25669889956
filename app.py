@@ -25920,18 +25920,18 @@ def get_account_strategies():
         # 获取accounts数组
         accounts = config_data.get('accounts', [])
         
-        # 策略列表（6个策略）
+        # 策略列表（6个策略）- 映射到实际文件名和目录
         strategies = [
-            {'key': 'top_signal_top8_short', 'name': '见顶信号+涨幅前8做空', 'file_pattern': 'top_signal_top8_short'},
-            {'key': 'top_signal_bottom8_short', 'name': '见顶信号+涨幅后8做空', 'file_pattern': 'top_signal_bottom8_short'},
-            {'key': 'bottom_signal_top8_long', 'name': '见底信号+涨幅前8做多', 'file_pattern': 'bottom_signal_top8_long'},
-            {'key': 'bottom_signal_bottom8_long', 'name': '见底信号+涨幅后8做多', 'file_pattern': 'bottom_signal_bottom8_long'},
-            {'key': 'btc_bottom8_copy', 'name': 'BTC触发涨幅后8名(抄底)', 'file_pattern': 'btc_bottom8_copy'},
-            {'key': 'btc_top8_chase', 'name': 'BTC触发涨幅前8名(追涨)', 'file_pattern': 'btc_top8_chase'},
+            {'key': 'top_signal_top8_short', 'name': '见顶信号+涨幅前8做空', 'file_patterns': ['top_signal_top8_short_execution'], 'dirs': ['okx_auto_strategy']},
+            {'key': 'top_signal_bottom8_short', 'name': '见顶信号+涨幅后8做空', 'file_patterns': ['top_signal_bottom8_short_execution'], 'dirs': ['okx_auto_strategy']},
+            {'key': 'bottom_signal_top8_long', 'name': '见底信号+涨幅前8做多', 'file_patterns': ['bottom_signal_top8_long_execution'], 'dirs': ['okx_bottom_signal_execution', 'okx_auto_strategy']},
+            {'key': 'bottom_signal_bottom8_long', 'name': '见底信号+涨幅后8做多', 'file_patterns': ['bottom_signal_bottom8_long_execution'], 'dirs': ['okx_bottom_signal_execution', 'okx_auto_strategy']},
+            {'key': 'btc_bottom8_copy', 'name': 'BTC触发涨幅后8名(抄底)', 'file_patterns': ['btc_bottom_performers_execution'], 'dirs': ['okx_auto_strategy']},
+            {'key': 'btc_top8_chase', 'name': 'BTC触发涨幅前8名(追涨)', 'file_patterns': ['btc_top_performers_execution'], 'dirs': ['okx_auto_strategy']},
         ]
         
-        # 数据目录
-        data_dir = os.path.join(os.path.dirname(__file__), 'data', 'okx_auto_strategy')
+        # 数据基础目录
+        base_data_dir = os.path.join(os.path.dirname(__file__), 'data')
         
         # 收集所有账户的策略状态
         result = []
@@ -25947,29 +25947,26 @@ def get_account_strategies():
             
             for strategy in strategies:
                 strategy_key = strategy['key']
-                file_pattern = strategy.get('file_pattern', strategy_key)
+                file_patterns = strategy.get('file_patterns', [])
+                search_dirs = strategy.get('dirs', ['okx_auto_strategy'])
                 
-                # 查找今日或最近的执行文件
+                # 查找执行文件
                 allowed = False
                 last_execution_time = None
                 file_found = False
                 
-                # 尝试多种文件名格式
-                filename_patterns = [
-                    # 格式1: account_id_strategy_execution_date.jsonl
-                    lambda d: f"{account_id}_{file_pattern}_execution_{d}.jsonl",
-                    # 格式2: account_id_bottom_signal_strategy_execution_date.jsonl (旧格式兼容)
-                    lambda d: f"{account_id}_bottom_signal_{file_pattern}_execution_{d}.jsonl",
-                ]
-                
-                for days_ago in range(3):
+                # 尝试多个目录和文件名格式
+                for search_dir in search_dirs:
                     if file_found:
                         break
-                    date = datetime.now() - timedelta(days=days_ago)
-                    date_str = date.strftime('%Y%m%d')
+                    data_dir = os.path.join(base_data_dir, search_dir)
                     
-                    for pattern_func in filename_patterns:
-                        filename = pattern_func(date_str)
+                    for pattern in file_patterns:
+                        if file_found:
+                            break
+                        
+                        # 格式1: 不带日期的旧格式
+                        filename = f"{account_id}_{pattern}.jsonl"
                         file_path = os.path.join(data_dir, filename)
                         
                         if os.path.exists(file_path):
@@ -25979,11 +25976,33 @@ def get_account_strategies():
                                     if first_line:
                                         record = json.loads(first_line)
                                         allowed = record.get('allowed', False)
-                                        last_execution_time = record.get('timestamp')
+                                        last_execution_time = record.get('timestamp') or record.get('time')
                                         file_found = True
                                         break
                             except Exception as e:
                                 print(f"Error reading {file_path}: {e}")
+                        
+                        # 格式2: 带日期的新格式（向后兼容）
+                        for days_ago in range(3):
+                            if file_found:
+                                break
+                            date = datetime.now() - timedelta(days=days_ago)
+                            date_str = date.strftime('%Y%m%d')
+                            filename_with_date = f"{account_id}_{pattern}_{date_str}.jsonl"
+                            file_path_with_date = os.path.join(data_dir, filename_with_date)
+                            
+                            if os.path.exists(file_path_with_date):
+                                try:
+                                    with open(file_path_with_date, 'r', encoding='utf-8') as f:
+                                        first_line = f.readline().strip()
+                                        if first_line:
+                                            record = json.loads(first_line)
+                                            allowed = record.get('allowed', False)
+                                            last_execution_time = record.get('timestamp') or record.get('time')
+                                            file_found = True
+                                            break
+                                except Exception as e:
+                                    print(f"Error reading {file_path_with_date}: {e}")
                 
                 account_info['strategies'].append({
                     'key': strategy_key,

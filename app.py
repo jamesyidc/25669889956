@@ -25248,10 +25248,6 @@ def data_management_page():
     """数据管理和备份页面"""
     return render_template('data_management.html')
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=9002, debug=False)
-
-
 # ==================== 见底信号做多策略 API ====================
 
 @app.route('/api/okx-trading/bottom-signal-long-top8/<account_id>', methods=['GET', 'POST'])
@@ -25551,4 +25547,9 @@ def set_bottom_signal_strategy_allowed(account_id, strategy_type):
             'error': str(e),
             'traceback': traceback.format_exc()
         }), 500
+
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=9002, debug=False)
+
 

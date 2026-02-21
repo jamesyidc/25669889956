@@ -8594,14 +8594,8 @@ ${data.sMsg || result.message || ''}`);
                     const enabled = this.checked;
                     const threshold = parseFloat(document.getElementById('takeProfitThreshold').value) || 50;
                     
-                    // 🔧 使用新函数：只更新本开关，不影响其他开关
-                    const saved = await saveSingleSwitchSetting('takeProfitEnabled', enabled, true);
-                    if (!saved) {
-                        console.error('❌ 止盈开关保存失败');
-                        alert('❌ 保存失败，请重试');
-                        this.checked = !enabled;  // 恢复原状态
-                        return;
-                    }
+                    // 保存设置（静默模式）
+                    await saveTakeProfitStopLossSettings(true);
                     
                     // ✅ 显示保存成功的确认信息
                     showSuccessToast(`✅ 止盈设置已保存：${enabled ? '已启用' : '已停用'}，阈值 ${threshold} USDT`);
@@ -8651,14 +8645,8 @@ ${data.sMsg || result.message || ''}`);
                     const enabled = this.checked;
                     const threshold = parseFloat(document.getElementById('stopLossThreshold').value) || -30;
                     
-                    // 🔧 使用新函数：只更新本开关，不影响其他开关
-                    const saved = await saveSingleSwitchSetting('stopLossEnabled', enabled, true);
-                    if (!saved) {
-                        console.error('❌ 止损开关保存失败');
-                        alert('❌ 保存失败，请重试');
-                        this.checked = !enabled;  // 恢复原状态
-                        return;
-                    }
+                    // 保存设置（静默模式）
+                    await saveTakeProfitStopLossSettings(true);
                     
                     // ✅ 显示保存成功的确认信息
                     showSuccessToast(`✅ 止损设置已保存：${enabled ? '已启用' : '已停用'}，阈值 ${threshold} USDT`);
@@ -8708,14 +8696,8 @@ ${data.sMsg || result.message || ''}`);
                     const enabled = this.checked;
                     const rsiValue = parseFloat(document.getElementById('rsiTakeProfitThreshold').value) || 1900;
                     
-                    // 1. 🔧 使用新函数：只更新本开关，不影响其他开关
-                    const saved = await saveSingleSwitchSetting('rsiTakeProfitEnabled', enabled, true);
-                    if (!saved) {
-                        console.error('❌ RSI多单止盈开关保存失败');
-                        alert('❌ 保存失败，请重试');
-                        this.checked = !enabled;  // 恢复原状态
-                        return;
-                    }
+                    // 1. 保存设置（静默模式）
+                    await saveTakeProfitStopLossSettings(true);
                     
                     // ✅ 显示保存成功的确认信息
                     showSuccessToast(`✅ RSI多单止盈已保存：${enabled ? '已启用' : '已停用'}，阈值 ${rsiValue}`);
@@ -8785,14 +8767,8 @@ ${data.sMsg || result.message || ''}`);
                     const enabled = this.checked;
                     const rsiValue = parseFloat(document.getElementById('rsiShortTakeProfitThreshold').value) || 810;
                     
-                    // 1. 🔧 使用新函数：只更新本开关，不影响其他开关
-                    const saved = await saveSingleSwitchSetting('rsiShortTakeProfitEnabled', enabled, true);
-                    if (!saved) {
-                        console.error('❌ RSI空单止盈开关保存失败');
-                        alert('❌ 保存失败，请重试');
-                        this.checked = !enabled;  // 恢复原状态
-                        return;
-                    }
+                    // 1. 保存设置（静默模式）
+                    await saveTakeProfitStopLossSettings(true);
                     
                     // ✅ 显示保存成功的确认信息
                     showSuccessToast(`✅ RSI空单止盈已保存：${enabled ? '已启用' : '已停用'}，阈值 ${rsiValue}`);
@@ -8870,14 +8846,8 @@ ${data.sMsg || result.message || ''}`);
                     
                     const enabled = this.checked;
                     
-                    // 1. 🔧 使用新函数：只更新本开关，不影响其他开关
-                    const saved = await saveSingleSwitchSetting('sentimentTakeProfitEnabled', enabled, true);
-                    if (!saved) {
-                        console.error('❌ 市场情绪止盈开关保存失败');
-                        alert('❌ 保存失败，请重试');
-                        this.checked = !enabled;  // 恢复原状态
-                        return;
-                    }
+                    // 1. 保存设置（静默模式）
+                    await saveTakeProfitStopLossSettings(true);
                     
                     // ✅ 显示保存成功的确认信息
                     showSuccessToast(`✅ 市场情绪止盈已保存：${enabled ? '已启用' : '已停用'}`);

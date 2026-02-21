@@ -3103,6 +3103,13 @@ pm2 status                                                # 查看所有进程�
         let historyData = [];
         let rsiHistoryData = [];  // RSI历史数据
         
+        // 上涨占比统计数据（全局变量，供tooltip使用）
+        let upRatioStats = {
+            avg: 0,
+            min: 0,
+            max: 0
+        };
+        
         // 最后的RSI数据缓存
         let lastRSIData = {
             total_rsi: null,
@@ -3206,6 +3213,13 @@ pm2 status                                                # 查看所有进程�
                                 html += `</div>`;
                                 html += `<div style="margin-top: 4px; font-size: 13px; color: #6B7280;">`;
                                 html += `上涨占比: <span style="font-weight: 600; color: #10B981;">${upRatio}</span>`;
+                                html += `</div>`;
+                                
+                                // 添加统计数据
+                                html += `<div style="margin-top: 6px; padding-top: 6px; border-top: 1px dashed #E5E7EB; font-size: 11px; color: #9CA3AF;">`;
+                                html += `平均: <span style="font-weight: 600; color: #6B7280;">${upRatioStats.avg.toFixed(1)}%</span> | `;
+                                html += `最小: <span style="font-weight: 600; color: #6B7280;">${upRatioStats.min.toFixed(1)}%</span> | `;
+                                html += `最大: <span style="font-weight: 600; color: #6B7280;">${upRatioStats.max.toFixed(1)}%</span>`;
                                 html += `</div>`;
                             } else if (p.seriesName === 'RSI之和') {
                                 const rsiValue = p.value;
@@ -3563,6 +3577,11 @@ pm2 status                                                # 查看所有进程�
                         const avgUpRatio = upRatios.reduce((sum, v) => sum + v, 0) / upRatios.length;
                         const minUpRatio = Math.min(...upRatios);
                         const maxUpRatio = Math.max(...upRatios);
+                        
+                        // 保存到全局变量（供tooltip使用）
+                        upRatioStats.avg = avgUpRatio;
+                        upRatioStats.min = minUpRatio;
+                        upRatioStats.max = maxUpRatio;
                         
                         // 更新显示
                         document.getElementById('upRatioAvg').textContent = avgUpRatio.toFixed(1) + '%';

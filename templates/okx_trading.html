@@ -1784,10 +1784,7 @@
                                 <li>✅ <strong>独立JSONL文件：</strong>每个账户每个策略使用独立文件，避免冲突</li>
                             </ul>
                         </li>
-                        <li><strong>🆕 上涨占比0触发策略（2个，实时显示）：</strong>
                             <ul style="margin: 2px 0 0 20px;">
-                                <li>上涨占比0-涨幅前8名：上涨占比 = 0%时，对常用币中涨幅前8名开多单</li>
-                                <li>上涨占比0-涨幅后8名：上涨占比 = 0%时，对常用币中涨幅后8名开多单</li>
                                 <li>✅ <strong>实时显示：</strong>上涨占比始终可见，0%时红色高亮，60秒自动更新</li>
                                 <li>排除时段：每天0:00-0:30（北京时间）不执行</li>
                             </ul>
@@ -1866,11 +1863,9 @@
                         <li>刷新账户数据（余额、持仓）</li>
                         <li>更新总涨跌幅统计</li>
                         <li>检查并执行BTC价格触发策略（涨幅前8名/涨幅后8名）</li>
-                        <li>🆕 检查并执行上涨占比0触发策略（涨幅前8名/涨幅后8名）</li>
                         <li>检查止盈止损触发条件</li>
                     </ul>
                     
-                    <p style="margin: 8px 0 4px 0; padding: 8px; background: #dbeafe; border-radius: 4px; border-left: 3px solid #3b82f6;"><strong>📌 策略布局顺序：</strong>BTC价格触发策略 → 上涨占比0触发策略 → 账户限额 → 涨跌预警</p>
                     
                     <p style="margin: 8px 0 4px 0;"><strong>BTC价格触发策略执行流程：</strong></p>
                     <ol style="margin: 4px 0 0 20px; padding: 0;">
@@ -1902,7 +1897,6 @@
                         <li><strong>记录日志：</strong>记录执行时间、币种、结果到JSONL文件</li>
                     </ol>
                     
-                    <p style="margin: 8px 0 4px 0;"><strong>🆕 上涨占比0触发策略执行流程：</strong></p>
                     <ol style="margin: 4px 0 0 20px; padding: 0;">
                         <li><strong>触发检查：</strong>每60秒检查一次上涨占比</li>
                         <li><strong>触发条件：</strong>
@@ -2065,16 +2059,6 @@ async function batchOrderTop8(direction, percentPerCoin, skipConfirm = false) {
 }
 
 // 2️⃣ 自动策略调用（代码复用）
-async function executeUpRatio0Strategy(account, upRatio, strategyType) {
-    const positionSizePercent = account.positionSize || 1.5;
-    
-    // 直接调用手动批量开仓（skipConfirm=true 跳过确认）
-    if (strategyType === 'top_8') {
-        return await batchOrderTop8('long', positionSizePercent, true);
-    } else {
-        return await batchOrderBottom8('long', positionSizePercent, true);
-    }
-}
 
 // 3️⃣ BTC价格触发策略（同样复用）
 async function executeAutoTrade(account, btcPrice, triggerPrice, strategyType) {
@@ -2228,12 +2212,7 @@ setInterval(() => {
 {"timestamp": 1771297260000, "time": "2026-02-17 12:31:00", "account_id": "main", "strategy_type": "top_performers", "allowed": false, "reason": "执行完成后自动关闭", "triggerPrice": 68000.0}</pre>
                     <p style="margin: 2px 0; font-size: 10px; color: #64748b;">✅ <strong>独立文件：</strong>涨幅前8名和涨幅后8名使用不同JSONL，命名格式：account_{account_id}_btc_{strategy_type}_execution.jsonl</p>
                     
-                    <p style="margin: 8px 0 4px 0; font-weight: 600;">🆕 3.3 上涨占比0策略执行许可（账户隔离）</p>
-                    <p style="margin: 2px 0;"><code style="background: #f1f5f9; padding: 2px 4px; border-radius: 3px;">data/okx_auto_strategy/account_main_upratio0_top8_execution.jsonl</code></p>
                     <pre style="background: #1e293b; color: #e2e8f0; padding: 8px; border-radius: 4px; overflow-x: auto; font-size: 10px; margin: 4px 0;">
-{"timestamp": 1771297200000, "time": "2026-02-17 12:30:00", "account_id": "main", "strategy_type": "upratio0_top8", "allowed": true, "reason": "用户开启策略"}
-{"timestamp": 1771297260000, "time": "2026-02-17 12:31:00", "account_id": "main", "strategy_type": "upratio0_top8", "allowed": false, "reason": "执行完成后自动关闭", "up_ratio": 0, "execution_details": {"success_count": 8, "total_count": 8}}</pre>
-                    <p style="margin: 2px 0; font-size: 10px; color: #64748b;">✅ <strong>账户隔离：</strong>每个账户独立管理，文件命名格式：account_{account_id}_upratio0_{top8|bottom8}_execution.jsonl</p>
                     
                     <p style="margin: 8px 0 4px 0; font-weight: 600;">3.4 止盈止损设置</p>
                     <p style="margin: 2px 0;"><code style="background: #f1f5f9; padding: 2px 4px; border-radius: 3px;">data/okx_tpsl_settings/account_main.json</code></p>
@@ -2362,11 +2341,7 @@ setInterval(() => {
                                 <td style="padding: 4px; border: 1px solid #cbd5e1;">/api/okx-trading/check-allowed/{id}/{type}<br>/api/okx-trading/set-allowed/{id}/{type}</td>
                             </tr>
                             <tr style="background: #fef3c7;">
-                                <td style="padding: 4px; border: 1px solid #cbd5e1; font-weight: 600;">上涨占比0许可</td>
-                                <td style="padding: 4px; border: 1px solid #cbd5e1;"><code>account_{id}_upratio0_{type}_execution.jsonl</code></td>
                                 <td style="padding: 4px; border: 1px solid #cbd5e1; text-align: center;">8</td>
-                                <td style="padding: 4px; border: 1px solid #cbd5e1;">上涨占比0触发执行许可（防重复）<br>type = top8 / bottom8</td>
-                                <td style="padding: 4px; border: 1px solid #cbd5e1;">/api/okx-trading/check-allowed-upratio0/{id}/{type}<br>/api/okx-trading/set-allowed-upratio0/{id}/{type}</td>
                             </tr>
                             <tr style="background: #fed7aa;">
                                 <td style="padding: 4px; border: 1px solid #cbd5e1; font-weight: 600;">RSI止盈许可</td>
@@ -2410,14 +2385,9 @@ setInterval(() => {
    └─ 下单复用: batchOrderTop8() / batchOrderBottom8()
 
 <span style="color: #f59e0b;">┌─────────────────────────────────────────────────────────────────────┐</span>
-<span style="color: #f59e0b;">│  2️⃣ 上涨占比0触发策略（涨幅前8名/后8名）                            │</span>
 <span style="color: #f59e0b;">└─────────────────────────────────────────────────────────────────────┘</span>
-   📝 执行许可: account_{id}_upratio0_{top8|bottom8}_execution.jsonl
-   ├─ 读取API: GET /api/okx-trading/check-allowed-upratio0/{id}/{type}
-   ├─ 写入API: POST /api/okx-trading/set-allowed-upratio0/{id}/{type}
    ├─ 触发时机: 前端每60秒检查上涨占比
    ├─ 触发条件: 上涨占比=0% 且 不在0:00-0:30
-   ├─ 执行函数: checkAndExecuteUpRatio0Top8() / checkAndExecuteUpRatio0Bottom8()
    ├─ 下单复用: batchOrderTop8() / batchOrderBottom8()
    └─ 数据来源: /api/coin-change-tracker/latest (total_change, changes)
 
@@ -2467,7 +2437,6 @@ setInterval(() => {
                                 <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: left;">账户ID</th>
                                 <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: left;">BTC策略配置</th>
                                 <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: left;">BTC执行许可</th>
-                                <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: left;">上涨占比0许可</th>
                                 <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: left;">止盈止损配置</th>
                                 <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: left;">RSI止盈许可</th>
                             </tr>
@@ -2477,7 +2446,6 @@ setInterval(() => {
                                 <td style="padding: 4px; border: 1px solid #cbd5e1;"><strong>main</strong></td>
                                 <td style="padding: 4px; border: 1px solid #cbd5e1;">account_main.json<br>account_main_top.json</td>
                                 <td style="padding: 4px; border: 1px solid #cbd5e1;">*_btc_top_performers_execution.jsonl<br>*_btc_bottom_performers_execution.jsonl</td>
-                                <td style="padding: 4px; border: 1px solid #cbd5e1;">*_upratio0_top8_execution.jsonl<br>*_upratio0_bottom8_execution.jsonl</td>
                                 <td style="padding: 4px; border: 1px solid #cbd5e1;">account_main_tpsl.jsonl</td>
                                 <td style="padding: 4px; border: 1px solid #cbd5e1;">account_main_takeprofit_execution.jsonl</td>
                             </tr>
@@ -2485,7 +2453,6 @@ setInterval(() => {
                                 <td style="padding: 4px; border: 1px solid #cbd5e1;"><strong>fangfang12</strong></td>
                                 <td style="padding: 4px; border: 1px solid #cbd5e1;">account_fangfang12.json<br>account_fangfang12_top.json</td>
                                 <td style="padding: 4px; border: 1px solid #cbd5e1;">account_fangfang12_btc_*_execution.jsonl</td>
-                                <td style="padding: 4px; border: 1px solid #cbd5e1;">account_fangfang12_upratio0_*_execution.jsonl</td>
                                 <td style="padding: 4px; border: 1px solid #cbd5e1;">account_fangfang12_tpsl.jsonl</td>
                                 <td style="padding: 4px; border: 1px solid #cbd5e1;">account_fangfang12_takeprofit_execution.jsonl</td>
                             </tr>
@@ -2493,7 +2460,6 @@ setInterval(() => {
                                 <td style="padding: 4px; border: 1px solid #cbd5e1;"><strong>poit</strong></td>
                                 <td style="padding: 4px; border: 1px solid #cbd5e1;">account_poit.json<br>account_poit_top.json</td>
                                 <td style="padding: 4px; border: 1px solid #cbd5e1;">account_poit_btc_*_execution.jsonl</td>
-                                <td style="padding: 4px; border: 1px solid #cbd5e1;">account_poit_upratio0_*_execution.jsonl</td>
                                 <td style="padding: 4px; border: 1px solid #cbd5e1;">account_poit_tpsl.jsonl</td>
                                 <td style="padding: 4px; border: 1px solid #cbd5e1;">account_poit_takeprofit_execution.jsonl</td>
                             </tr>
@@ -2501,7 +2467,6 @@ setInterval(() => {
                                 <td style="padding: 4px; border: 1px solid #cbd5e1;"><strong>marks</strong></td>
                                 <td style="padding: 4px; border: 1px solid #cbd5e1;">account_marks.json<br>account_marks_top.json</td>
                                 <td style="padding: 4px; border: 1px solid #cbd5e1;">account_marks_btc_*_execution.jsonl</td>
-                                <td style="padding: 4px; border: 1px solid #cbd5e1;">account_marks_upratio0_*_execution.jsonl</td>
                                 <td style="padding: 4px; border: 1px solid #cbd5e1;">account_marks_tpsl.jsonl</td>
                                 <td style="padding: 4px; border: 1px solid #cbd5e1;">account_marks_takeprofit_execution.jsonl</td>
                             </tr>
@@ -2518,8 +2483,6 @@ setInterval(() => {
     loadTradingLogs();                 // 加载交易日志
     updateTotalChangeOKX();            // 更新总涨跌幅
     <span style="color: #22c55e;">checkAndExecuteAutoStrategy();</span>      // ✅ 检查BTC价格触发策略
-    <span style="color: #f59e0b;">checkAndExecuteUpRatio0Top8();</span>      // ✅ 检查上涨占比0-涨幅前8名
-    <span style="color: #f59e0b;">checkAndExecuteUpRatio0Bottom8();</span>   // ✅ 检查上涨占比0-涨幅后8名
     <span style="color: #ec4899;">checkRSITakeProfit();</span>               // ✅ 检查RSI止盈
 }, 60000);  // 每60秒执行一次
 
@@ -2565,8 +2528,6 @@ setInterval(() => {
                             <tr><td style="padding: 4px; border: 1px solid #cbd5e1;">/api/okx-trading/auto-strategy/&lt;account_id&gt;</td><td style="padding: 4px; border: 1px solid #cbd5e1;">GET/POST</td><td style="padding: 4px; border: 1px solid #cbd5e1;">自动策略设置</td></tr>
                             <tr style="background: #dcfce7;"><td style="padding: 4px; border: 1px solid #cbd5e1;">🆕 /api/okx-trading/check-allowed/&lt;account_id&gt;/&lt;strategy_type&gt;</td><td style="padding: 4px; border: 1px solid #cbd5e1;">GET</td><td style="padding: 4px; border: 1px solid #cbd5e1;">检查BTC策略执行许可（v2.5新增策略类型参数）</td></tr>
                             <tr style="background: #dcfce7;"><td style="padding: 4px; border: 1px solid #cbd5e1;">🆕 /api/okx-trading/set-allowed/&lt;account_id&gt;/&lt;strategy_type&gt;</td><td style="padding: 4px; border: 1px solid #cbd5e1;">POST</td><td style="padding: 4px; border: 1px solid #cbd5e1;">设置BTC策略执行许可（v2.5新增策略类型参数）</td></tr>
-                            <tr><td style="padding: 4px; border: 1px solid #cbd5e1;">🆕 /api/okx-trading/check-allowed-upratio0/&lt;account_id&gt;/&lt;type&gt;</td><td style="padding: 4px; border: 1px solid #cbd5e1;">GET</td><td style="padding: 4px; border: 1px solid #cbd5e1;">检查上涨占比0策略执行许可</td></tr>
-                            <tr><td style="padding: 4px; border: 1px solid #cbd5e1;">🆕 /api/okx-trading/set-allowed-upratio0/&lt;account_id&gt;/&lt;type&gt;</td><td style="padding: 4px; border: 1px solid #cbd5e1;">POST</td><td style="padding: 4px; border: 1px solid #cbd5e1;">设置上涨占比0策略执行许可</td></tr>
                             <tr><td style="padding: 4px; border: 1px solid #cbd5e1;">/api/okx-trading/tpsl-settings/&lt;account_id&gt;</td><td style="padding: 4px; border: 1px solid #cbd5e1;">GET/POST</td><td style="padding: 4px; border: 1px solid #cbd5e1;">止盈止损设置</td></tr>
                             <tr><td style="padding: 4px; border: 1px solid #cbd5e1;">/api/coin-change-tracker/latest</td><td style="padding: 4px; border: 1px solid #cbd5e1;">GET</td><td style="padding: 4px; border: 1px solid #cbd5e1;">获取涨跌幅数据</td></tr>
                         </tbody>
@@ -2626,20 +2587,12 @@ data/
 │   ├── account_main_history.jsonl
 │   ├── 🆕 account_main_btc_top_performers_execution.jsonl      # BTC策略-涨幅前8名执行许可 (v2.5)
 │   ├── 🆕 account_main_btc_bottom_performers_execution.jsonl   # BTC策略-涨幅后8名执行许可 (v2.5)
-│   ├── 🆕 account_main_upratio0_top8_execution.jsonl           # 上涨占比0-涨幅前8名执行许可
-│   ├── 🆕 account_main_upratio0_bottom8_execution.jsonl        # 上涨占比0-涨幅后8名执行许可
 │   ├── 🆕 account_fangfang12_btc_top_performers_execution.jsonl
 │   ├── 🆕 account_fangfang12_btc_bottom_performers_execution.jsonl
-│   ├── 🆕 account_fangfang12_upratio0_top8_execution.jsonl
-│   ├── 🆕 account_fangfang12_upratio0_bottom8_execution.jsonl
 │   ├── 🆕 account_poit_btc_top_performers_execution.jsonl
 │   ├── 🆕 account_poit_btc_bottom_performers_execution.jsonl
-│   ├── 🆕 account_poit_upratio0_top8_execution.jsonl
-│   ├── 🆕 account_poit_upratio0_bottom8_execution.jsonl
 │   ├── 🆕 account_marks_btc_top_performers_execution.jsonl
 │   ├── 🆕 account_marks_btc_bottom_performers_execution.jsonl
-│   ├── 🆕 account_marks_upratio0_top8_execution.jsonl
-│   └── 🆕 account_marks_upratio0_bottom8_execution.jsonl
 │   # 📊 统计: 4个账户 × 4个策略 = 16个独立JSONL文件 (v2.5架构升级)
 ├── okx_tpsl_settings/           # 止盈止损设置
 ├── okx_trading_logs/            # 交易日志
@@ -2664,26 +2617,18 @@ data/
                                 <!-- account_main -->
                                 <tr><td style="padding: 3px; border: 1px solid #e9d5ff;">1</td><td style="padding: 3px; border: 1px solid #e9d5ff;">main</td><td style="padding: 3px; border: 1px solid #e9d5ff;">BTC-涨幅前8名</td><td style="padding: 3px; border: 1px solid #e9d5ff; font-family: monospace; font-size: 8px;"><code>account_main_btc_top_performers_execution.jsonl</code></td><td style="padding: 3px; border: 1px solid #e9d5ff;">BTC价格触发策略-涨幅前8名</td></tr>
                                 <tr><td style="padding: 3px; border: 1px solid #e9d5ff;">2</td><td style="padding: 3px; border: 1px solid #e9d5ff;">main</td><td style="padding: 3px; border: 1px solid #e9d5ff;">BTC-涨幅后8名</td><td style="padding: 3px; border: 1px solid #e9d5ff; font-family: monospace; font-size: 8px;"><code>account_main_btc_bottom_performers_execution.jsonl</code></td><td style="padding: 3px; border: 1px solid #e9d5ff;">BTC价格触发策略-涨幅后8名</td></tr>
-                                <tr><td style="padding: 3px; border: 1px solid #e9d5ff;">3</td><td style="padding: 3px; border: 1px solid #e9d5ff;">main</td><td style="padding: 3px; border: 1px solid #e9d5ff;">上涨占比0-前8</td><td style="padding: 3px; border: 1px solid #e9d5ff; font-family: monospace; font-size: 8px;"><code>account_main_upratio0_top8_execution.jsonl</code></td><td style="padding: 3px; border: 1px solid #e9d5ff;">上涨占比=0%触发-涨幅前8名</td></tr>
-                                <tr style="background: #faf5ff;"><td style="padding: 3px; border: 1px solid #e9d5ff;">4</td><td style="padding: 3px; border: 1px solid #e9d5ff;">main</td><td style="padding: 3px; border: 1px solid #e9d5ff;">上涨占比0-后8</td><td style="padding: 3px; border: 1px solid #e9d5ff; font-family: monospace; font-size: 8px;"><code>account_main_upratio0_bottom8_execution.jsonl</code></td><td style="padding: 3px; border: 1px solid #e9d5ff;">上涨占比=0%触发-涨幅后8名</td></tr>
                                 
                                 <!-- account_fangfang12 -->
                                 <tr><td style="padding: 3px; border: 1px solid #e9d5ff;">5</td><td style="padding: 3px; border: 1px solid #e9d5ff;">fangfang12</td><td style="padding: 3px; border: 1px solid #e9d5ff;">BTC-涨幅前8名</td><td style="padding: 3px; border: 1px solid #e9d5ff; font-family: monospace; font-size: 8px;"><code>account_fangfang12_btc_top_performers_execution.jsonl</code></td><td style="padding: 3px; border: 1px solid #e9d5ff;">BTC价格触发策略-涨幅前8名</td></tr>
                                 <tr><td style="padding: 3px; border: 1px solid #e9d5ff;">6</td><td style="padding: 3px; border: 1px solid #e9d5ff;">fangfang12</td><td style="padding: 3px; border: 1px solid #e9d5ff;">BTC-涨幅后8名</td><td style="padding: 3px; border: 1px solid #e9d5ff; font-family: monospace; font-size: 8px;"><code>account_fangfang12_btc_bottom_performers_execution.jsonl</code></td><td style="padding: 3px; border: 1px solid #e9d5ff;">BTC价格触发策略-涨幅后8名</td></tr>
-                                <tr><td style="padding: 3px; border: 1px solid #e9d5ff;">7</td><td style="padding: 3px; border: 1px solid #e9d5ff;">fangfang12</td><td style="padding: 3px; border: 1px solid #e9d5ff;">上涨占比0-前8</td><td style="padding: 3px; border: 1px solid #e9d5ff; font-family: monospace; font-size: 8px;"><code>account_fangfang12_upratio0_top8_execution.jsonl</code></td><td style="padding: 3px; border: 1px solid #e9d5ff;">上涨占比=0%触发-涨幅前8名</td></tr>
-                                <tr style="background: #faf5ff;"><td style="padding: 3px; border: 1px solid #e9d5ff;">8</td><td style="padding: 3px; border: 1px solid #e9d5ff;">fangfang12</td><td style="padding: 3px; border: 1px solid #e9d5ff;">上涨占比0-后8</td><td style="padding: 3px; border: 1px solid #e9d5ff; font-family: monospace; font-size: 8px;"><code>account_fangfang12_upratio0_bottom8_execution.jsonl</code></td><td style="padding: 3px; border: 1px solid #e9d5ff;">上涨占比=0%触发-涨幅后8名</td></tr>
                                 
                                 <!-- account_poit -->
                                 <tr><td style="padding: 3px; border: 1px solid #e9d5ff;">9</td><td style="padding: 3px; border: 1px solid #e9d5ff;">poit</td><td style="padding: 3px; border: 1px solid #e9d5ff;">BTC-涨幅前8名</td><td style="padding: 3px; border: 1px solid #e9d5ff; font-family: monospace; font-size: 8px;"><code>account_poit_btc_top_performers_execution.jsonl</code></td><td style="padding: 3px; border: 1px solid #e9d5ff;">BTC价格触发策略-涨幅前8名</td></tr>
                                 <tr><td style="padding: 3px; border: 1px solid #e9d5ff;">10</td><td style="padding: 3px; border: 1px solid #e9d5ff;">poit</td><td style="padding: 3px; border: 1px solid #e9d5ff;">BTC-涨幅后8名</td><td style="padding: 3px; border: 1px solid #e9d5ff; font-family: monospace; font-size: 8px;"><code>account_poit_btc_bottom_performers_execution.jsonl</code></td><td style="padding: 3px; border: 1px solid #e9d5ff;">BTC价格触发策略-涨幅后8名</td></tr>
-                                <tr><td style="padding: 3px; border: 1px solid #e9d5ff;">11</td><td style="padding: 3px; border: 1px solid #e9d5ff;">poit</td><td style="padding: 3px; border: 1px solid #e9d5ff;">上涨占比0-前8</td><td style="padding: 3px; border: 1px solid #e9d5ff; font-family: monospace; font-size: 8px;"><code>account_poit_upratio0_top8_execution.jsonl</code></td><td style="padding: 3px; border: 1px solid #e9d5ff;">上涨占比=0%触发-涨幅前8名</td></tr>
-                                <tr style="background: #faf5ff;"><td style="padding: 3px; border: 1px solid #e9d5ff;">12</td><td style="padding: 3px; border: 1px solid #e9d5ff;">poit</td><td style="padding: 3px; border: 1px solid #e9d5ff;">上涨占比0-后8</td><td style="padding: 3px; border: 1px solid #e9d5ff; font-family: monospace; font-size: 8px;"><code>account_poit_upratio0_bottom8_execution.jsonl</code></td><td style="padding: 3px; border: 1px solid #e9d5ff;">上涨占比=0%触发-涨幅后8名</td></tr>
                                 
                                 <!-- account_marks -->
                                 <tr><td style="padding: 3px; border: 1px solid #e9d5ff;">13</td><td style="padding: 3px; border: 1px solid #e9d5ff;">marks</td><td style="padding: 3px; border: 1px solid #e9d5ff;">BTC-涨幅前8名</td><td style="padding: 3px; border: 1px solid #e9d5ff; font-family: monospace; font-size: 8px;"><code>account_marks_btc_top_performers_execution.jsonl</code></td><td style="padding: 3px; border: 1px solid #e9d5ff;">BTC价格触发策略-涨幅前8名</td></tr>
                                 <tr><td style="padding: 3px; border: 1px solid #e9d5ff;">14</td><td style="padding: 3px; border: 1px solid #e9d5ff;">marks</td><td style="padding: 3px; border: 1px solid #e9d5ff;">BTC-涨幅后8名</td><td style="padding: 3px; border: 1px solid #e9d5ff; font-family: monospace; font-size: 8px;"><code>account_marks_btc_bottom_performers_execution.jsonl</code></td><td style="padding: 3px; border: 1px solid #e9d5ff;">BTC价格触发策略-涨幅后8名</td></tr>
-                                <tr><td style="padding: 3px; border: 1px solid #e9d5ff;">15</td><td style="padding: 3px; border: 1px solid #e9d5ff;">marks</td><td style="padding: 3px; border: 1px solid #e9d5ff;">上涨占比0-前8</td><td style="padding: 3px; border: 1px solid #e9d5ff; font-family: monospace; font-size: 8px;"><code>account_marks_upratio0_top8_execution.jsonl</code></td><td style="padding: 3px; border: 1px solid #e9d5ff;">上涨占比=0%触发-涨幅前8名</td></tr>
-                                <tr style="background: #faf5ff;"><td style="padding: 3px; border: 1px solid #e9d5ff;">16</td><td style="padding: 3px; border: 1px solid #e9d5ff;">marks</td><td style="padding: 3px; border: 1px solid #e9d5ff;">上涨占比0-后8</td><td style="padding: 3px; border: 1px solid #e9d5ff; font-family: monospace; font-size: 8px;"><code>account_marks_upratio0_bottom8_execution.jsonl</code></td><td style="padding: 3px; border: 1px solid #e9d5ff;">上涨占比=0%触发-涨幅后8名</td></tr>
                             </tbody>
                         </table>
                         
@@ -2723,7 +2668,6 @@ data/
                         <ul style="margin: 2px 0 0 20px; padding: 0; font-size: 10px;">
                             <li><strong>问题：</strong>4个账户（main, fangfang12, poit, marks）共用同一套策略开关，切换账户后开关状态不更新</li>
                             <li><strong>原因：</strong>前端开关是全局单一DOM元素，未实现账户切换时重新加载对应账户的策略状态</li>
-                            <li><strong>解决：</strong>新增 <code>loadUpRatio0StrategySettings()</code> 函数，在账户切换和页面初始化时调用，从API加载当前账户的策略状态并更新开关UI</li>
                             <li><strong>效果：</strong>每个账户的策略开关完全独立，切换账户自动加载对应状态，UI与JSONL文件保持一致</li>
                         </ul>
                     </div>
@@ -2737,7 +2681,6 @@ data/
                                 <code>account_{account_id}_btc_top_performers_execution.jsonl</code><br>
                                 <code>account_{account_id}_btc_bottom_performers_execution.jsonl</code>
                             </li>
-                            <li><strong>效果：</strong>4个账户 × 4个策略（BTC-top8, BTC-bottom8, upratio0-top8, upratio0-bottom8）= 16个独立JSONL文件，完全避免冲突</li>
                         </ul>
                     </div>
                     
@@ -2788,7 +2731,6 @@ data/
                                 <li>触发时和完成时均发送TG消息，完成时显示Alert弹窗</li>
                             </ul>
                         </li>
-                        <li><strong>🆕 上涨占比0触发策略（2个）：</strong>
                             <ul style="margin: 2px 0 0 20px;">
                                 <li>涨幅前8名：上涨占比 = 0%时，对常用币中涨幅前8名开多单，1.5% × 10倍杠杆</li>
                                 <li>涨幅后8名：上涨占比 = 0%时，对常用币中涨幅后8名开多单，1.5% × 10倍杠杆</li>
@@ -2822,10 +2764,7 @@ data/
                                 <li><code style="background: #f1f5f9; padding: 2px 4px;">data/okx_auto_strategy/account_{account_id}_btc_bottom_performers_execution.jsonl</code></li>
                             </ul>
                         </li>
-                        <li><strong>🆕 上涨占比0策略：</strong>每个账号、每个策略独立的执行许可文件：
                             <ul style="margin: 2px 0 0 20px;">
-                                <li><code style="background: #f1f5f9; padding: 2px 4px;">data/okx_auto_strategy/account_{account_id}_upratio0_top8_execution.jsonl</code></li>
-                                <li><code style="background: #f1f5f9; padding: 2px 4px;">data/okx_auto_strategy/account_{account_id}_upratio0_bottom8_execution.jsonl</code></li>
                             </ul>
                         </li>
                         <li>记录格式：<code>{"allowed": true/false, "reason": "...", "timestamp": "...", "account_id": "...", "strategy_type": "..."}</code></li>
@@ -3966,7 +3905,6 @@ data/
                     </div>
                     
                 </div>
-                <!-- 📈 上涨占比0策略A（涨幅前8名多单） -->
 
                 <!-- 账户仓位限额 -->
                 <div class="info-card" style="margin-top: 16px; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #fbbf24;">
@@ -5533,8 +5471,6 @@ data/
                 refreshStrategyLogs();
                 updateTotalChangeOKX(); // 同时更新涨跌幅
                 checkAndExecuteAutoStrategy(); // 检查自动交易策略
-                checkAndExecuteUpRatio0Top8(); // 检查上涨占比0-涨幅前8名策略
-                checkAndExecuteUpRatio0Bottom8(); // 检查上涨占比0-涨幅后8名策略
                 checkRSITakeProfit(); // 检查RSI止盈
                 loadCurrentMarketSentiment(); // 🔥 刷新市场情绪
                 
@@ -5605,7 +5541,6 @@ data/
             loadCurrentMarketSentiment();  // 🔥 加载当前市场情绪
             loadAutoStrategySettings();  // 加载该账户的抄底策略设置
             loadAutoStrategySettingsTop();  // 🆕 加载该账户的追涨策略设置
-            loadUpRatio0StrategySettings();  // 🆕 加载该账户的上涨占比0策略设置
             loadBottomSignalTop8Config();  // 📈 加载见底信号涨幅前8做多策略设置
             loadBottomSignalBottom8Config();  // 📈 加载见底信号涨幅后8做多策略设置
             refreshStrategyLogs();  // 🆕 加载该账户的策略执行日志
@@ -8033,80 +7968,6 @@ ${data.sMsg || result.message || ''}`);
             }
         }
         
-        // 🆕 加载上涨占比0策略的开关状态（按账户独立加载）
-        async function loadUpRatio0StrategySettings() {
-            const account = accounts.find(acc => acc.id === currentAccount);
-            if (!account) return;
-            
-            try {
-                // 加载涨幅前8名策略状态
-                const top8Response = await fetch(`/api/okx-trading/check-allowed-upratio0/${account.id}/top8`);
-                const top8Result = await top8Response.json();
-                
-                const top8SwitchEl = document.getElementById('autoTradeSwitchUpRatio0Top8');
-                const top8StatusEl = document.getElementById('autoTradeStatusUpRatio0Top8');
-                const top8SwitchStatusEl = document.getElementById('switchStatusUpRatio0Top8');
-                
-                if (top8Result.success) {
-                    const isEnabled = top8Result.allowed || false;
-                    if (top8SwitchEl) top8SwitchEl.checked = isEnabled;
-                    if (top8StatusEl) top8StatusEl.textContent = isEnabled ? '监控中' : '未启用';
-                    if (top8SwitchStatusEl) {
-                        top8SwitchStatusEl.textContent = isEnabled ? '🟢 已开启' : '🔴 未开启';
-                        top8SwitchStatusEl.style.color = isEnabled ? '#10b981' : '#6b7280';
-                    }
-                    
-                    // 🆕 更新JSONL执行许可状态显示
-                    const top8JsonlStatusEl = document.getElementById('jsonlAllowedStatusUpRatio0Top8');
-                    if (top8JsonlStatusEl) {
-                        if (isEnabled) {
-                            top8JsonlStatusEl.textContent = '✅ 允许执行';
-                            top8JsonlStatusEl.style.color = '#10b981';
-                        } else {
-                            top8JsonlStatusEl.textContent = '🚫 禁止执行';
-                            top8JsonlStatusEl.style.color = '#ef4444';
-                        }
-                    }
-                    
-                    console.log(`✅ 已加载账户 ${account.name} 的涨幅前8名策略状态: ${isEnabled ? '开启' : '关闭'}, JSONL allowed: ${isEnabled}`);
-                }
-                
-                // 加载涨幅后8名策略状态
-                const bottom8Response = await fetch(`/api/okx-trading/check-allowed-upratio0/${account.id}/bottom8`);
-                const bottom8Result = await bottom8Response.json();
-                
-                const bottom8SwitchEl = document.getElementById('autoTradeSwitchUpRatio0Bottom8');
-                const bottom8StatusEl = document.getElementById('autoTradeStatusUpRatio0Bottom8');
-                const bottom8SwitchStatusEl = document.getElementById('switchStatusUpRatio0Bottom8');
-                
-                if (bottom8Result.success) {
-                    const isEnabled = bottom8Result.allowed || false;
-                    if (bottom8SwitchEl) bottom8SwitchEl.checked = isEnabled;
-                    if (bottom8StatusEl) bottom8StatusEl.textContent = isEnabled ? '监控中' : '未启用';
-                    if (bottom8SwitchStatusEl) {
-                        bottom8SwitchStatusEl.textContent = isEnabled ? '🟢 已开启' : '🔴 未开启';
-                        bottom8SwitchStatusEl.style.color = isEnabled ? '#10b981' : '#6b7280';
-                    }
-                    
-                    // 🆕 更新JSONL执行许可状态显示
-                    const bottom8JsonlStatusEl = document.getElementById('jsonlAllowedStatusUpRatio0Bottom8');
-                    if (bottom8JsonlStatusEl) {
-                        if (isEnabled) {
-                            bottom8JsonlStatusEl.textContent = '✅ 允许执行';
-                            bottom8JsonlStatusEl.style.color = '#10b981';
-                        } else {
-                            bottom8JsonlStatusEl.textContent = '🚫 禁止执行';
-                            bottom8JsonlStatusEl.style.color = '#ef4444';
-                        }
-                    }
-                    
-                    console.log(`✅ 已加载账户 ${account.name} 的涨幅后8名策略状态: ${isEnabled ? '开启' : '关闭'}, JSONL allowed: ${isEnabled}`);
-                }
-                
-            } catch (e) {
-                console.warn('⚠️ 加载上涨占比0策略设置异常', e);
-            }
-        }
         
         // 保存自动交易策略设置（到服务器API和JSONL文件，按账户独立存储）
         // 参数：suffix - 策略后缀（空字符串表示默认策略，'Top'表示追涨策略）
@@ -8406,99 +8267,9 @@ ${data.sMsg || result.message || ''}`);
         }
         
         // 重置涨幅前8名策略的JSONL执行许可
-        async function resetJsonlAllowedUpRatio0Top8() {
-            const account = accounts.find(acc => acc.id === currentAccount);
-            if (!account) {
-                alert('❌ 请先选择账户');
-                return;
-            }
-            
-            const strategyType = 'top8';
-            
-            // 获取当前上涨占比
-            const upRatioEl = document.getElementById('currentUpRatioTop8');
-            const currentUpRatio = upRatioEl ? parseFloat(upRatioEl.textContent) : 0;
-            
-            if (!confirm(`🔄 确认重置涨幅前8名策略的执行许可？\n\n这将允许策略再次执行。\n\n账户: ${account.name}\n策略类型: 涨幅前8名\n当前上涨占比: ${currentUpRatio}%`)) {
-                return;
-            }
-            
-            try {
-                const response = await fetch(`/api/okx-trading/set-allowed-upratio0/${account.id}/${strategyType}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        allowed: true,
-                        reason: 'User manually reset execution permission for top8 strategy',
-                        up_ratio: currentUpRatio
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    alert('✅ 重置成功！涨幅前8名策略现在可以执行了。');
-                    // 刷新JSONL状态显示
-                    const jsonlStatusEl = document.getElementById('jsonlAllowedStatusUpRatio0Top8');
-                    if (jsonlStatusEl) {
-                        jsonlStatusEl.textContent = '✅ 允许执行';
-                        jsonlStatusEl.style.color = '#10b981';
-                    }
-                } else {
-                    alert(`❌ 重置失败: ${result.error}`);
-                }
-            } catch (e) {
-                alert('❌ 重置失败，请检查网络连接');
-                console.error('重置涨幅前8名策略JSONL许可失败:', e);
-            }
         }
         
         // 重置涨幅后8名策略的JSONL执行许可
-        async function resetJsonlAllowedUpRatio0Bottom8() {
-            const account = accounts.find(acc => acc.id === currentAccount);
-            if (!account) {
-                alert('❌ 请先选择账户');
-                return;
-            }
-            
-            const strategyType = 'bottom8';
-            
-            // 获取当前上涨占比
-            const upRatioEl = document.getElementById('currentUpRatioBottom8');
-            const currentUpRatio = upRatioEl ? parseFloat(upRatioEl.textContent) : 0;
-            
-            if (!confirm(`🔄 确认重置涨幅后8名策略的执行许可？\n\n这将允许策略再次执行。\n\n账户: ${account.name}\n策略类型: 涨幅后8名\n当前上涨占比: ${currentUpRatio}%`)) {
-                return;
-            }
-            
-            try {
-                const response = await fetch(`/api/okx-trading/set-allowed-upratio0/${account.id}/${strategyType}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        allowed: true,
-                        reason: 'User manually reset execution permission for bottom8 strategy',
-                        up_ratio: currentUpRatio
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (result.success) {
-                    alert('✅ 重置成功！涨幅后8名策略现在可以执行了。');
-                    // 刷新JSONL状态显示
-                    const jsonlStatusEl = document.getElementById('jsonlAllowedStatusUpRatio0Bottom8');
-                    if (jsonlStatusEl) {
-                        jsonlStatusEl.textContent = '✅ 允许执行';
-                        jsonlStatusEl.style.color = '#10b981';
-                    }
-                } else {
-                    alert(`❌ 重置失败: ${result.error}`);
-                }
-            } catch (e) {
-                alert('❌ 重置失败，请检查网络连接');
-                console.error('重置涨幅后8名策略JSONL许可失败:', e);
-            }
         }
         
         // 更新总涨跌幅显示
@@ -8537,8 +8308,6 @@ ${data.sMsg || result.message || ''}`);
             // 🆕 加载追涨策略设置（涨幅前8名）
             loadAutoStrategySettingsTop();
             
-            // 🆕 加载上涨占比0策略设置
-            loadUpRatio0StrategySettings();
             
             // ✅ 添加事件监听器（必须在DOM加载后）
             // 添加止盈止损设置的事件监听器
@@ -8886,186 +8655,14 @@ ${data.sMsg || result.message || ''}`);
                 console.log('✅ maxOrderSizeInputTop 事件监听器已添加');
             }
             
-            // ✅ 上涨占比0策略A（涨幅前8名）开关事件监听
-            const autoTradeSwitchUpRatio0Top8El = document.getElementById('autoTradeSwitchUpRatio0Top8');
-            if (autoTradeSwitchUpRatio0Top8El) {
-                autoTradeSwitchUpRatio0Top8El.addEventListener('change', async function() {
-                    const account = accounts.find(acc => acc.id === currentAccount);
-                    if (!account) return;
-                    
-                    const enabled = this.checked;
-                    console.log(`[上涨占比0-涨幅前8名] 开关${enabled ? '开启' : '关闭'}`);
-                    
-                    // 更新开关状态显示
-                    const switchStatusEl = document.getElementById('switchStatusUpRatio0Top8');
-                    if (switchStatusEl) {
-                        switchStatusEl.textContent = enabled ? '🟢 已开启' : '🔴 未开启';
-                        switchStatusEl.style.color = enabled ? '#10b981' : '#6b7280';
-                    }
-                    
-                    // 如果开启，写入JSONL设置allowed=true
-                    if (enabled) {
-                        try {
-                            await fetch(`/api/okx-trading/set-allowed-upratio0/${account.id}/top8`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    allowed: true,
-                                    reason: 'User enabled strategy',
-                                    upRatio: null
-                                })
-                            });
-                            console.log('✅ 已写入JSONL：允许执行（涨幅前8名）');
-                            
-                            // 更新状态显示
-                            const statusEl = document.getElementById('autoTradeStatusUpRatio0Top8');
-                            if (statusEl) statusEl.textContent = '监控中';
-                            
-                            const switchStatusEl = document.getElementById('switchStatusUpRatio0Top8');
-                            if (switchStatusEl) {
-                                switchStatusEl.textContent = '🟢 已开启';
-                                switchStatusEl.style.color = '#10b981';
-                            }
-                            
-                            // 🆕 更新JSONL执行许可状态显示
-                            const jsonlStatusEl = document.getElementById('jsonlAllowedStatusUpRatio0Top8');
-                            if (jsonlStatusEl) {
-                                jsonlStatusEl.textContent = '✅ 允许执行';
-                                jsonlStatusEl.style.color = '#10b981';
-                            }
-                        } catch (e) {
-                            console.error('❌ 写入JSONL失败:', e);
-                            this.checked = false;
-                        }
-                    } else {
-                        // 如果关闭，写入JSONL设置allowed=false
-                        try {
-                            await fetch(`/api/okx-trading/set-allowed-upratio0/${account.id}/top8`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    allowed: false,
-                                    reason: 'User disabled strategy',
-                                    upRatio: null
-                                })
-                            });
-                            console.log('✅ 已写入JSONL：禁止执行（涨幅前8名）');
-                            
-                            // 更新状态显示
-                            const statusEl = document.getElementById('autoTradeStatusUpRatio0Top8');
-                            if (statusEl) statusEl.textContent = '未启用';
-                            
-                            const switchStatusEl = document.getElementById('switchStatusUpRatio0Top8');
-                            if (switchStatusEl) {
-                                switchStatusEl.textContent = '🔴 未开启';
-                                switchStatusEl.style.color = '#6b7280';
-                            }
-                            
-                            // 🆕 更新JSONL执行许可状态显示
-                            const jsonlStatusEl = document.getElementById('jsonlAllowedStatusUpRatio0Top8');
-                            if (jsonlStatusEl) {
-                                jsonlStatusEl.textContent = '🚫 禁止执行';
-                                jsonlStatusEl.style.color = '#ef4444';
-                            }
-                        } catch (e) {
-                            console.error('❌ 写入JSONL失败:', e);
-                        }
                     }
                 });
-                console.log('✅ autoTradeSwitchUpRatio0Top8 事件监听器已添加');
             } else {
-                console.warn('⚠️ 未找到 autoTradeSwitchUpRatio0Top8 元素');
             }
             
-            // ✅ 上涨占比0策略B（涨幅后8名）开关事件监听
-            const autoTradeSwitchUpRatio0Bottom8El = document.getElementById('autoTradeSwitchUpRatio0Bottom8');
-            if (autoTradeSwitchUpRatio0Bottom8El) {
-                autoTradeSwitchUpRatio0Bottom8El.addEventListener('change', async function() {
-                    const account = accounts.find(acc => acc.id === currentAccount);
-                    if (!account) return;
-                    
-                    const enabled = this.checked;
-                    console.log(`[上涨占比0-涨幅后8名] 开关${enabled ? '开启' : '关闭'}`);
-                    
-                    // 更新开关状态显示
-                    const switchStatusEl = document.getElementById('switchStatusUpRatio0Bottom8');
-                    if (switchStatusEl) {
-                        switchStatusEl.textContent = enabled ? '🟢 已开启' : '🔴 未开启';
-                        switchStatusEl.style.color = enabled ? '#10b981' : '#6b7280';
-                    }
-                    
-                    // 如果开启，写入JSONL设置allowed=true
-                    if (enabled) {
-                        try {
-                            await fetch(`/api/okx-trading/set-allowed-upratio0/${account.id}/bottom8`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    allowed: true,
-                                    reason: 'User enabled strategy',
-                                    upRatio: null
-                                })
-                            });
-                            console.log('✅ 已写入JSONL：允许执行（涨幅后8名）');
-                            
-                            // 更新状态显示
-                            const statusEl = document.getElementById('autoTradeStatusUpRatio0Bottom8');
-                            if (statusEl) statusEl.textContent = '监控中';
-                            
-                            const switchStatusEl = document.getElementById('switchStatusUpRatio0Bottom8');
-                            if (switchStatusEl) {
-                                switchStatusEl.textContent = '🟢 已开启';
-                                switchStatusEl.style.color = '#10b981';
-                            }
-                            
-                            // 🆕 更新JSONL执行许可状态显示
-                            const jsonlStatusEl = document.getElementById('jsonlAllowedStatusUpRatio0Bottom8');
-                            if (jsonlStatusEl) {
-                                jsonlStatusEl.textContent = '✅ 允许执行';
-                                jsonlStatusEl.style.color = '#10b981';
-                            }
-                        } catch (e) {
-                            console.error('❌ 写入JSONL失败:', e);
-                            this.checked = false;
-                        }
-                    } else {
-                        // 如果关闭，写入JSONL设置allowed=false
-                        try {
-                            await fetch(`/api/okx-trading/set-allowed-upratio0/${account.id}/bottom8`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    allowed: false,
-                                    reason: 'User disabled strategy',
-                                    upRatio: null
-                                })
-                            });
-                            console.log('✅ 已写入JSONL：禁止执行（涨幅后8名）');
-                            
-                            // 更新状态显示
-                            const statusEl = document.getElementById('autoTradeStatusUpRatio0Bottom8');
-                            if (statusEl) statusEl.textContent = '未启用';
-                            
-                            const switchStatusEl = document.getElementById('switchStatusUpRatio0Bottom8');
-                            if (switchStatusEl) {
-                                switchStatusEl.textContent = '🔴 未开启';
-                                switchStatusEl.style.color = '#6b7280';
-                            }
-                            
-                            // 🆕 更新JSONL执行许可状态显示
-                            const jsonlStatusEl = document.getElementById('jsonlAllowedStatusUpRatio0Bottom8');
-                            if (jsonlStatusEl) {
-                                jsonlStatusEl.textContent = '🚫 禁止执行';
-                                jsonlStatusEl.style.color = '#ef4444';
-                            }
-                        } catch (e) {
-                            console.error('❌ 写入JSONL失败:', e);
-                        }
                     }
                 });
-                console.log('✅ autoTradeSwitchUpRatio0Bottom8 事件监听器已添加');
             } else {
-                console.warn('⚠️ 未找到 autoTradeSwitchUpRatio0Bottom8 元素');
             }
             
             // ✅ 策略类型选择器事件监听
@@ -9317,394 +8914,20 @@ ${data.sMsg || result.message || ''}`);
         
         // ========== 新增策略：上涨占比=0触发策略（按账号独立控制）==========
         
-        // 检查并执行上涨占比0策略A（涨幅前8名多单）
-        async function checkAndExecuteUpRatio0Top8() {
-            const account = accounts.find(acc => acc.id === currentAccount);
-            if (!account || !account.apiKey) return;
-            
-            try {
-                // 🔄 始终获取并更新上涨占比显示（不管开关状态）
-                const upRatio = await getUpRatio();
-                const upRatioEl = document.getElementById('currentUpRatioTop8');
-                if (upRatioEl) {
-                    if (upRatio !== null) {
-                        upRatioEl.textContent = `${upRatio}%`;
-                        upRatioEl.style.color = upRatio === 0 ? '#ef4444' : '#6b7280';
-                        upRatioEl.style.fontWeight = '800';
-                    } else {
-                        upRatioEl.textContent = '--';
-                        upRatioEl.style.color = '#6b7280';
-                    }
-                }
-                
-                // 读取开关状态（从UI）
-                const switchEl = document.getElementById('autoTradeSwitchUpRatio0Top8');
-                if (!switchEl || !switchEl.checked) {
-                    return; // 策略未启用，但已更新显示
-                }
-                
-                // 检查是否正在执行
-                if (strategyExecuting) {
-                    console.log('⚠️ 策略正在执行中，跳过上涨占比0-涨幅前8名检查');
-                    return;
-                }
-                
-                // 获取当前时间（北京时间）
-                const now = new Date();
-                const bjHour = (now.getUTCHours() + 8) % 24;
-                const bjMinute = now.getUTCMinutes();
-                
-                // 排除0:00-0:30
-                if (bjHour === 0 && bjMinute < 30) {
-                    console.log('⏰ 当前时间在0:00-0:30排除时段，跳过上涨占比0-涨幅前8名策略');
-                    return;
-                }
-                
-                // 检查上涨占比是否有效
-                if (upRatio === null) {
-                    console.warn('⚠️ 无法获取上涨占比');
-                    return;
-                }
-                
-                // 检查触发条件：上涨占比=0
-                if (upRatio === 0) {
-                    // 🔒 第一重检查：JSONL allowed状态（最重要！）
-                    console.log('🔍 检查JSONL执行许可状态（上涨占比0-涨幅前8名）...');
-                    const allowedCheck = await fetch(`/api/okx-trading/check-allowed-upratio0/${account.id}/top8`);
-                    const allowedResult = await allowedCheck.json();
-                    
-                    if (!allowedResult.success) {
-                        console.error('❌ 检查JSONL状态失败:', allowedResult.error);
-                        return;
-                    }
-                    
-                    if (!allowedResult.allowed) {
-                        console.log('🚫 JSONL状态不允许执行，跳过本次执行');
-                        console.log('📄 最后记录:', allowedResult.lastRecord);
-                        
-                        // 同时关闭UI开关
-                        switchEl.checked = false;
-                        const statusEl = document.getElementById('autoTradeStatusUpRatio0Top8');
-                        if (statusEl) statusEl.textContent = '已关闭';
-                        
-                        // 更新开关状态显示
-                        const switchStatusEl = document.getElementById('switchStatusUpRatio0Top8');
-                        if (switchStatusEl) {
-                            switchStatusEl.textContent = '🔴 未开启';
-                            switchStatusEl.style.color = '#6b7280';
-                        }
-                        return;
-                    }
-                    
-                    console.log('✅ JSONL状态允许执行');
-                    console.log('🎯 触发条件满足！上涨占比 = 0%');
-                    console.log('📊 准备对常用币(15个)中涨幅前8名开多单...');
-                    
-                    // 🔒 设置执行锁
-                    strategyExecuting = true;
-                    console.log('🔒 已设置执行锁（上涨占比0-涨幅前8名）');
-                    
-                    // 执行开单
-                    const result = await executeUpRatio0Strategy(account, upRatio, 'top_8');
-                    
-                    if (result.success) {
-                        // ⚠️ 执行成功后立即写入JSONL设置allowed=false
-                        console.log('📝 写入JSONL：设置allowed=false，禁止再次执行');
-                        await fetch(`/api/okx-trading/set-allowed-upratio0/${account.id}/top8`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                allowed: false,
-                                reason: 'Strategy executed successfully',
-                                upRatio: upRatio
-                            })
-                        });
-                        
-                        // 执行后自动关闭开关
-                        switchEl.checked = false;
-                        
-                        // 更新状态显示
-                        const statusEl = document.getElementById('autoTradeStatusUpRatio0Top8');
-                        if (statusEl) statusEl.textContent = '已执行';
-                        
-                        // 更新开关状态显示
-                        const switchStatusEl = document.getElementById('switchStatusUpRatio0Top8');
-                        if (switchStatusEl) {
-                            switchStatusEl.textContent = '🔴 未开启';
-                            switchStatusEl.style.color = '#6b7280';
-                        }
-                        
-                        const timeEl = document.getElementById('autoTradeLastTimeUpRatio0Top8');
-                        if (timeEl) {
-                            const now = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
-                            timeEl.textContent = now;
-                        }
-                        
-                        // 静默通知用户（不需要人工确认）
-                        const successCoins = result.successCoins.map(c => c.name).join(', ');
-                        const failedCoins = result.failedCoins.map(c => c.name).join(', ');
-                        
-                        // 构建通知消息
-                        let notificationMessage = `✅ 上涨占比0-涨幅前8名策略执行完成！\n\n`;
-                        notificationMessage += `账户：${account.name}\n`;
-                        notificationMessage += `触发条件：上涨占比 = 0%\n`;
-                        notificationMessage += `成功开单：${result.successCount}/${result.totalCount} 个币种\n`;
-                        if (successCoins) notificationMessage += `成功币种：${successCoins}\n`;
-                        if (failedCoins) notificationMessage += `失败币种：${failedCoins}\n`;
-                        notificationMessage += `\n策略已自动关闭，如需再次执行请重新开启。`;
-                        
-                        // 控制台输出详细信息
-                        console.log('🎉 ===== 策略执行完成 =====');
-                        console.log(notificationMessage);
-                        console.log('🎉 ==========================');
-                        
-                        // 浏览器通知（不阻塞）
-                        if ('Notification' in window && Notification.permission === 'granted') {
-                            new Notification('上涨占比0-涨幅前8名策略', {
-                                body: `账户：${account.name}\n成功：${result.successCount}/${result.totalCount}\n${successCoins}`,
-                                icon: '/static/icon.png',
-                                requireInteraction: false
-                            });
-                        }
-                        
-                        // 播放提示音
-                        playAlertSound();
-                        
-                        // 刷新持仓
-                        await loadPositions();
-                        
-                        // 发送Telegram通知
-                        const telegramMsg = `🎯 上涨占比0策略-涨幅前8名执行完成\n\n` +
-                            `账户：${account.name}\n` +
-                            `触发条件：上涨占比 = 0%\n` +
-                            `成功开单：${result.successCount}/${result.totalCount} 个币种\n` +
-                            `成功币种：${successCoins || '无'}\n` +
-                            `失败币种：${failedCoins || '无'}\n\n` +
-                            `策略已自动关闭。`;
-                        try {
-                            await sendTelegramMessage(telegramMsg);
-                            console.log('📱 Telegram通知已发送');
-                        } catch (err) {
-                            console.error('❌ Telegram通知发送失败:', err);
-                        }
-                        
-                        // 🔕 移除弹窗通知，只发送TG消息（用户需求：不要确认弹窗，自动执行）
-                        // 原弹窗代码已注释：
-                        // const alertMsg = `✅ 上涨占比0-涨幅前8名策略执行完成！\n\n` +
-                        //     `账户：${account.name}\n` +
-                        //     `触发条件：上涨占比 = 0%\n` +
-                        //     `成功开单：${result.successCount}/${result.totalCount} 个币种\n\n` +
-                        //     `成功币种：\n${successCoins || '无'}\n\n` +
-                        //     `失败币种：\n${failedCoins || '无'}\n\n` +
-                        //     `策略已自动关闭，如需再次执行请重新开启。`;
-                        // alert(alertMsg);
-                        
-                        console.log(`📢 上涨占比0-涨幅前8名策略执行完成通知已发送到Telegram`);
-                    }
-                }
             } catch (e) {
-                console.error('❌ 上涨占比0-涨幅前8名策略检查异常:', e);
             } finally {
                 // 🔓 释放执行锁
                 if (strategyExecuting) {
                     strategyExecuting = false;
-                    console.log('🔓 已释放执行锁（上涨占比0-涨幅前8名）');
                 }
             }
         }
         
-        // 检查并执行上涨占比0策略B（涨幅后8名多单）
-        async function checkAndExecuteUpRatio0Bottom8() {
-            const account = accounts.find(acc => acc.id === currentAccount);
-            if (!account || !account.apiKey) return;
-            
-            try {
-                // 🔄 始终获取并更新上涨占比显示（不管开关状态）
-                const upRatio = await getUpRatio();
-                const upRatioEl = document.getElementById('currentUpRatioBottom8');
-                if (upRatioEl) {
-                    if (upRatio !== null) {
-                        upRatioEl.textContent = `${upRatio}%`;
-                        upRatioEl.style.color = upRatio === 0 ? '#ef4444' : '#6b7280';
-                        upRatioEl.style.fontWeight = '800';
-                    } else {
-                        upRatioEl.textContent = '--';
-                        upRatioEl.style.color = '#6b7280';
-                    }
-                }
-                
-                // 读取开关状态（从UI）
-                const switchEl = document.getElementById('autoTradeSwitchUpRatio0Bottom8');
-                if (!switchEl || !switchEl.checked) {
-                    return; // 策略未启用，但已更新显示
-                }
-                
-                // 检查是否正在执行
-                if (strategyExecuting) {
-                    console.log('⚠️ 策略正在执行中，跳过上涨占比0-涨幅后8名检查');
-                    return;
-                }
-                
-                // 获取当前时间（北京时间）
-                const now = new Date();
-                const bjHour = (now.getUTCHours() + 8) % 24;
-                const bjMinute = now.getUTCMinutes();
-                
-                // 排除0:00-0:30
-                if (bjHour === 0 && bjMinute < 30) {
-                    console.log('⏰ 当前时间在0:00-0:30排除时段，跳过上涨占比0-涨幅后8名策略');
-                    return;
-                }
-                
-                // 检查上涨占比是否有效
-                if (upRatio === null) {
-                    console.warn('⚠️ 无法获取上涨占比');
-                    return;
-                }
-                
-                // 检查触发条件：上涨占比=0
-                if (upRatio === 0) {
-                    // 🔒 第一重检查：JSONL allowed状态（最重要！）
-                    console.log('🔍 检查JSONL执行许可状态（上涨占比0-涨幅后8名）...');
-                    const allowedCheck = await fetch(`/api/okx-trading/check-allowed-upratio0/${account.id}/bottom8`);
-                    const allowedResult = await allowedCheck.json();
-                    
-                    if (!allowedResult.success) {
-                        console.error('❌ 检查JSONL状态失败:', allowedResult.error);
-                        return;
-                    }
-                    
-                    if (!allowedResult.allowed) {
-                        console.log('🚫 JSONL状态不允许执行，跳过本次执行');
-                        console.log('📄 最后记录:', allowedResult.lastRecord);
-                        
-                        // 同时关闭UI开关
-                        switchEl.checked = false;
-                        const statusEl = document.getElementById('autoTradeStatusUpRatio0Bottom8');
-                        if (statusEl) statusEl.textContent = '已关闭';
-                        
-                        // 更新开关状态显示
-                        const switchStatusEl = document.getElementById('switchStatusUpRatio0Bottom8');
-                        if (switchStatusEl) {
-                            switchStatusEl.textContent = '🔴 未开启';
-                            switchStatusEl.style.color = '#6b7280';
-                        }
-                        return;
-                    }
-                    
-                    console.log('✅ JSONL状态允许执行');
-                    console.log('🎯 触发条件满足！上涨占比 = 0%');
-                    console.log('📊 准备对常用币(15个)中涨幅后8名开多单...');
-                    
-                    // 🔒 设置执行锁
-                    strategyExecuting = true;
-                    console.log('🔒 已设置执行锁（上涨占比0-涨幅后8名）');
-                    
-                    // 执行开单
-                    const result = await executeUpRatio0Strategy(account, upRatio, 'bottom_8');
-                    
-                    if (result.success) {
-                        // ⚠️ 执行成功后立即写入JSONL设置allowed=false
-                        console.log('📝 写入JSONL：设置allowed=false，禁止再次执行');
-                        await fetch(`/api/okx-trading/set-allowed-upratio0/${account.id}/bottom8`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                allowed: false,
-                                reason: 'Strategy executed successfully',
-                                upRatio: upRatio
-                            })
-                        });
-                        
-                        // 执行后自动关闭开关
-                        switchEl.checked = false;
-                        
-                        // 更新状态显示
-                        const statusEl = document.getElementById('autoTradeStatusUpRatio0Bottom8');
-                        if (statusEl) statusEl.textContent = '已执行';
-                        
-                        // 更新开关状态显示
-                        const switchStatusEl = document.getElementById('switchStatusUpRatio0Bottom8');
-                        if (switchStatusEl) {
-                            switchStatusEl.textContent = '🔴 未开启';
-                            switchStatusEl.style.color = '#6b7280';
-                        }
-                        
-                        const timeEl = document.getElementById('autoTradeLastTimeUpRatio0Bottom8');
-                        if (timeEl) {
-                            const now = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
-                            timeEl.textContent = now;
-                        }
-                        
-                        // 静默通知用户（不需要人工确认）
-                        const successCoins = result.successCoins.map(c => c.name).join(', ');
-                        const failedCoins = result.failedCoins.map(c => c.name).join(', ');
-                        
-                        // 构建通知消息
-                        let notificationMessage = `✅ 上涨占比0-涨幅后8名策略执行完成！\n\n`;
-                        notificationMessage += `账户：${account.name}\n`;
-                        notificationMessage += `触发条件：上涨占比 = 0%\n`;
-                        notificationMessage += `成功开单：${result.successCount}/${result.totalCount} 个币种\n`;
-                        if (successCoins) notificationMessage += `成功币种：${successCoins}\n`;
-                        if (failedCoins) notificationMessage += `失败币种：${failedCoins}\n`;
-                        notificationMessage += `\n策略已自动关闭，如需再次执行请重新开启。`;
-                        
-                        // 控制台输出详细信息
-                        console.log('🎉 ===== 策略执行完成 =====');
-                        console.log(notificationMessage);
-                        console.log('🎉 ==========================');
-                        
-                        // 浏览器通知（不阻塞）
-                        if ('Notification' in window && Notification.permission === 'granted') {
-                            new Notification('上涨占比0-涨幅后8名策略', {
-                                body: `账户：${account.name}\n成功：${result.successCount}/${result.totalCount}\n${successCoins}`,
-                                icon: '/static/icon.png',
-                                requireInteraction: false
-                            });
-                        }
-                        
-                        // 播放提示音
-                        playAlertSound();
-                        
-                        // 刷新持仓
-                        await loadPositions();
-                        
-                        // 发送Telegram通知
-                        const telegramMsg = `🎯 上涨占比0策略-涨幅后8名执行完成\n\n` +
-                            `账户：${account.name}\n` +
-                            `触发条件：上涨占比 = 0%\n` +
-                            `成功开单：${result.successCount}/${result.totalCount} 个币种\n` +
-                            `成功币种：${successCoins || '无'}\n` +
-                            `失败币种：${failedCoins || '无'}\n\n` +
-                            `策略已自动关闭。`;
-                        try {
-                            await sendTelegramMessage(telegramMsg);
-                            console.log('📱 Telegram通知已发送');
-                        } catch (err) {
-                            console.error('❌ Telegram通知发送失败:', err);
-                        }
-                        
-                        // 🔕 移除弹窗通知，只发送TG消息（用户需求：不要确认弹窗，自动执行）
-                        // 原弹窗代码已注释：
-                        // const alertMsg = `✅ 上涨占比0-涨幅后8名策略执行完成！\n\n` +
-                        //     `账户：${account.name}\n` +
-                        //     `触发条件：上涨占比 = 0%\n` +
-                        //     `成功开单：${result.successCount}/${result.totalCount} 个币种\n\n` +
-                        //     `成功币种：\n${successCoins || '无'}\n\n` +
-                        //     `失败币种：\n${failedCoins || '无'}\n\n` +
-                        //     `策略已自动关闭，如需再次执行请重新开启。`;
-                        // alert(alertMsg);
-                        
-                        console.log(`📢 上涨占比0-涨幅后8名策略执行完成通知已发送到Telegram`);
-                    }
-                }
             } catch (e) {
-                console.error('❌ 上涨占比0-涨幅后8名策略检查异常:', e);
             } finally {
                 // 🔓 释放执行锁
                 if (strategyExecuting) {
                     strategyExecuting = false;
-                    console.log('🔓 已释放执行锁（上涨占比0-涨幅后8名）');
                 }
             }
         }
@@ -9724,30 +8947,6 @@ ${data.sMsg || result.message || ''}`);
             return null;
         }
         
-        // 执行上涨占比0策略（通用函数）- 直接调用手动批量开仓
-        async function executeUpRatio0Strategy(account, upRatio, strategyType) {
-            try {
-                const strategyName = strategyType === 'top_8' ? '涨幅前8名' : '涨幅后8名';
-                console.log(`📊 开始执行上涨占比0-${strategyName}策略...`);
-                console.log(`📊 直接调用手动批量开仓函数（自动触发，跳过确认）...`);
-                
-                // 获取账户配置的仓位百分比，默认1.5%
-                const positionSizePercent = account.positionSize || 1.5;
-                
-                // 直接调用手动批量开仓函数（skipConfirm=true 跳过确认弹窗）
-                let result;
-                if (strategyType === 'top_8') {
-                    result = await batchOrderTop8('long', positionSizePercent, true);
-                } else {
-                    result = await batchOrderBottom8('long', positionSizePercent, true);
-                }
-                
-                return result;
-            } catch (error) {
-                console.error('❌ 执行上涨占比0策略失败:', error);
-                return { success: false, error: error.message };
-            }
-        }
         
         // 获取BTC当前价格
         async function getBTCPrice() {

@@ -1498,9 +1498,137 @@
             transition: .4s;
             border-radius: 50%;
         }
+        
+        /* Toast通知样式 - 10秒自动消失 */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 400px;
+        }
+        
+        .toast {
+            background: white;
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            animation: slideInRight 0.3s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .toast.removing {
+            animation: slideOutRight 0.3s ease-out forwards;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(120%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(120%);
+                opacity: 0;
+            }
+        }
+        
+        .toast-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        
+        .toast-content {
+            flex: 1;
+        }
+        
+        .toast-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+            color: #1f2937;
+        }
+        
+        .toast-message {
+            font-size: 12px;
+            color: #6b7280;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        
+        .toast-close {
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: #9ca3af;
+            cursor: pointer;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: color 0.2s;
+        }
+        
+        .toast-close:hover {
+            color: #4b5563;
+        }
+        
+        .toast-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #10b981, #059669);
+            animation: progress 10s linear forwards;
+        }
+        
+        @keyframes progress {
+            from { width: 100%; }
+            to { width: 0%; }
+        }
+        
+        .toast-success {
+            border-left: 4px solid #10b981;
+        }
+        
+        .toast-error {
+            border-left: 4px solid #ef4444;
+        }
+        
+        .toast-warning {
+            border-left: 4px solid #f59e0b;
+        }
+        
+        .toast-info {
+            border-left: 4px solid #3b82f6;
+        }
     </style>
 </head>
 <body>
+    <!-- Toast通知容器 - 10秒自动消失 -->
+    <div class="toast-container" id="toastContainer"></div>
+    
     <!-- 加载进度覆盖层 -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-content">
@@ -4316,6 +4444,71 @@ data/
                 confirmDialogResolve(result);
                 confirmDialogResolve = null;
             }
+        }
+        
+        // Toast通知系统 - 10秒自动消失
+        function showToast(type, title, message, duration = 10000) {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+            
+            // 创建Toast元素
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            
+            // 图标映射
+            const icons = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                info: 'ℹ️'
+            };
+            
+            toast.innerHTML = `
+                <div class="toast-icon">${icons[type] || icons.info}</div>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close" onclick="removeToast(this.parentElement)">×</button>
+                <div class="toast-progress"></div>
+            `;
+            
+            container.appendChild(toast);
+            
+            // 自动消失
+            setTimeout(() => {
+                removeToast(toast);
+            }, duration);
+            
+            // 记录日志
+            console.log(`[Toast] ${type.toUpperCase()}: ${title} - ${message}`);
+        }
+        
+        function removeToast(toast) {
+            if (!toast) return;
+            toast.classList.add('removing');
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.parentElement.removeChild(toast);
+                }
+            }, 300);
+        }
+        
+        // 快捷方法
+        function showSuccessToast(title, message, duration = 10000) {
+            showToast('success', title, message, duration);
+        }
+        
+        function showErrorToast(title, message, duration = 10000) {
+            showToast('error', title, message, duration);
+        }
+        
+        function showWarningToast(title, message, duration = 10000) {
+            showToast('warning', title, message, duration);
+        }
+        
+        function showInfoToast(title, message, duration = 10000) {
+            showToast('info', title, message, duration);
         }
 
         // 当前交易方向

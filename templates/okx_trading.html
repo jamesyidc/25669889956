@@ -3334,7 +3334,10 @@ data/
                     <div id="strategyStatusOverview" style="margin-bottom: 12px; padding: 10px; background: rgba(255, 255, 255, 0.8); border-radius: 6px; border: 1px solid #d97706;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                             <span style="font-size: 12px; font-weight: 600; color: #92400e;">📊 当前账户策略状态</span>
-                            <button onclick="refreshStrategyStatus()" style="padding: 2px 8px; background: #f59e0b; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 10px;">🔄 刷新</button>
+                            <div style="display: flex; gap: 4px;">
+                                <button onclick="resetAllStrategiesExecution()" style="padding: 2px 8px; background: #10b981; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 10px;">🔓 重置所有</button>
+                                <button onclick="refreshStrategyStatus()" style="padding: 2px 8px; background: #f59e0b; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 10px;">🔄 刷新</button>
+                            </div>
                         </div>
                         <div id="strategyStatusContent" style="font-size: 10px; color: #78350f; line-height: 1.6;">
                             <div style="text-align: center; padding: 10px; color: #a16207;">⏳ 正在加载策略状态...</div>
@@ -8312,6 +8315,76 @@ ${data.sMsg || result.message || ''}`);
         }
         
         // 刷新策略状态总览
+        // 重置所有策略的执行许可
+        async function resetAllStrategiesExecution() {
+            const account = accounts.find(acc => acc.id === currentAccount);
+            if (!account) {
+                alert('请先选择账户');
+                return;
+            }
+            
+            const confirmed = confirm(`确认要重置 ${account.name} 的所有策略执行许可吗？\n\n这将允许所有策略重新执行（解除1小时冷却限制）。`);
+            if (!confirmed) {
+                return;
+            }
+            
+            try {
+                const strategies = [
+                    { type: 'top8_short', api: 'top-signal', name: '见顶+前8空' },
+                    { type: 'bottom8_short', api: 'top-signal', name: '见顶+后8空' },
+                    { type: 'top8_long', api: 'bottom-signal', name: '见底+前8多' },
+                    { type: 'bottom8_long', api: 'bottom-signal', name: '见底+后8多' }
+                ];
+                
+                let successCount = 0;
+                let failedList = [];
+                
+                for (const strategy of strategies) {
+                    try {
+                        const endpoint = strategy.api === 'top-signal' 
+                            ? `/api/okx-trading/set-allowed-top-signal/${account.id}/${strategy.type}`
+                            : `/api/okx-trading/set-allowed-bottom-signal/${account.id}/${strategy.type}`;
+                        
+                        const response = await fetch(endpoint, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                allowed: true,
+                                reason: '用户手动重置所有策略执行许可'
+                            })
+                        });
+                        
+                        if (response.ok) {
+                            successCount++;
+                        } else {
+                            failedList.push(strategy.name);
+                        }
+                    } catch (e) {
+                        console.error(`重置 ${strategy.name} 失败:`, e);
+                        failedList.push(strategy.name);
+                    }
+                }
+                
+                // 刷新状态显示
+                await refreshStrategyStatus();
+                
+                // 显示结果
+                if (successCount === strategies.length) {
+                    alert(`✅ 成功重置所有 ${successCount} 个策略的执行许可！`);
+                } else if (successCount > 0) {
+                    alert(`⚠️ 部分成功：\n成功重置 ${successCount} 个策略\n失败 ${failedList.length} 个：${failedList.join(', ')}`);
+                } else {
+                    alert(`❌ 全部失败，请检查网络连接或联系管理员`);
+                }
+                
+            } catch (error) {
+                console.error('重置策略执行许可失败:', error);
+                alert('❌ 重置失败，请重试');
+            }
+        }
+        
         async function refreshStrategyStatus() {
             const account = accounts.find(acc => acc.id === currentAccount);
             if (!account) {

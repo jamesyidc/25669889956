@@ -25255,6 +25255,69 @@ def check_bottom_signal_status(account_id, strategy_type):
         }), 500
 
 
+@app.route('/api/okx-trading/set-allowed-bottom-signal/<account_id>/<strategy_type>', methods=['POST'])
+def set_bottom_signal_strategy_allowed(account_id, strategy_type):
+    """设置见底信号做多策略的执行允许状态（写入JSONL文件头）
+    strategy_type: 'top8_long' 或 'bottom8_long'
+    """
+    try:
+        import json
+        import os
+        from datetime import datetime
+        
+        data = request.get_json()
+        allowed = bool(data.get('allowed', False))
+        reason = data.get('reason', 'Manual update')
+        
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        jsonl_dir = os.path.join(current_dir, 'data', 'okx_bottom_signal_execution')
+        os.makedirs(jsonl_dir, exist_ok=True)
+        
+        jsonl_file = os.path.join(jsonl_dir, f'{account_id}_bottom_signal_{strategy_type}_execution.jsonl')
+        
+        # 读取现有记录（除了第一行）
+        existing_records = []
+        if os.path.exists(jsonl_file):
+            with open(jsonl_file, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+                if len(lines) > 1:
+                    existing_records = lines[1:]  # 跳过第一行
+        
+        # 创建新的文件头记录
+        header_record = {
+            'timestamp': datetime.now().isoformat(),
+            'time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'account_id': account_id,
+            'strategy_type': strategy_type,
+            'allowed': allowed,
+            'reason': reason
+        }
+        
+        # 写入新的文件头和原有记录
+        with open(jsonl_file, 'w', encoding='utf-8') as f:
+            f.write(json.dumps(header_record, ensure_ascii=False) + '\n')
+            # 写回其他记录
+            for line in existing_records:
+                f.write(line)
+        
+        print(f"✅ Set bottom signal {strategy_type} execution allowed={allowed} for {account_id}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Bottom signal {strategy_type} execution allowed status set to {allowed}',
+            'record': header_record
+        })
+        
+    except Exception as e:
+        import traceback
+        print(f"❌ Error setting bottom signal allowed: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+
 # 数据管理页面路由
 @app.route('/data-management')
 def data_management_page():

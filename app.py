@@ -25251,3 +25251,304 @@ def data_management_page():
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=9002, debug=False)
 
+
+# ==================== 见底信号做多策略 API ====================
+
+@app.route('/api/okx-trading/bottom-signal-long-top8/<account_id>', methods=['GET', 'POST'])
+def bottom_signal_long_top8_strategy(account_id):
+    """见底信号+涨幅前8做多策略配置
+    GET: 读取配置
+    POST: 保存配置
+    """
+    try:
+        import json
+        import os
+        from datetime import datetime
+        
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        config_dir = os.path.join(current_dir, 'data', 'okx_bottom_signal_long')
+        os.makedirs(config_dir, exist_ok=True)
+        
+        config_file = os.path.join(config_dir, f'{account_id}_bottom_signal_top8_long.jsonl')
+        
+        if request.method == 'GET':
+            # 读取配置
+            if not os.path.exists(config_file):
+                # 返回默认配置
+                return jsonify({
+                    'success': True,
+                    'config': {
+                        'enabled': False,
+                        'rsi_threshold': 800,
+                        'max_order_size': 5.0,
+                        'position_size_percent': 1.5,
+                        'leverage': 10,
+                        'last_updated': None
+                    }
+                })
+            
+            # 读取最后一行配置
+            with open(config_file, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+                if lines:
+                    last_config = json.loads(lines[-1].strip())
+                    return jsonify({
+                        'success': True,
+                        'config': last_config
+                    })
+                else:
+                    return jsonify({
+                        'success': True,
+                        'config': {
+                            'enabled': False,
+                            'rsi_threshold': 800,
+                            'max_order_size': 5.0,
+                            'position_size_percent': 1.5,
+                            'leverage': 10,
+                            'last_updated': None
+                        }
+                    })
+        
+        elif request.method == 'POST':
+            # 保存配置
+            data = request.get_json()
+            
+            config = {
+                'timestamp': datetime.now().isoformat(),
+                'time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'account_id': account_id,
+                'strategy_type': 'bottom_signal_top8_long',
+                'enabled': bool(data.get('enabled', False)),
+                'rsi_threshold': float(data.get('rsi_threshold', 800)),
+                'max_order_size': float(data.get('max_order_size', 5.0)),
+                'position_size_percent': float(data.get('position_size_percent', 1.5)),
+                'leverage': int(data.get('leverage', 10)),
+                'last_updated': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            }
+            
+            # 追加写入配置
+            with open(config_file, 'a', encoding='utf-8') as f:
+                f.write(json.dumps(config, ensure_ascii=False) + '\n')
+            
+            return jsonify({
+                'success': True,
+                'message': 'Configuration saved successfully',
+                'config': config
+            })
+    
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+
+@app.route('/api/okx-trading/bottom-signal-long-bottom8/<account_id>', methods=['GET', 'POST'])
+def bottom_signal_long_bottom8_strategy(account_id):
+    """见底信号+涨幅后8做多策略配置
+    GET: 读取配置
+    POST: 保存配置
+    """
+    try:
+        import json
+        import os
+        from datetime import datetime
+        
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        config_dir = os.path.join(current_dir, 'data', 'okx_bottom_signal_long')
+        os.makedirs(config_dir, exist_ok=True)
+        
+        config_file = os.path.join(config_dir, f'{account_id}_bottom_signal_bottom8_long.jsonl')
+        
+        if request.method == 'GET':
+            # 读取配置
+            if not os.path.exists(config_file):
+                # 返回默认配置
+                return jsonify({
+                    'success': True,
+                    'config': {
+                        'enabled': False,
+                        'rsi_threshold': 800,
+                        'max_order_size': 5.0,
+                        'position_size_percent': 1.5,
+                        'leverage': 10,
+                        'last_updated': None
+                    }
+                })
+            
+            # 读取最后一行配置
+            with open(config_file, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+                if lines:
+                    last_config = json.loads(lines[-1].strip())
+                    return jsonify({
+                        'success': True,
+                        'config': last_config
+                    })
+                else:
+                    return jsonify({
+                        'success': True,
+                        'config': {
+                            'enabled': False,
+                            'rsi_threshold': 800,
+                            'max_order_size': 5.0,
+                            'position_size_percent': 1.5,
+                            'leverage': 10,
+                            'last_updated': None
+                        }
+                    })
+        
+        elif request.method == 'POST':
+            # 保存配置
+            data = request.get_json()
+            
+            config = {
+                'timestamp': datetime.now().isoformat(),
+                'time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'account_id': account_id,
+                'strategy_type': 'bottom_signal_bottom8_long',
+                'enabled': bool(data.get('enabled', False)),
+                'rsi_threshold': float(data.get('rsi_threshold', 800)),
+                'max_order_size': float(data.get('max_order_size', 5.0)),
+                'position_size_percent': float(data.get('position_size_percent', 1.5)),
+                'leverage': int(data.get('leverage', 10)),
+                'last_updated': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            }
+            
+            # 追加写入配置
+            with open(config_file, 'a', encoding='utf-8') as f:
+                f.write(json.dumps(config, ensure_ascii=False) + '\n')
+            
+            return jsonify({
+                'success': True,
+                'message': 'Configuration saved successfully',
+                'config': config
+            })
+    
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+
+@app.route('/api/okx-trading/check-bottom-signal-allowed/<account_id>/<strategy_type>', methods=['GET'])
+def check_bottom_signal_strategy_allowed(account_id, strategy_type):
+    """检查见底信号做多策略是否允许执行（从JSONL读取）
+    strategy_type: 'top8_long' 或 'bottom8_long'
+    """
+    try:
+        import json
+        import os
+        from datetime import datetime
+        
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        jsonl_dir = os.path.join(current_dir, 'data', 'okx_bottom_signal_long_execution')
+        os.makedirs(jsonl_dir, exist_ok=True)
+        
+        jsonl_file = os.path.join(jsonl_dir, f'{account_id}_bottom_signal_{strategy_type}_execution.jsonl')
+        
+        # 如果文件不存在，返回默认允许（首次执行）
+        if not os.path.exists(jsonl_file):
+            return jsonify({
+                'success': True,
+                'allowed': True,
+                'reason': 'No execution record found - first time execution allowed',
+                'lastRecord': None
+            })
+        
+        # 读取第一行（文件头）
+        with open(jsonl_file, 'r', encoding='utf-8') as f:
+            first_line = f.readline().strip()
+            if not first_line:
+                return jsonify({
+                    'success': True,
+                    'allowed': True,
+                    'reason': 'Empty execution file - first time execution allowed',
+                    'lastRecord': None
+                })
+            
+            first_record = json.loads(first_line)
+        
+        # 返回第一行记录的allowed状态
+        return jsonify({
+            'success': True,
+            'allowed': first_record.get('allowed', False),
+            'reason': 'Read from JSONL header',
+            'lastRecord': first_record
+        })
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        })
+
+
+@app.route('/api/okx-trading/set-allowed-bottom-signal/<account_id>/<strategy_type>', methods=['POST'])
+def set_bottom_signal_strategy_allowed(account_id, strategy_type):
+    """设置见底信号做多策略的执行允许状态（写入JSONL文件头）
+    strategy_type: 'top8_long' 或 'bottom8_long'
+    """
+    try:
+        import json
+        import os
+        from datetime import datetime
+        
+        data = request.get_json()
+        allowed = bool(data.get('allowed', False))
+        reason = data.get('reason', 'Manual update')
+        
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        jsonl_dir = os.path.join(current_dir, 'data', 'okx_bottom_signal_long_execution')
+        os.makedirs(jsonl_dir, exist_ok=True)
+        
+        jsonl_file = os.path.join(jsonl_dir, f'{account_id}_bottom_signal_{strategy_type}_execution.jsonl')
+        
+        # 读取现有记录（除了第一行）
+        existing_records = []
+        if os.path.exists(jsonl_file):
+            with open(jsonl_file, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+                if len(lines) > 1:
+                    existing_records = lines[1:]  # 跳过第一行
+        
+        # 创建新的文件头记录
+        header_record = {
+            'timestamp': datetime.now().isoformat(),
+            'time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'account_id': account_id,
+            'strategy_type': strategy_type,
+            'allowed': allowed,
+            'reason': reason,
+            'rsi_value': data.get('rsiValue'),
+            'sentiment': data.get('sentiment')
+        }
+        
+        # 写入新的文件头和原有记录
+        with open(jsonl_file, 'w', encoding='utf-8') as f:
+            f.write(json.dumps(header_record, ensure_ascii=False) + '\n')
+            # 写回其他记录
+            for line in existing_records:
+                f.write(line)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Execution allowed status updated successfully',
+            'header_record': header_record
+        })
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+

@@ -189,6 +189,174 @@
                         </div>
                     </div>
                     
+                    <!-- 📊 Tooltip累积统计优化 (2026-02-21) -->
+                    <div class="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-lg p-6 shadow-md border-2 border-cyan-400">
+                        <h3 class="text-lg font-bold text-cyan-800 mb-4 border-b-2 border-cyan-500 pb-2">
+                            <i class="fas fa-chart-area text-cyan-600 mr-2"></i>
+                            📊 Tooltip上涨占比累积统计优化 (2026-02-21 16:28)
+                        </h3>
+                        <div class="space-y-4 text-sm text-gray-700">
+                            
+                            <!-- 功能说明 -->
+                            <div class="bg-white p-4 rounded-lg border-l-4 border-cyan-500">
+                                <h4 class="font-bold text-cyan-800 mb-2">
+                                    <i class="fas fa-info-circle mr-2"></i>
+                                    🎯 功能说明：动态累积统计
+                                </h4>
+                                <p class="mb-2 font-semibold">将鼠标悬停在"总涨跌幅趋势"图表上时，tooltip会显示：</p>
+                                <ul class="list-disc list-inside space-y-1 ml-4">
+                                    <li><strong>当前时间点的上涨占比：</strong>悬停时刻有多少百分比的币在上涨</li>
+                                    <li><strong>平均值：</strong>从00:30到当前悬停时间的<strong>累积平均</strong></li>
+                                    <li><strong>最小值：</strong>从00:30到当前悬停时间的<strong>累积最小</strong></li>
+                                    <li><strong>最大值：</strong>从00:30到当前悬停时间的<strong>累积最大</strong></li>
+                                </ul>
+                            </div>
+
+                            <!-- 修复内容 -->
+                            <div class="bg-white p-4 rounded-lg border-l-4 border-green-500">
+                                <h4 class="font-bold text-green-800 mb-2">
+                                    <i class="fas fa-wrench mr-2"></i>
+                                    ✅ 修复内容：从全局统计改为累积统计
+                                </h4>
+                                <div class="grid grid-cols-2 gap-3 mt-2">
+                                    <div class="p-3 bg-red-50 rounded border border-red-300">
+                                        <p class="text-xs font-semibold text-red-700 mb-1">❌ 修复前（错误）</p>
+                                        <ul class="text-xs space-y-1">
+                                            <li>• 无论悬停在哪里，显示相同的统计值</li>
+                                            <li>• 00:36的平均 = 16:30的平均 = <strong>43.8%</strong></li>
+                                            <li>• 统计的是全天数据（00:30-16:30）</li>
+                                        </ul>
+                                    </div>
+                                    <div class="p-3 bg-green-50 rounded border border-green-300">
+                                        <p class="text-xs font-semibold text-green-700 mb-1">✅ 修复后（正确）</p>
+                                        <ul class="text-xs space-y-1">
+                                            <li>• 每个时间点显示不同的统计值</li>
+                                            <li>• 00:36的平均 = <strong>26.5%</strong></li>
+                                            <li>• 16:30的平均 = <strong>43.8%</strong></li>
+                                            <li>• 统计的是00:30到当前悬停时间的数据</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 实际示例 -->
+                            <div class="bg-white p-4 rounded-lg border-l-4 border-blue-500">
+                                <h4 class="font-bold text-blue-800 mb-2">
+                                    <i class="fas fa-table mr-2"></i>
+                                    📋 实际示例（今日数据 2026-02-21）
+                                </h4>
+                                <table class="w-full text-xs border-collapse mt-2">
+                                    <thead>
+                                        <tr class="bg-gray-200">
+                                            <th class="border border-gray-400 px-2 py-1">悬停时间</th>
+                                            <th class="border border-gray-400 px-2 py-1">当前上涨占比</th>
+                                            <th class="border border-gray-400 px-2 py-1">平均值</th>
+                                            <th class="border border-gray-400 px-2 py-1">最小值</th>
+                                            <th class="border border-gray-400 px-2 py-1">最大值</th>
+                                            <th class="border border-gray-400 px-2 py-1">统计范围</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="border border-gray-400 px-2 py-1 text-center">00:37</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center">22.2%</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center font-semibold text-blue-600">26.5%</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center">22.2%</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center">37.0%</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center text-xs">00:30-00:37</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="border border-gray-400 px-2 py-1 text-center">02:00</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center">7.4%</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center font-semibold text-blue-600">21.2%</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center">0.0%</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center">88.9%</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center text-xs">00:30-02:00</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="border border-gray-400 px-2 py-1 text-center">05:00</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center">37.0%</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center font-semibold text-blue-600">35.2%</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center">0.0%</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center">88.9%</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center text-xs">00:30-05:00</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="border border-gray-400 px-2 py-1 text-center">10:00</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center">44.4%</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center font-semibold text-blue-600">38.9%</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center">0.0%</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center">88.9%</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center text-xs">00:30-10:00</td>
+                                        </tr>
+                                        <tr class="bg-green-50">
+                                            <td class="border border-gray-400 px-2 py-1 text-center font-semibold">16:30</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center">63.0%</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center font-semibold text-green-600">43.8%</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center">0.0%</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center">88.9%</td>
+                                            <td class="border border-gray-400 px-2 py-1 text-center text-xs">00:30-16:30</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <div class="mt-3 p-3 bg-cyan-50 rounded">
+                                    <p class="text-xs text-cyan-800">
+                                        <strong>💡 关键观察：</strong>随着时间推移，统计的数据点越来越多，平均值从26.5%逐渐增长到43.8%，最小值和最大值的范围也在扩大。
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- 技术实现 -->
+                            <div class="bg-white p-4 rounded-lg border-l-4 border-purple-500">
+                                <h4 class="font-bold text-purple-800 mb-2">
+                                    <i class="fas fa-code mr-2"></i>
+                                    ⚙️ 技术实现逻辑
+                                </h4>
+                                <div class="bg-gray-100 p-3 rounded font-mono text-xs">
+                                    <pre>// 计算截止到当前时间点的累积统计
+for (let i = 0; i <= dataIndex; i++) {  // 👈 关键：只遍历到当前索引
+    if (historyData[i] && timeStr >= '00:30:00') {
+        upRatiosUpToNow.push(ratio);
+    }
+}
+
+// 计算统计值
+avgUpRatio = sum(upRatiosUpToNow) / count(upRatiosUpToNow);
+minUpRatio = Math.min(...upRatiosUpToNow);
+maxUpRatio = Math.max(...upRatiosUpToNow);</pre>
+                                </div>
+                            </div>
+
+                            <!-- 用户提示 -->
+                            <div class="bg-yellow-50 p-4 rounded-lg border-2 border-yellow-400">
+                                <h4 class="font-bold text-yellow-800 mb-2">
+                                    <i class="fas fa-lightbulb mr-2"></i>
+                                    💡 如果看到相同的统计值
+                                </h4>
+                                <p class="mb-2">如果您悬停在不同时间点时看到相同的平均值，请<strong>清除浏览器缓存</strong>：</p>
+                                <ul class="list-disc list-inside space-y-1 ml-4 text-xs">
+                                    <li><strong>方法1 - 强制刷新（推荐）：</strong>Windows/Linux按 <code class="bg-gray-200 px-1 rounded">Ctrl + Shift + R</code>，Mac按 <code class="bg-gray-200 px-1 rounded">Cmd + Shift + R</code></li>
+                                    <li><strong>方法2 - 硬性重新加载：</strong>按F12打开开发者工具，右键刷新按钮，选择"清空缓存并硬性重新加载"</li>
+                                    <li><strong>验证测试页面：</strong>访问 <a href="/static/test_tooltip_stats.html" class="text-blue-600 underline">/static/test_tooltip_stats.html</a> 查看验证结果</li>
+                                </ul>
+                            </div>
+
+                            <!-- Git提交信息 -->
+                            <div class="bg-gray-100 p-4 rounded-lg">
+                                <h4 class="font-bold text-gray-800 mb-2">
+                                    <i class="fab fa-git-alt mr-2"></i>
+                                    📌 Git提交记录
+                                </h4>
+                                <ul class="text-xs space-y-1 font-mono">
+                                    <li><strong>edf1760</strong> - docs: 添加tooltip累积统计用户指南</li>
+                                    <li><strong>06e1388</strong> - test: 添加tooltip累积统计验证测试页面和文档</li>
+                                    <li><strong>4dd0caa</strong> - fix: 修复tooltip上涨占比统计逻辑为累积统计</li>
+                                    <li><strong>ae24815</strong> - feat: 在图表tooltip中添加上涨占比统计数据</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <!-- 系统概述 -->
                     <div class="bg-white rounded-lg p-6 shadow-md">
                         <h3 class="text-lg font-bold text-gray-800 mb-4 border-b-2 border-blue-500 pb-2">

@@ -25930,8 +25930,8 @@ def get_account_strategies():
             {'key': 'btc_top8_chase', 'name': 'BTC触发涨幅前8名(追涨)', 'file_patterns': ['btc_top_performers_execution'], 'dirs': ['okx_auto_strategy']},
         ]
         
-        # 数据基础目录
-        base_data_dir = os.path.join(os.path.dirname(__file__), 'data')
+        # 数据基础目录 - 使用绝对路径
+        base_data_dir = '/home/user/webapp/data'
         
         # 收集所有账户的策略状态
         result = []

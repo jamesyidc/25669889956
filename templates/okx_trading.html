@@ -5462,6 +5462,7 @@ data/
                 Promise.all([
                     loadTradingLogs(),
                     loadAccountLimit(),
+                    loadTopSignalConfig(),  // 🆕 加载见顶信号策略配置
                     loadBottomSignalConfig()  // 🆕 加载见底信号策略配置
                 ]);
                 updateProgress(6, '✓ 所有数据加载完成！', 'step-logs');
@@ -5563,6 +5564,7 @@ data/
             loadAutoStrategySettings();  // 加载该账户的抄底策略设置
             loadAutoStrategySettingsTop();  // 🆕 加载该账户的追涨策略设置
             loadUpRatio0StrategySettings();  // 🆕 加载该账户的上涨占比0策略设置
+            loadTopSignalConfig();  // 🆕 加载见顶信号做空策略设置
             loadBottomSignalConfig();  // 🆕 加载见底信号做多策略设置
             refreshStrategyStatus();  // 🆕 刷新策略状态总览
             
@@ -8285,6 +8287,46 @@ ${data.sMsg || result.message || ''}`);
             } catch (e) {
                 console.error('Save bottom signal bottom8 config error:', e);
                 alert(`❌ 保存失败: ${e.message}`);
+            }
+        }
+        
+        // 加载见顶信号策略配置
+        async function loadTopSignalConfig() {
+            const account = accounts.find(acc => acc.id === currentAccount);
+            if (!account) {
+                console.log('No account selected, skip loading top signal config');
+                return;
+            }
+            
+            try {
+                // 加载Top8做空策略状态
+                const top8Response = await fetch(`/api/okx-trading/check-top-signal-status/${account.id}/top8_short`);
+                const top8Result = await top8Response.json();
+                
+                if (top8Result.success) {
+                    const top8Switch = document.getElementById('topSignalTop8ShortSwitch');
+                    if (top8Switch) {
+                        top8Switch.checked = top8Result.allowed || false;
+                    }
+                }
+                
+                // 加载Bottom8做空策略状态
+                const bottom8Response = await fetch(`/api/okx-trading/check-top-signal-status/${account.id}/bottom8_short`);
+                const bottom8Result = await bottom8Response.json();
+                
+                if (bottom8Result.success) {
+                    const bottom8Switch = document.getElementById('topSignalBottom8ShortSwitch');
+                    if (bottom8Switch) {
+                        bottom8Switch.checked = bottom8Result.allowed || false;
+                    }
+                }
+                
+                console.log(`✅ Loaded top signal config for ${account.name}`, {
+                    top8_short: top8Result.allowed,
+                    bottom8_short: bottom8Result.allowed
+                });
+            } catch (e) {
+                console.error('Load top signal config error:', e);
             }
         }
         

@@ -3532,6 +3532,26 @@ data/
                     </div>
                 </div>
 
+                <!-- 📊 策略执行日志 -->
+                <div class="info-card" style="margin-top: 16px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2px solid #3b82f6;">
+                    <h3 style="color: #1e40af; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+                        <span style="display: flex; align-items: center; gap: 6px;">📊 策略执行日志</span>
+                        <button onclick="refreshStrategyLogs()" style="background: #3b82f6; color: white; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600;">
+                            🔄 刷新
+                        </button>
+                    </h3>
+                    <div style="font-size: 11px; color: #1e40af; margin-bottom: 12px; opacity: 0.8;">
+                        💡 记录所有自动触发和手动执行的策略，包括开仓、平仓、止盈、止损等操作
+                    </div>
+                    
+                    <!-- 日志列表 -->
+                    <div id="strategyLogsList" style="max-height: 500px; overflow-y: auto;">
+                        <div style="text-align: center; padding: 30px; color: #94a3b8;">
+                            ⏳ 加载中...
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 📉 涨幅后8名策略（抄底） -->
                 <div class="info-card" style="margin-top: 16px; background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%); border: 2px solid #8b5cf6;">
                     <h3 style="color: #5b21b6; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
@@ -4089,24 +4109,7 @@ data/
                     </div>
                 </div>
                 
-                <!-- 交易日志 -->
-                <div class="info-card" style="margin-top: 24px;">
-                    <h3>
-                        📜 交易日志 
-                        <span id="logsCount" style="color: #888; font-size: 14px; font-weight: normal;">(0)</span>
-                        <button onclick="loadTradingLogs()" style="float: right; padding: 4px 12px; font-size: 12px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer;" title="刷新日志">
-                            🔄 刷新
-                        </button>
-                    </h3>
-                    <div style="margin-bottom: 12px; font-size: 12px; color: #64748b;">
-                        📝 所有操作均自动记录，不可修改 | 数据保存格式: JSONL
-                    </div>
-                    <div id="tradingLogsList" style="max-height: 400px; overflow-y: auto;">
-                        <div style="text-align: center; padding: 20px; color: #94a3b8;">
-                            暂无日志
-                        </div>
-                    </div>
-                </div>
+
             </div>
         </div>
     </div>
@@ -5109,6 +5112,215 @@ data/
             }
         }
 
+        // 加载策略执行日志
+        async function refreshStrategyLogs() {
+            console.log('[refreshStrategyLogs] 开始加载策略执行日志');
+            const logsContainer = document.getElementById('strategyLogsList');
+            
+            try {
+                const response = await fetch(`/api/okx-trading/strategy-logs?account=${currentAccount}&limit=50`);
+                const result = await response.json();
+                
+                if (result.success && result.logs) {
+                    const logs = result.logs;
+                    
+                    if (logs.length === 0) {
+                        logsContainer.innerHTML = `
+                            <div style="text-align: center; padding: 30px; color: #94a3b8;">
+                                📭 暂无策略执行记录
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    // 按时间倒序排列（最新的在上面）
+                    const sortedLogs = [...logs].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    
+                    logsContainer.innerHTML = sortedLogs.map((log, index) => {
+                        const logId = `log_${index}`;
+                        const time = new Date(log.timestamp).toLocaleString('zh-CN', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit'
+                        });
+                        
+                        // 策略类型图标和文本
+                        const strategyTypeMap = {
+                            'manual_open': { emoji: '👆', text: '手动开仓', color: '#3b82f6' },
+                            'manual_close': { emoji: '✋', text: '手动平仓', color: '#8b5cf6' },
+                            'auto_bottom8': { emoji: '📉', text: '涨幅后8做多', color: '#10b981' },
+                            'auto_top_signal_top8': { emoji: '⚠️', text: '见顶信号+前8做空', color: '#dc2626' },
+                            'auto_top_signal_bottom8': { emoji: '⚠️', text: '见顶信号+后8做空', color: '#b91c1c' },
+                            'tp_takeprofit': { emoji: '🎯', text: '止盈平仓', color: '#22c55e' },
+                            'sl_stoploss': { emoji: '🛡️', text: '止损平仓', color: '#ef4444' },
+                            'rsi_long_tp': { emoji: '📊', text: 'RSI多单止盈', color: '#fb923c' },
+                            'rsi_short_tp': { emoji: '📉', text: 'RSI空单止盈', color: '#10b981' },
+                            'sentiment_tp': { emoji: '🔥', text: '情绪止盈', color: '#ef4444' }
+                        };
+                        
+                        const strategyInfo = strategyTypeMap[log.strategy_type] || {
+                            emoji: '❓',
+                            text: log.strategy_type,
+                            color: '#6b7280'
+                        };
+                        
+                        // 执行类型（开仓/平仓）
+                        const actionType = log.action_type || 'open';
+                        const actionText = actionType === 'open' ? '开仓' : '平仓';
+                        const actionBg = actionType === 'open' ? '#dbeafe' : '#fee2e2';
+                        const actionColor = actionType === 'open' ? '#1e40af' : '#991b1b';
+                        
+                        // 总金额和状态
+                        const totalAmount = log.total_amount || 0;
+                        const status = log.status || 'success';
+                        const statusEmoji = status === 'success' ? '✅' : status === 'partial' ? '⚠️' : '❌';
+                        const statusText = status === 'success' ? '成功' : status === 'partial' ? '部分成功' : '失败';
+                        const statusColor = status === 'success' ? '#10b981' : status === 'partial' ? '#f59e0b' : '#ef4444';
+                        
+                        // 构建详情列表
+                        const positions = log.positions || [];
+                        const positionsHtml = positions.map(pos => {
+                            const coinName = (pos.inst_id || '').replace('-USDT-SWAP', '');
+                            const posAmount = pos.amount || 0;
+                            const posStatus = pos.status || 'success';
+                            const posEmoji = posStatus === 'success' ? '✅' : '❌';
+                            const posColor = posStatus === 'success' ? '#10b981' : '#ef4444';
+                            
+                            // 平仓时显示盈亏
+                            let pnlText = '';
+                            if (actionType === 'close' && pos.pnl !== undefined) {
+                                const pnl = pos.pnl || 0;
+                                const pnlColor = pnl >= 0 ? '#10b981' : '#ef4444';
+                                const pnlSign = pnl >= 0 ? '+' : '';
+                                pnlText = `<span style="margin-left: 8px; color: ${pnlColor}; font-weight: 700; font-size: 13px;">${pnlSign}${pnl.toFixed(2)} USDT</span>`;
+                            }
+                            
+                            // 错误信息
+                            let errorText = '';
+                            if (posStatus === 'failed' && pos.error) {
+                                errorText = `<div style="margin-top: 3px; font-size: 10px; color: #ef4444; padding-left: 20px;">错误: ${pos.error}</div>`;
+                            }
+                            
+                            return `
+                                <div style="padding: 8px 12px; background: rgba(255,255,255,0.5); border-radius: 6px; margin-bottom: 6px; border-left: 3px solid ${posColor};">
+                                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <span style="font-size: 12px;">${posEmoji}</span>
+                                            <span style="font-weight: 700; color: #1e293b; font-size: 14px;">${coinName}</span>
+                                            <span style="color: #64748b; font-size: 12px;">${pos.pos_side === 'long' ? '做多' : '做空'}</span>
+                                        </div>
+                                        <div style="display: flex; align-items: center;">
+                                            <span style="font-weight: 700; color: #3b82f6; font-size: 14px;">${posAmount.toFixed(2)} USDT</span>
+                                            ${pnlText}
+                                        </div>
+                                    </div>
+                                    ${errorText}
+                                </div>
+                            `;
+                        }).join('');
+                        
+                        // 触发条件说明
+                        let triggerInfo = '';
+                        if (log.trigger_info) {
+                            const info = log.trigger_info;
+                            triggerInfo = `
+                                <div style="margin-top: 8px; padding: 8px; background: rgba(59, 130, 246, 0.05); border-radius: 6px; border-left: 2px solid #3b82f6;">
+                                    <div style="font-size: 10px; color: #64748b; font-weight: 600; margin-bottom: 4px;">📌 触发条件</div>
+                                    <div style="font-size: 11px; color: #475569; line-height: 1.5;">
+                                        ${info.btc_price ? `<div>BTC价格: <strong>${info.btc_price}</strong></div>` : ''}
+                                        ${info.rsi_sum ? `<div>RSI总和: <strong>${info.rsi_sum}</strong></div>` : ''}
+                                        ${info.sentiment ? `<div>市场情绪: <strong>${info.sentiment}</strong></div>` : ''}
+                                        ${info.unrealized_pnl ? `<div>未实现盈亏: <strong>${info.unrealized_pnl.toFixed(2)} USDT</strong></div>` : ''}
+                                        ${info.custom_reason ? `<div>${info.custom_reason}</div>` : ''}
+                                    </div>
+                                </div>
+                            `;
+                        }
+                        
+                        return `
+                            <div style="margin-bottom: 12px; border-radius: 12px; border: 2px solid #e5e7eb; overflow: hidden; background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%); transition: all 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.05);" onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)'; this.style.borderColor='${strategyInfo.color}';" onmouseout="this.style.boxShadow='0 2px 4px rgba(0,0,0,0.05)'; this.style.borderColor='#e5e7eb';">
+                                <!-- 标题行：策略类型 + 总金额 -->
+                                <div style="padding: 14px 16px; background: linear-gradient(135deg, ${strategyInfo.color}15 0%, ${strategyInfo.color}08 100%); border-bottom: 1px solid ${strategyInfo.color}30; cursor: pointer;" onclick="toggleLogDetails('${logId}')">
+                                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                                        <div style="display: flex; align-items: center; gap: 10px;">
+                                            <span style="font-size: 22px;">${strategyInfo.emoji}</span>
+                                            <div>
+                                                <div style="font-weight: 700; color: ${strategyInfo.color}; font-size: 16px; margin-bottom: 2px;">${strategyInfo.text}</div>
+                                                <div style="font-size: 10px; color: #64748b;">${time}</div>
+                                            </div>
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: 12px;">
+                                            <div style="text-align: right;">
+                                                <div style="font-size: 11px; color: #64748b; margin-bottom: 2px;">${actionText}</div>
+                                                <div style="font-weight: 800; color: #1e293b; font-size: 20px;">${totalAmount.toFixed(2)} <span style="font-size: 13px; color: #64748b;">USDT</span></div>
+                                            </div>
+                                            <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                                                <span style="font-size: 18px;">${statusEmoji}</span>
+                                                <span style="font-size: 10px; color: ${statusColor}; font-weight: 600;">${statusText}</span>
+                                            </div>
+                                            <span id="${logId}_arrow" style="font-size: 20px; color: #94a3b8; transition: transform 0.3s;">▼</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 详情内容（可展开） -->
+                                <div id="${logId}_details" style="display: none; padding: 16px; background: white;">
+                                    ${positions.length > 0 ? `
+                                        <div style="margin-bottom: 12px;">
+                                            <div style="font-size: 12px; color: #64748b; font-weight: 600; margin-bottom: 8px;">📝 持仓详情 (${positions.length})</div>
+                                            ${positionsHtml}
+                                        </div>
+                                    ` : ''}
+                                    
+                                    ${triggerInfo}
+                                    
+                                    ${log.error ? `
+                                        <div style="margin-top: 12px; padding: 10px; background: #fef2f2; border-radius: 6px; border-left: 3px solid #ef4444;">
+                                            <div style="font-size: 11px; color: #dc2626; font-weight: 600; margin-bottom: 4px;">❌ 错误信息</div>
+                                            <div style="font-size: 11px; color: #991b1b;">${log.error}</div>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                    
+                    console.log(`[refreshStrategyLogs] 加载了 ${logs.length} 条策略日志`);
+                } else {
+                    logsContainer.innerHTML = `
+                        <div style="text-align: center; padding: 30px; color: #ef4444;">
+                            ❌ 加载失败: ${result.error || '未知错误'}
+                        </div>
+                    `;
+                    console.error('[refreshStrategyLogs] 加载失败:', result.error);
+                }
+            } catch (error) {
+                logsContainer.innerHTML = `
+                    <div style="text-align: center; padding: 30px; color: #ef4444;">
+                        ❌ 加载异常: ${error.message}
+                    </div>
+                `;
+                console.error('[refreshStrategyLogs] 加载异常:', error);
+            }
+        }
+
+        // 展开/折叠日志详情
+        function toggleLogDetails(logId) {
+            const detailsDiv = document.getElementById(`${logId}_details`);
+            const arrow = document.getElementById(`${logId}_arrow`);
+            
+            if (detailsDiv.style.display === 'none') {
+                detailsDiv.style.display = 'block';
+                arrow.style.transform = 'rotate(180deg)';
+            } else {
+                detailsDiv.style.display = 'none';
+                arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
         // 初始化页面
         // 从后端API加载账户列表
         async function loadAccountsList() {
@@ -5271,10 +5483,10 @@ data/
                 loadPendingOrders();  // 不await，让它在后台执行
                 updateProgress(5, '✓ 委托订单加载中...', 'step-orders');
                 
-                // 步骤6: 加载交易日志和账户限额（次要数据）
+                // 步骤6: 加载策略日志和账户限额（次要数据）
                 setLoadingStep('step-logs');
                 Promise.all([
-                    loadTradingLogs(),
+                    refreshStrategyLogs(),
                     loadAccountLimit()
                 ]);
                 updateProgress(6, '✓ 所有数据加载完成！', 'step-logs');
@@ -5300,7 +5512,7 @@ data/
             setInterval(() => {
                 refreshAccountData();
                 loadPendingOrders();
-                loadTradingLogs();
+                refreshStrategyLogs();
                 updateTotalChangeOKX(); // 同时更新涨跌幅
                 checkAndExecuteAutoStrategy(); // 检查自动交易策略
                 checkAndExecuteUpRatio0Top8(); // 检查上涨占比0-涨幅前8名策略
@@ -5376,6 +5588,7 @@ data/
             loadAutoStrategySettings();  // 加载该账户的抄底策略设置
             loadAutoStrategySettingsTop();  // 🆕 加载该账户的追涨策略设置
             loadUpRatio0StrategySettings();  // 🆕 加载该账户的上涨占比0策略设置
+            refreshStrategyLogs();  // 🆕 加载该账户的策略执行日志
             
             const account = accounts.find(acc => acc.id === accountId);
             console.log(`[selectAccount] 已切换到账户: ${account ? account.name : '未找到'} (${accountId})`);

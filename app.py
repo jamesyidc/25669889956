@@ -15563,6 +15563,118 @@ def get_okx_trading_logs():
             'error': str(e)
         })
 
+@app.route('/api/okx-trading/strategy-logs', methods=['GET'])
+def get_okx_strategy_logs():
+    """获取OKX策略执行日志"""
+    try:
+        account = request.args.get('account', 'account_poit_main')
+        date_str = request.args.get('date', None)  # YYYYMMDD格式，None表示今天
+        limit = int(request.args.get('limit', 50))
+        
+        import json
+        import os
+        from datetime import datetime
+        
+        # 确定日期
+        if date_str is None:
+            date_str = datetime.now().strftime('%Y%m%d')
+        
+        # 构建文件路径
+        log_dir = 'data/okx_strategy_logs'
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir, exist_ok=True)
+        
+        log_file = os.path.join(log_dir, f'strategy_log_{account}_{date_str}.jsonl')
+        
+        # 读取日志
+        logs = []
+        if os.path.exists(log_file):
+            with open(log_file, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if line:
+                        try:
+                            log_entry = json.loads(line)
+                            logs.append(log_entry)
+                        except json.JSONDecodeError:
+                            continue
+        
+        # 按时间倒序排序，并限制数量
+        logs.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
+        logs = logs[:limit]
+        
+        return jsonify({
+            'success': True,
+            'count': len(logs),
+            'logs': logs,
+            'account': account,
+            'date': date_str
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
+
+@app.route('/api/okx-trading/strategy-log', methods=['POST'])
+def add_okx_strategy_log():
+    """记录策略执行日志"""
+    try:
+        data = request.get_json()
+        
+        import json
+        import os
+        from datetime import datetime
+        
+        # 必需字段验证
+        required_fields = ['account', 'strategy_type', 'action_type']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({
+                    'success': False,
+                    'error': f'Missing required field: {field}'
+                }), 400
+        
+        account = data['account']
+        strategy_type = data['strategy_type']
+        action_type = data['action_type']  # 'open' or 'close'
+        
+        # 构建日志条目
+        log_entry = {
+            'timestamp': datetime.utcnow().isoformat() + 'Z',
+            'account': account,
+            'strategy_type': strategy_type,
+            'action_type': action_type,
+            'total_amount': data.get('total_amount', 0),
+            'status': data.get('status', 'success'),  # 'success', 'partial', 'failed'
+            'positions': data.get('positions', []),  # 持仓详情数组
+            'trigger_info': data.get('trigger_info', {}),  # 触发条件信息
+            'error': data.get('error', '')
+        }
+        
+        # 确定日期和文件路径
+        date_str = datetime.now().strftime('%Y%m%d')
+        log_dir = 'data/okx_strategy_logs'
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir, exist_ok=True)
+        
+        log_file = os.path.join(log_dir, f'strategy_log_{account}_{date_str}.jsonl')
+        
+        # 追加写入日志
+        with open(log_file, 'a', encoding='utf-8') as f:
+            f.write(json.dumps(log_entry, ensure_ascii=False) + '\n')
+        
+        return jsonify({
+            'success': True,
+            'message': 'Strategy log recorded successfully',
+            'log_entry': log_entry
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @app.route('/api/okx-trading/favorite-symbols', methods=['GET'])
 def get_favorite_symbols():
     """获取常用币列表(全局共享)"""

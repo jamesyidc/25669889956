@@ -98,8 +98,8 @@
   "CRV": {
     "highest_price": 0.2567,
     "highest_time": "2026-02-17 10:26:36",
-    "lowest_price": 0.2445,
-    "lowest_time": "2026-02-21 12:51:40"
+    "lowest_price": 0.2444,
+    "lowest_time": "2026-02-21 15:11:47"
   },
   "NEAR": {
     "highest_price": 1.0721,
@@ -164,7 +164,7 @@
   "XLM": {
     "highest_price": 0.17027,
     "highest_time": "2026-02-16 23:03:38",
-    "lowest_price": 0.16141,
-    "lowest_time": "2026-02-21 15:04:57"
+    "lowest_price": 0.16135,
+    "lowest_time": "2026-02-21 15:11:47"
   }
 }

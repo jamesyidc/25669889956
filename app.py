@@ -15618,12 +15618,13 @@ def get_okx_strategy_logs():
 
 @app.route('/api/okx-trading/strategy-log', methods=['POST'])
 def add_okx_strategy_log():
-    """记录策略执行日志"""
+    """记录策略执行日志（带防篡改校验）"""
     try:
         data = request.get_json()
         
         import json
         import os
+        import hashlib
         from datetime import datetime
         
         # 必需字段验证
@@ -15637,11 +15638,14 @@ def add_okx_strategy_log():
         
         account = data['account']
         strategy_type = data['strategy_type']
-        action_type = data['action_type']  # 'open' or 'close'
+        action_type = data['action_type']  # 'open', 'close', or 'settings'
+        
+        # 添加时间戳
+        timestamp = datetime.utcnow().isoformat() + 'Z'
         
         # 构建日志条目
         log_entry = {
-            'timestamp': datetime.utcnow().isoformat() + 'Z',
+            'timestamp': timestamp,
             'account': account,
             'strategy_type': strategy_type,
             'action_type': action_type,
@@ -15652,6 +15656,13 @@ def add_okx_strategy_log():
             'error': data.get('error', '')
         }
         
+        # 生成防篡改哈希（SHA256）
+        # 使用timestamp + account + strategy_type + action_type作为哈希源
+        hash_source = f"{timestamp}|{account}|{strategy_type}|{action_type}|{json.dumps(log_entry, sort_keys=True, ensure_ascii=False)}"
+        log_hash = hashlib.sha256(hash_source.encode('utf-8')).hexdigest()
+        log_entry['_hash'] = log_hash
+        log_entry['_hash_algorithm'] = 'SHA256'
+        
         # 确定日期和文件路径
         date_str = datetime.now().strftime('%Y%m%d')
         log_dir = 'data/okx_strategy_logs'
@@ -15660,20 +15671,118 @@ def add_okx_strategy_log():
         
         log_file = os.path.join(log_dir, f'strategy_log_{account}_{date_str}.jsonl')
         
-        # 追加写入日志
+        # 追加写入日志（只追加，不允许修改）
         with open(log_file, 'a', encoding='utf-8') as f:
             f.write(json.dumps(log_entry, ensure_ascii=False) + '\n')
         
         return jsonify({
             'success': True,
             'message': 'Strategy log recorded successfully',
-            'log_entry': log_entry
+            'log_entry': log_entry,
+            'hash': log_hash
         })
     except Exception as e:
         return jsonify({
             'success': False,
             'error': str(e)
         }), 500
+
+@app.route('/api/okx-trading/verify-strategy-logs', methods=['POST'])
+def verify_okx_strategy_logs():
+    """验证策略日志完整性（防篡改检查）"""
+    try:
+        data = request.get_json()
+        account = data.get('account')
+        date_str = data.get('date')
+        
+        import json
+        import os
+        import hashlib
+        from datetime import datetime
+        
+        if not date_str:
+            date_str = datetime.now().strftime('%Y%m%d')
+        
+        log_file = f'data/okx_strategy_logs/strategy_log_{account}_{date_str}.jsonl'
+        
+        if not os.path.exists(log_file):
+            return jsonify({
+                'success': False,
+                'error': 'Log file not found'
+            })
+        
+        verified_count = 0
+        tampered_count = 0
+        total_count = 0
+        tampered_logs = []
+        
+        with open(log_file, 'r', encoding='utf-8') as f:
+            for line_num, line in enumerate(f, 1):
+                line = line.strip()
+                if not line:
+                    continue
+                
+                try:
+                    log_entry = json.loads(line)
+                    total_count += 1
+                    
+                    # 检查是否有哈希
+                    if '_hash' not in log_entry:
+                        tampered_count += 1
+                        tampered_logs.append({
+                            'line': line_num,
+                            'reason': 'Missing hash',
+                            'timestamp': log_entry.get('timestamp', 'unknown')
+                        })
+                        continue
+                    
+                    # 重新计算哈希
+                    stored_hash = log_entry.pop('_hash')
+                    log_entry.pop('_hash_algorithm', None)
+                    
+                    timestamp = log_entry.get('timestamp', '')
+                    account_id = log_entry.get('account', '')
+                    strategy_type = log_entry.get('strategy_type', '')
+                    action_type = log_entry.get('action_type', '')
+                    
+                    hash_source = f"{timestamp}|{account_id}|{strategy_type}|{action_type}|{json.dumps(log_entry, sort_keys=True, ensure_ascii=False)}"
+                    calculated_hash = hashlib.sha256(hash_source.encode('utf-8')).hexdigest()
+                    
+                    if calculated_hash == stored_hash:
+                        verified_count += 1
+                    else:
+                        tampered_count += 1
+                        tampered_logs.append({
+                            'line': line_num,
+                            'reason': 'Hash mismatch',
+                            'timestamp': log_entry.get('timestamp', 'unknown'),
+                            'expected': stored_hash[:16] + '...',
+                            'actual': calculated_hash[:16] + '...'
+                        })
+                        
+                except json.JSONDecodeError:
+                    tampered_count += 1
+                    tampered_logs.append({
+                        'line': line_num,
+                        'reason': 'Invalid JSON'
+                    })
+        
+        is_valid = tampered_count == 0
+        
+        return jsonify({
+            'success': True,
+            'is_valid': is_valid,
+            'total_logs': total_count,
+            'verified_logs': verified_count,
+            'tampered_logs_count': tampered_count,
+            'tampered_details': tampered_logs if tampered_count > 0 else []
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
 
 @app.route('/api/okx-trading/favorite-symbols', methods=['GET'])
 def get_favorite_symbols():

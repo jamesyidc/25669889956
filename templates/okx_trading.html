@@ -5158,7 +5158,8 @@ data/
                             'sl_stoploss': { emoji: '🛡️', text: '止损平仓', color: '#ef4444' },
                             'rsi_long_tp': { emoji: '📊', text: 'RSI多单止盈', color: '#fb923c' },
                             'rsi_short_tp': { emoji: '📉', text: 'RSI空单止盈', color: '#10b981' },
-                            'sentiment_tp': { emoji: '🔥', text: '情绪止盈', color: '#ef4444' }
+                            'sentiment_tp': { emoji: '🔥', text: '情绪止盈', color: '#ef4444' },
+                            'config_change': { emoji: '⚙️', text: '配置变更', color: '#6366f1' }
                         };
                         
                         const strategyInfo = strategyTypeMap[log.strategy_type] || {
@@ -5167,11 +5168,23 @@ data/
                             color: '#6b7280'
                         };
                         
-                        // 执行类型（开仓/平仓）
+                        // 执行类型（开仓/平仓/设置）
                         const actionType = log.action_type || 'open';
-                        const actionText = actionType === 'open' ? '开仓' : '平仓';
-                        const actionBg = actionType === 'open' ? '#dbeafe' : '#fee2e2';
-                        const actionColor = actionType === 'open' ? '#1e40af' : '#991b1b';
+                        let actionText, actionBg, actionColor;
+                        
+                        if (actionType === 'settings') {
+                            actionText = '配置';
+                            actionBg = '#f3f4f6';
+                            actionColor = '#6366f1';
+                        } else if (actionType === 'open') {
+                            actionText = '开仓';
+                            actionBg = '#dbeafe';
+                            actionColor = '#1e40af';
+                        } else {
+                            actionText = '平仓';
+                            actionBg = '#fee2e2';
+                            actionColor = '#991b1b';
+                        }
                         
                         // 总金额和状态
                         const totalAmount = log.total_amount || 0;
@@ -5180,9 +5193,9 @@ data/
                         const statusText = status === 'success' ? '成功' : status === 'partial' ? '部分成功' : '失败';
                         const statusColor = status === 'success' ? '#10b981' : status === 'partial' ? '#f59e0b' : '#ef4444';
                         
-                        // 构建详情列表
+                        // 构建详情列表（配置变更不显示持仓）
                         const positions = log.positions || [];
-                        const positionsHtml = positions.map(pos => {
+                        const positionsHtml = actionType === 'settings' ? '' : positions.map(pos => {
                             const coinName = (pos.inst_id || '').replace('-USDT-SWAP', '');
                             const posAmount = pos.amount || 0;
                             const posStatus = pos.status || 'success';
@@ -5253,10 +5266,11 @@ data/
                                             </div>
                                         </div>
                                         <div style="display: flex; align-items: center; gap: 12px;">
+                                            ${actionType !== 'settings' ? `
                                             <div style="text-align: right;">
                                                 <div style="font-size: 11px; color: #64748b; margin-bottom: 2px;">${actionText}</div>
                                                 <div style="font-weight: 800; color: #1e293b; font-size: 20px;">${totalAmount.toFixed(2)} <span style="font-size: 13px; color: #64748b;">USDT</span></div>
-                                            </div>
+                                            </div>` : ''}
                                             <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
                                                 <span style="font-size: 18px;">${statusEmoji}</span>
                                                 <span style="font-size: 10px; color: ${statusColor}; font-weight: 600;">${statusText}</span>
@@ -7716,7 +7730,34 @@ ${data.sMsg || result.message || ''}`);
                 const result = await response.json();
                 
                 if (result.success) {
-                    // 2. 同时保存API凭证（用于止盈止损监控）
+                    // 2. 记录配置变更到策略日志
+                    try {
+                        const logData = {
+                            account: account.id,
+                            strategy_type: 'config_change',
+                            action_type: 'settings',
+                            total_amount: 0,
+                            status: 'success',
+                            positions: [],
+                            trigger_info: {
+                                config_type: '止盈止损设置',
+                                changes: settings,
+                                custom_reason: `用户修改止盈止损配置：止盈${settings.takeProfitEnabled?'启用':'停用'}(${settings.takeProfitThreshold}U)、止损${settings.stopLossEnabled?'启用':'停用'}(${settings.stopLossThreshold}U)、RSI多单止盈${settings.rsiTakeProfitEnabled?'启用':'停用'}(${settings.rsiTakeProfitThreshold})、RSI空单止盈${settings.rsiShortTakeProfitEnabled?'启用':'停用'}(${settings.rsiShortTakeProfitThreshold})、见顶信号前8做空${settings.top_signal_top8_short_enabled?'启用':'停用'}、见顶信号后8做空${settings.top_signal_bottom8_short_enabled?'启用':'停用'}、市场情绪止盈${settings.sentimentTakeProfitEnabled?'启用':'停用'}、最大持仓${settings.maxPositionValueUsdt}U`
+                            }
+                        };
+                        
+                        await fetch('/api/okx-trading/strategy-log', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify(logData)
+                        });
+                        
+                        console.log('📝 已记录止盈止损设置变更到策略日志');
+                    } catch (e) {
+                        console.warn('⚠️ 记录策略日志失败:', e);
+                    }
+                    
+                    // 3. 同时保存API凭证（用于止盈止损监控）
                     if (account.apiKey && account.apiSecret && account.passphrase) {
                         try {
                             const credResponse = await fetch(`/api/okx-trading/save-account-credentials/${account.id}`, {
@@ -7747,6 +7788,9 @@ ${data.sMsg || result.message || ''}`);
                         alert(`✅ 账户「${account.name}」的止盈止损设置已保存到服务器！`);
                     }
                     console.log(`✅ 已保存账户 ${account.name} 的止盈止损设置到服务器`, settings);
+                    
+                    // 刷新策略日志显示
+                    refreshStrategyLogs();
                     
                     // 更新最大持仓限制显示
                     document.getElementById('maxPositionValueDisplay').textContent = settings.maxPositionValueUsdt.toFixed(1) + ' USDT';
@@ -8095,6 +8139,42 @@ ${data.sMsg || result.message || ''}`);
                 
                 if (result.success) {
                     console.log(`✅ 已保存账户 ${account.name} 的自动交易策略设置到服务器`, settings);
+                    
+                    // 记录策略开关变更到日志
+                    try {
+                        const strategyName = settings.strategyType === 'bottom_performers' ? '涨幅后8做多' : 
+                                           settings.strategyType === 'top_performers' ? '涨幅前8做空' : settings.strategyType;
+                        
+                        const logData = {
+                            account: account.id,
+                            strategy_type: 'config_change',
+                            action_type: 'settings',
+                            total_amount: 0,
+                            status: 'success',
+                            positions: [],
+                            trigger_info: {
+                                config_type: '自动策略开关',
+                                strategy_name: strategyName,
+                                enabled: settings.enabled,
+                                trigger_price: settings.triggerPrice,
+                                max_order_size: settings.maxOrderSize,
+                                custom_reason: `用户${settings.enabled?'启用':'停用'}自动策略「${strategyName}」，触发价格${settings.triggerPrice}，单笔上限${settings.maxOrderSize}U`
+                            }
+                        };
+                        
+                        await fetch('/api/okx-trading/strategy-log', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify(logData)
+                        });
+                        
+                        console.log('📝 已记录策略开关变更到日志');
+                        
+                        // 刷新策略日志显示
+                        setTimeout(() => refreshStrategyLogs(), 500);
+                    } catch (e) {
+                        console.warn('⚠️ 记录策略日志失败:', e);
+                    }
                     
                     // ⚠️ 注意：不要在打开开关时自动写入allowed=true
                     // allowed状态只应该由以下方式修改：

@@ -22,7 +22,7 @@ import os
 import sys
 import time
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 # 项目根目录
@@ -82,19 +82,50 @@ def log(message):
 
 
 def get_execution_file_path(account_id, strategy_key):
-    """获取执行许可文件路径"""
-    # top8_long -> bottom_signal_top8_long_execution.jsonl
-    # bottom8_long -> bottom_signal_bottom8_long_execution.jsonl
-    filename = f"{account_id}_bottom_signal_{strategy_key}_execution.jsonl"
+    """获取执行许可文件路径（按日期保存）"""
+    # 获取当前日期
+    date_str = datetime.now().strftime('%Y%m%d')
+    # top8_long -> bottom_signal_top8_long_execution_20260221.jsonl
+    # bottom8_long -> bottom_signal_bottom8_long_execution_20260221.jsonl
+    filename = f"{account_id}_bottom_signal_{strategy_key}_execution_{date_str}.jsonl"
     return DATA_DIR / filename
 
 
+def get_latest_execution_file(account_id, strategy_key):
+    """获取最新的执行文件（用于读取allowed状态）"""
+    # 查找最近3天的文件
+    for days_ago in range(3):
+        date = datetime.now() - timedelta(days=days_ago)
+        date_str = date.strftime('%Y%m%d')
+        filename = f"{account_id}_bottom_signal_{strategy_key}_execution_{date_str}.jsonl"
+        file_path = DATA_DIR / filename
+        if file_path.exists():
+            return file_path
+    return None
+
+
 def check_allowed_execution(account_id, strategy_key):
-    """检查是否允许执行（从JSONL文件头读取）"""
+    """检查是否允许执行（从今日JSONL文件头读取，如不存在则查找最近文件）"""
+    # 先检查今天的文件
     execution_file = get_execution_file_path(account_id, strategy_key)
     
     if not execution_file.exists():
-        # 文件不存在，创建并允许执行
+        # 今天的文件不存在，查找最近的文件
+        latest_file = get_latest_execution_file(account_id, strategy_key)
+        if latest_file:
+            # 从最近的文件读取状态
+            try:
+                with open(latest_file, 'r', encoding='utf-8') as f:
+                    first_line = f.readline().strip()
+                    if first_line:
+                        record = json.loads(first_line)
+                        allowed = record.get('allowed', False)
+                        log(f"📖 [{account_id}] 从历史文件读取allowed={allowed}: {strategy_key}")
+                        return allowed
+            except Exception as e:
+                log(f"❌ [{account_id}] 读取历史文件失败: {e}")
+        
+        # 没有历史文件，创建新文件并允许执行
         try:
             DATA_DIR.mkdir(parents=True, exist_ok=True)
             with open(execution_file, 'w', encoding='utf-8') as f:
@@ -104,12 +135,13 @@ def check_allowed_execution(account_id, strategy_key):
                     'reason': '初始化，允许执行'
                 }
                 f.write(json.dumps(record, ensure_ascii=False) + '\n')
-            log(f"✅ [{account_id}] 创建执行许可文件: {strategy_key}")
+            log(f"✅ [{account_id}] 创建今日执行许可文件: {strategy_key}")
             return True
         except Exception as e:
             log(f"❌ [{account_id}] 创建执行许可文件失败: {e}")
             return False
     
+    # 今天的文件存在，读取
     try:
         with open(execution_file, 'r', encoding='utf-8') as f:
             first_line = f.readline().strip()

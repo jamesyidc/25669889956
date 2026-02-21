@@ -25643,22 +25643,47 @@ def bottom_signal_long_bottom8_strategy(account_id):
 
 @app.route('/api/okx-trading/check-bottom-signal-allowed/<account_id>/<strategy_type>', methods=['GET'])
 def check_bottom_signal_strategy_allowed(account_id, strategy_type):
-    """检查见底信号做多策略是否允许执行（从JSONL读取）
+    """检查见底信号做多策略是否允许执行（从今日JSONL读取，如不存在则查找最近文件）
     strategy_type: 'top8_long' 或 'bottom8_long'
     """
     try:
         import json
         import os
-        from datetime import datetime
+        from datetime import datetime, timedelta
         
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        jsonl_dir = os.path.join(current_dir, 'data', 'okx_bottom_signal_long_execution')
+        jsonl_dir = os.path.join(current_dir, 'data', 'okx_auto_strategy')
         os.makedirs(jsonl_dir, exist_ok=True)
         
-        jsonl_file = os.path.join(jsonl_dir, f'{account_id}_bottom_signal_{strategy_type}_execution.jsonl')
+        # 获取今日日期
+        today = datetime.now().strftime('%Y%m%d')
+        jsonl_file = os.path.join(jsonl_dir, f'{account_id}_bottom_signal_{strategy_type}_execution_{today}.jsonl')
         
-        # 如果文件不存在，返回默认允许（首次执行）
+        # 如果今日文件不存在，查找最近3天的文件
         if not os.path.exists(jsonl_file):
+            found_file = None
+            for days_ago in range(1, 4):
+                date = datetime.now() - timedelta(days=days_ago)
+                date_str = date.strftime('%Y%m%d')
+                old_file = os.path.join(jsonl_dir, f'{account_id}_bottom_signal_{strategy_type}_execution_{date_str}.jsonl')
+                if os.path.exists(old_file):
+                    found_file = old_file
+                    break
+            
+            if found_file:
+                # 从历史文件读取
+                with open(found_file, 'r', encoding='utf-8') as f:
+                    first_line = f.readline().strip()
+                    if first_line:
+                        first_record = json.loads(first_line)
+                        return jsonify({
+                            'success': True,
+                            'allowed': first_record.get('allowed', False),
+                            'reason': f'Read from history file ({os.path.basename(found_file)})',
+                            'lastRecord': first_record
+                        })
+            
+            # 没有任何文件，返回默认允许（首次执行）
             return jsonify({
                 'success': True,
                 'allowed': True,
@@ -25666,7 +25691,7 @@ def check_bottom_signal_strategy_allowed(account_id, strategy_type):
                 'lastRecord': None
             })
         
-        # 读取第一行（文件头）
+        # 今日文件存在，读取第一行（文件头）
         with open(jsonl_file, 'r', encoding='utf-8') as f:
             first_line = f.readline().strip()
             if not first_line:
@@ -25683,7 +25708,7 @@ def check_bottom_signal_strategy_allowed(account_id, strategy_type):
         return jsonify({
             'success': True,
             'allowed': first_record.get('allowed', False),
-            'reason': 'Read from JSONL header',
+            'reason': 'Read from today\'s JSONL header',
             'lastRecord': first_record
         })
         
@@ -25698,7 +25723,7 @@ def check_bottom_signal_strategy_allowed(account_id, strategy_type):
 
 @app.route('/api/okx-trading/set-allowed-bottom-signal/<account_id>/<strategy_type>', methods=['POST'])
 def set_bottom_signal_strategy_allowed(account_id, strategy_type):
-    """设置见底信号做多策略的执行允许状态（写入JSONL文件头）
+    """设置见底信号做多策略的执行允许状态（写入今日JSONL文件头）
     strategy_type: 'top8_long' 或 'bottom8_long'
     """
     try:
@@ -25711,12 +25736,14 @@ def set_bottom_signal_strategy_allowed(account_id, strategy_type):
         reason = data.get('reason', 'Manual update')
         
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        jsonl_dir = os.path.join(current_dir, 'data', 'okx_bottom_signal_long_execution')
+        jsonl_dir = os.path.join(current_dir, 'data', 'okx_auto_strategy')
         os.makedirs(jsonl_dir, exist_ok=True)
         
-        jsonl_file = os.path.join(jsonl_dir, f'{account_id}_bottom_signal_{strategy_type}_execution.jsonl')
+        # 使用今日日期
+        today = datetime.now().strftime('%Y%m%d')
+        jsonl_file = os.path.join(jsonl_dir, f'{account_id}_bottom_signal_{strategy_type}_execution_{today}.jsonl')
         
-        # 读取现有记录（除了第一行）
+        # 读取今日文件的现有记录（除了第一行）
         existing_records = []
         if os.path.exists(jsonl_file):
             with open(jsonl_file, 'r', encoding='utf-8') as f:
@@ -25733,7 +25760,8 @@ def set_bottom_signal_strategy_allowed(account_id, strategy_type):
             'allowed': allowed,
             'reason': reason,
             'rsi_value': data.get('rsiValue'),
-            'sentiment': data.get('sentiment')
+            'sentiment': data.get('sentiment'),
+            'date': today
         }
         
         # 写入新的文件头和原有记录
@@ -25743,14 +25771,22 @@ def set_bottom_signal_strategy_allowed(account_id, strategy_type):
             for line in existing_records:
                 f.write(line)
         
+        print(f"✅ Set bottom signal {strategy_type} execution allowed={allowed} for {account_id} on {today}")
+        
         return jsonify({
             'success': True,
-            'message': 'Execution allowed status updated successfully',
+            'message': f'Execution allowed status updated successfully for {today}',
             'header_record': header_record
         })
         
     except Exception as e:
         import traceback
+        print(f"❌ Error setting bottom signal allowed: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
         return jsonify({
             'success': False,
             'error': str(e),

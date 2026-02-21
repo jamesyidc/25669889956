@@ -1327,7 +1327,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: #ccc;
+            background-color: #fca5a5;
             transition: .4s;
             border-radius: 24px;
             z-index: 1;
@@ -1361,7 +1361,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: #ccc;
+            background-color: #f87171;
             transition: .4s;
             border-radius: 24px;
             z-index: 1;
@@ -1380,6 +1380,74 @@
         }
         
         #topSignalBottom8ShortSwitch:checked + .slider-top-signal-bottom8-short:before {
+            transform: translateX(20px);
+        }
+        
+        /* 见底信号做多开关 - 涨幅前8 - 绿色 */
+        #bottomSignalTop8LongSwitch:checked + .slider-bottom-signal-top8-long {
+            background-color: #22c55e !important;
+        }
+        
+        .slider-bottom-signal-top8-long {
+            position: absolute;
+            cursor: pointer !important;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #86efac;
+            transition: .4s;
+            border-radius: 24px;
+            z-index: 1;
+        }
+        
+        .slider-bottom-signal-top8-long:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        #bottomSignalTop8LongSwitch:checked + .slider-bottom-signal-top8-long:before {
+            transform: translateX(20px);
+        }
+        
+        /* 见底信号做多开关 - 涨幅后8 - 深绿色 */
+        #bottomSignalBottom8LongSwitch:checked + .slider-bottom-signal-bottom8-long {
+            background-color: #10b981 !important;
+        }
+        
+        .slider-bottom-signal-bottom8-long {
+            position: absolute;
+            cursor: pointer !important;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #6ee7b7;
+            transition: .4s;
+            border-radius: 24px;
+            z-index: 1;
+        }
+        
+        .slider-bottom-signal-bottom8-long:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        #bottomSignalBottom8LongSwitch:checked + .slider-bottom-signal-bottom8-long:before {
             transform: translateX(20px);
         }
         
@@ -3279,7 +3347,7 @@ data/
                             <span style="color: #991b1b; font-weight: 600; font-size: 13px;">⚠️ 见顶信号+涨幅前8做空</span>
                             <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
                                 <input type="checkbox" id="topSignalTop8ShortSwitch" style="opacity: 0; width: 0; height: 0;">
-                                <span class="slider slider-top-signal-top8-short" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px;"></span>
+                                <span class="slider slider-top-signal-top8-short" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; transition: .4s; border-radius: 24px;"></span>
                             </label>
                         </div>
                         <div style="font-size: 11px; color: #991b1b; line-height: 1.5;">
@@ -3305,7 +3373,7 @@ data/
                             <span style="color: #7f1d1d; font-weight: 600; font-size: 13px;">⚠️ 见顶信号+涨幅后8做空</span>
                             <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
                                 <input type="checkbox" id="topSignalBottom8ShortSwitch" style="opacity: 0; width: 0; height: 0;">
-                                <span class="slider slider-top-signal-bottom8-short" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px;"></span>
+                                <span class="slider slider-top-signal-bottom8-short" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; transition: .4s; border-radius: 24px;"></span>
                             </label>
                         </div>
                         <div style="font-size: 11px; color: #7f1d1d; line-height: 1.5;">
@@ -3331,7 +3399,7 @@ data/
                             <span style="color: #166534; font-weight: 600; font-size: 13px;">🎯 见底信号+涨幅前8做多</span>
                             <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
                                 <input type="checkbox" id="bottomSignalTop8LongSwitch" style="opacity: 0; width: 0; height: 0;">
-                                <span class="slider slider-bottom-signal-top8-long" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px;"></span>
+                                <span class="slider slider-bottom-signal-top8-long" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; transition: .4s; border-radius: 24px;"></span>
                             </label>
                         </div>
                         <div style="font-size: 11px; color: #166534; line-height: 1.5;">
@@ -3375,7 +3443,7 @@ data/
                             <span style="color: #065f46; font-weight: 600; font-size: 13px;">🎯 见底信号+涨幅后8做多</span>
                             <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
                                 <input type="checkbox" id="bottomSignalBottom8LongSwitch" style="opacity: 0; width: 0; height: 0;">
-                                <span class="slider slider-bottom-signal-bottom8-long" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px;"></span>
+                                <span class="slider slider-bottom-signal-bottom8-long" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; transition: .4s; border-radius: 24px;"></span>
                             </label>
                         </div>
                         <div style="font-size: 11px; color: #065f46; line-height: 1.5;">

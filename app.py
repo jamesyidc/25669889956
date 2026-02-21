@@ -23679,6 +23679,7 @@ def api_signal_stats_jsonl():
         }), 500
 
 @app.route('/api/signal-timeline/computed-peaks')
+@app.route('/api/price-position/computed-peaks')
 def api_signal_computed_peaks():
     """
     获取信号统计数据并计算峰值（完全后端计算）

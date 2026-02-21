@@ -25898,6 +25898,98 @@ def submit_order_to_scheduler():
             'traceback': traceback.format_exc()
         }), 500
 
+@app.route('/api/order-scheduler/account-strategies', methods=['GET'])
+def get_account_strategies():
+    """获取所有账户的策略状态"""
+    try:
+        import json
+        import os
+        from datetime import datetime, timedelta
+        
+        # 获取账户列表
+        accounts_config_path = os.path.join(os.path.dirname(__file__), 'config', 'okx_accounts.json')
+        if not os.path.exists(accounts_config_path):
+            return jsonify({
+                'success': False,
+                'error': 'Accounts config not found'
+            }), 404
+        
+        with open(accounts_config_path, 'r', encoding='utf-8') as f:
+            config_data = json.load(f)
+        
+        # 获取accounts数组
+        accounts = config_data.get('accounts', [])
+        
+        # 策略列表
+        strategies = [
+            {'key': 'top8_long', 'name': '涨幅前8做多'},
+            {'key': 'bottom8_long', 'name': '涨幅后8做多'},
+            # 可以继续添加其他策略
+        ]
+        
+        # 数据目录
+        data_dir = os.path.join(os.path.dirname(__file__), 'data', 'okx_auto_strategy')
+        
+        # 收集所有账户的策略状态
+        result = []
+        
+        for account in accounts:
+            account_id = account.get('id', 'unknown')
+            account_name = account.get('name', account_id)
+            account_info = {
+                'account_id': account_id,
+                'account_name': account_name,
+                'strategies': []
+            }
+            
+            for strategy in strategies:
+                strategy_key = strategy['key']
+                
+                # 查找今日或最近的执行文件
+                allowed = False
+                last_execution_time = None
+                
+                for days_ago in range(3):
+                    date = datetime.now() - timedelta(days=days_ago)
+                    date_str = date.strftime('%Y%m%d')
+                    filename = f"{account_id}_bottom_signal_{strategy_key}_execution_{date_str}.jsonl"
+                    file_path = os.path.join(data_dir, filename)
+                    
+                    if os.path.exists(file_path):
+                        try:
+                            with open(file_path, 'r', encoding='utf-8') as f:
+                                first_line = f.readline().strip()
+                                if first_line:
+                                    record = json.loads(first_line)
+                                    allowed = record.get('allowed', False)
+                                    last_execution_time = record.get('timestamp')
+                                    break
+                        except Exception as e:
+                            print(f"Error reading {file_path}: {e}")
+                
+                account_info['strategies'].append({
+                    'key': strategy_key,
+                    'name': strategy['name'],
+                    'enabled': allowed,
+                    'last_update': last_execution_time
+                })
+            
+            result.append(account_info)
+        
+        return jsonify({
+            'success': True,
+            'accounts': result
+        })
+        
+    except Exception as e:
+        import traceback
+        print(f"Error getting account strategies: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=9002, debug=False)
 

@@ -548,10 +548,28 @@
             container.innerHTML = tableHTML;
         }
 
-        function renderAccounts(status) {
+        async function fetchAccountStrategies() {
+            try {
+                const response = await fetch('/api/order-scheduler/account-strategies');
+                const data = await response.json();
+                
+                if (data.success) {
+                    return data.accounts;
+                }
+                throw new Error(data.error || '获取账户策略失败');
+            } catch (error) {
+                console.error('获取账户策略失败:', error);
+                return [];
+            }
+        }
+
+        async function renderAccounts(status) {
             const container = document.getElementById('accountsContent');
             
-            if (!status || status.total_accounts === 0) {
+            // 获取账户策略状态
+            const accounts = await fetchAccountStrategies();
+            
+            if (!accounts || accounts.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon">👤</div>
@@ -561,27 +579,45 @@
                 return;
             }
 
-            // 生成账户列表（假设有account_main, account_sub1等）
-            const accounts = [];
-            for (let i = 0; i < status.total_accounts; i++) {
-                const accountId = i === 0 ? 'account_main' : `account_sub${i}`;
-                const isLocked = status.locked_accounts.includes(accountId);
-                accounts.push({ id: accountId, locked: isLocked });
-            }
-
             const accountsHTML = `
                 <div class="account-list">
-                    ${accounts.map(account => `
-                        <div class="account-item">
-                            <div class="account-info">
-                                <div class="account-name">${account.id}</div>
-                                <div class="account-status">
-                                    ${account.locked ? '🔒 执行中...' : '✅ 空闲'}
+                    ${accounts.map(account => {
+                        const isLocked = status && status.locked_accounts && status.locked_accounts.includes(account.account_id);
+                        return `
+                            <div class="account-item" style="flex-direction: column; align-items: flex-start;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 12px;">
+                                    <div class="account-info">
+                                        <div class="account-name">${account.account_name}</div>
+                                        <div class="account-status">
+                                            ${isLocked ? '🔒 执行中...' : '✅ 空闲'}
+                                        </div>
+                                    </div>
+                                    <div class="lock-indicator ${isLocked ? 'locked' : 'unlocked'}"></div>
+                                </div>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; width: 100%;">
+                                    ${account.strategies.map(strategy => `
+                                        <div style="background: ${strategy.enabled ? '#d1fae5' : '#f3f4f6'}; 
+                                                    border-radius: 8px; 
+                                                    padding: 8px 12px; 
+                                                    display: flex; 
+                                                    align-items: center; 
+                                                    gap: 8px;
+                                                    border: 1px solid ${strategy.enabled ? '#10b981' : '#e5e7eb'};">
+                                            <span style="font-size: 16px;">${strategy.enabled ? '✅' : '⭕'}</span>
+                                            <div style="flex: 1;">
+                                                <div style="font-size: 12px; font-weight: 600; color: ${strategy.enabled ? '#065f46' : '#6b7280'};">
+                                                    ${strategy.name}
+                                                </div>
+                                                <div style="font-size: 10px; color: ${strategy.enabled ? '#059669' : '#9ca3af'};">
+                                                    ${strategy.enabled ? '已开启' : '未开启'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `).join('')}
                                 </div>
                             </div>
-                            <div class="lock-indicator ${account.locked ? 'locked' : 'unlocked'}"></div>
-                        </div>
-                    `).join('')}
+                        `;
+                    }).join('')}
                 </div>
             `;
             

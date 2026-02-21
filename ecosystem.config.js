@@ -288,6 +288,17 @@ module.exports = {
       max_memory_restart: '500M',
       error_file: '/home/user/webapp/logs/rsi-takeprofit-error.log',
       out_file: '/home/user/webapp/logs/rsi-takeprofit-out.log'
+    },
+    {
+      name: 'new-high-low-collector',
+      script: 'source_code/new_high_low_collector.py',
+      interpreter: 'python3',
+      cwd: '/home/user/webapp',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '500M',
+      error_file: '/home/user/webapp/logs/new-high-low-error.log',
+      out_file: '/home/user/webapp/logs/new-high-low-out.log'
     }
   ]
 };

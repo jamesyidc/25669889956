@@ -26,8 +26,8 @@
   "XRP": {
     "highest_price": 1.503,
     "highest_time": "2026-02-16 22:49:58",
-    "lowest_price": 1.4269,
-    "lowest_time": "2026-02-21 12:34:35"
+    "lowest_price": 1.4265,
+    "lowest_time": "2026-02-21 12:44:50"
   },
   "ADA": {
     "highest_price": 0.2894,
@@ -92,8 +92,8 @@
   "AAVE": {
     "highest_price": 128.84,
     "highest_time": "2026-02-17 22:34:31",
-    "lowest_price": 116.32,
-    "lowest_time": "2026-02-21 12:41:26"
+    "lowest_price": 116.3,
+    "lowest_time": "2026-02-21 12:44:50"
   },
   "CRV": {
     "highest_price": 0.2567,
@@ -134,8 +134,8 @@
   "CRO": {
     "highest_price": 0.08095,
     "highest_time": "2026-02-17 07:11:53",
-    "lowest_price": 0.07803,
-    "lowest_time": "2026-02-21 12:34:35"
+    "lowest_price": 0.07797,
+    "lowest_time": "2026-02-21 12:44:50"
   },
   "HBAR": {
     "highest_price": 0.10201,

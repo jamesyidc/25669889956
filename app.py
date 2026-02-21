@@ -25920,11 +25920,14 @@ def get_account_strategies():
         # 获取accounts数组
         accounts = config_data.get('accounts', [])
         
-        # 策略列表
+        # 策略列表（6个策略）
         strategies = [
-            {'key': 'top8_long', 'name': '涨幅前8做多'},
-            {'key': 'bottom8_long', 'name': '涨幅后8做多'},
-            # 可以继续添加其他策略
+            {'key': 'top_signal_top8_short', 'name': '见顶信号+涨幅前8做空', 'file_pattern': 'top_signal_top8_short'},
+            {'key': 'top_signal_bottom8_short', 'name': '见顶信号+涨幅后8做空', 'file_pattern': 'top_signal_bottom8_short'},
+            {'key': 'bottom_signal_top8_long', 'name': '见底信号+涨幅前8做多', 'file_pattern': 'bottom_signal_top8_long'},
+            {'key': 'bottom_signal_bottom8_long', 'name': '见底信号+涨幅后8做多', 'file_pattern': 'bottom_signal_bottom8_long'},
+            {'key': 'btc_bottom8_copy', 'name': 'BTC触发涨幅后8名(抄底)', 'file_pattern': 'btc_bottom8_copy'},
+            {'key': 'btc_top8_chase', 'name': 'BTC触发涨幅前8名(追涨)', 'file_pattern': 'btc_top8_chase'},
         ]
         
         # 数据目录
@@ -25944,28 +25947,43 @@ def get_account_strategies():
             
             for strategy in strategies:
                 strategy_key = strategy['key']
+                file_pattern = strategy.get('file_pattern', strategy_key)
                 
                 # 查找今日或最近的执行文件
                 allowed = False
                 last_execution_time = None
+                file_found = False
+                
+                # 尝试多种文件名格式
+                filename_patterns = [
+                    # 格式1: account_id_strategy_execution_date.jsonl
+                    lambda d: f"{account_id}_{file_pattern}_execution_{d}.jsonl",
+                    # 格式2: account_id_bottom_signal_strategy_execution_date.jsonl (旧格式兼容)
+                    lambda d: f"{account_id}_bottom_signal_{file_pattern}_execution_{d}.jsonl",
+                ]
                 
                 for days_ago in range(3):
+                    if file_found:
+                        break
                     date = datetime.now() - timedelta(days=days_ago)
                     date_str = date.strftime('%Y%m%d')
-                    filename = f"{account_id}_bottom_signal_{strategy_key}_execution_{date_str}.jsonl"
-                    file_path = os.path.join(data_dir, filename)
                     
-                    if os.path.exists(file_path):
-                        try:
-                            with open(file_path, 'r', encoding='utf-8') as f:
-                                first_line = f.readline().strip()
-                                if first_line:
-                                    record = json.loads(first_line)
-                                    allowed = record.get('allowed', False)
-                                    last_execution_time = record.get('timestamp')
-                                    break
-                        except Exception as e:
-                            print(f"Error reading {file_path}: {e}")
+                    for pattern_func in filename_patterns:
+                        filename = pattern_func(date_str)
+                        file_path = os.path.join(data_dir, filename)
+                        
+                        if os.path.exists(file_path):
+                            try:
+                                with open(file_path, 'r', encoding='utf-8') as f:
+                                    first_line = f.readline().strip()
+                                    if first_line:
+                                        record = json.loads(first_line)
+                                        allowed = record.get('allowed', False)
+                                        last_execution_time = record.get('timestamp')
+                                        file_found = True
+                                        break
+                            except Exception as e:
+                                print(f"Error reading {file_path}: {e}")
                 
                 account_info['strategies'].append({
                     'key': strategy_key,

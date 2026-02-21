@@ -352,21 +352,36 @@
         .strategies-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 14px;
+            font-size: 13px;
+            overflow-x: auto;
+            display: block;
+        }
+
+        .strategies-table thead,
+        .strategies-table tbody {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
         }
 
         .strategies-table th {
             background: #f9fafb;
-            padding: 12px;
-            text-align: left;
+            padding: 10px 8px;
+            text-align: center;
             font-weight: 600;
             color: #374151;
             border-bottom: 2px solid #e5e7eb;
+            font-size: 12px;
         }
 
         .strategies-table td {
-            padding: 12px;
+            padding: 10px 8px;
             border-bottom: 1px solid #e5e7eb;
+            text-align: center;
+        }
+
+        .strategies-table td:first-child {
+            text-align: left;
         }
 
         .strategies-table tr:hover {
@@ -379,10 +394,11 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            text-align: left;
         }
 
         .account-id {
-            font-size: 12px;
+            font-size: 11px;
             color: #6b7280;
             margin-top: 2px;
         }
@@ -390,10 +406,10 @@
         .strategy-switch {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 12px;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 11px;
             font-weight: 500;
         }
 
@@ -408,9 +424,25 @@
         }
 
         .strategy-time {
-            font-size: 11px;
+            font-size: 10px;
             color: #9ca3af;
             margin-top: 2px;
+        }
+
+        @media (max-width: 1200px) {
+            .strategies-table {
+                font-size: 11px;
+            }
+            
+            .strategies-table th,
+            .strategies-table td {
+                padding: 8px 4px;
+            }
+            
+            .strategy-switch {
+                font-size: 10px;
+                padding: 2px 6px;
+            }
         }
     </style>
 </head>
@@ -806,13 +838,27 @@
                 <table class="strategies-table">
                     <thead>
                         <tr>
-                            <th>账户</th>
-                            <th>涨幅前8做多</th>
-                            <th>涨幅后8做多</th>
+                            <th style="min-width: 150px;">账户</th>
+                            <th style="min-width: 130px;">见顶前8空</th>
+                            <th style="min-width: 130px;">见顶后8空</th>
+                            <th style="min-width: 130px;">见底前8多</th>
+                            <th style="min-width: 130px;">见底后8多</th>
+                            <th style="min-width: 130px;">BTC后8抄底</th>
+                            <th style="min-width: 130px;">BTC前8追涨</th>
                         </tr>
                     </thead>
                     <tbody>
             `;
+
+            // 6个策略的key定义
+            const strategyKeys = [
+                'top_signal_top8_short',
+                'top_signal_bottom8_short',
+                'bottom_signal_top8_long',
+                'bottom_signal_bottom8_long',
+                'btc_bottom8_copy',
+                'btc_top8_chase'
+            ];
 
             accounts.forEach(account => {
                 html += `
@@ -828,51 +874,35 @@
                         </td>
                 `;
 
-                // 找到对应的策略状态
-                const top8Strategy = account.strategies.find(s => s.key === 'top8_long');
-                const bottom8Strategy = account.strategies.find(s => s.key === 'bottom8_long');
-
-                // 涨幅前8做多
-                html += '<td>';
-                if (top8Strategy) {
-                    const enabledClass = top8Strategy.enabled ? 'enabled' : 'disabled';
-                    const statusIcon = top8Strategy.enabled ? '✅' : '❌';
-                    const statusText = top8Strategy.enabled ? '已开启' : '未开启';
-                    html += `
-                        <div class="strategy-switch ${enabledClass}">
-                            <span>${statusIcon}</span>
-                            <span>${statusText}</span>
-                        </div>
-                    `;
-                    if (top8Strategy.last_update) {
-                        const updateTime = new Date(top8Strategy.last_update).toLocaleString('zh-CN');
-                        html += `<div class="strategy-time">更新: ${updateTime}</div>`;
+                // 为每个策略生成一列
+                strategyKeys.forEach(strategyKey => {
+                    const strategy = account.strategies.find(s => s.key === strategyKey);
+                    
+                    html += '<td>';
+                    if (strategy) {
+                        const enabledClass = strategy.enabled ? 'enabled' : 'disabled';
+                        const statusIcon = strategy.enabled ? '✅' : '❌';
+                        const statusText = strategy.enabled ? '开' : '关';
+                        html += `
+                            <div class="strategy-switch ${enabledClass}">
+                                <span>${statusIcon}</span>
+                                <span>${statusText}</span>
+                            </div>
+                        `;
+                        if (strategy.last_update) {
+                            const updateTime = new Date(strategy.last_update).toLocaleString('zh-CN', {
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            });
+                            html += `<div class="strategy-time">${updateTime}</div>`;
+                        }
+                    } else {
+                        html += '<span style="color: #9ca3af;">-</span>';
                     }
-                } else {
-                    html += '<span style="color: #9ca3af;">-</span>';
-                }
-                html += '</td>';
-
-                // 涨幅后8做多
-                html += '<td>';
-                if (bottom8Strategy) {
-                    const enabledClass = bottom8Strategy.enabled ? 'enabled' : 'disabled';
-                    const statusIcon = bottom8Strategy.enabled ? '✅' : '❌';
-                    const statusText = bottom8Strategy.enabled ? '已开启' : '未开启';
-                    html += `
-                        <div class="strategy-switch ${enabledClass}">
-                            <span>${statusIcon}</span>
-                            <span>${statusText}</span>
-                        </div>
-                    `;
-                    if (bottom8Strategy.last_update) {
-                        const updateTime = new Date(bottom8Strategy.last_update).toLocaleString('zh-CN');
-                        html += `<div class="strategy-time">更新: ${updateTime}</div>`;
-                    }
-                } else {
-                    html += '<span style="color: #9ca3af;">-</span>';
-                }
-                html += '</td>';
+                    html += '</td>';
+                });
 
                 html += '</tr>';
             });

@@ -2274,6 +2274,11 @@ pm2 status                                                # 查看所有进程�
                     <i class="fas fa-arrow-up text-emerald-600"></i>
                 </div>
                 <div id="upRatio" class="text-3xl font-bold text-gray-800">--</div>
+                <div class="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>平均: <span id="upRatioAvg" class="font-semibold">--</span></span>
+                    <span>最小: <span id="upRatioMin" class="font-semibold">--</span></span>
+                    <span>最大: <span id="upRatioMax" class="font-semibold">--</span></span>
+                </div>
                 <div class="text-sm text-gray-500 mt-2">
                     <i class="far fa-clock mr-1"></i>
                     <span id="upRatioUpdateTime">--</span>
@@ -3528,6 +3533,37 @@ pm2 status                                                # 查看所有进程�
                 
                 if (result.success && result.data && result.data.length > 0) {
                     historyData = result.data;
+                    
+                    // 计算上涨占比的统计值（平均值、最小值、最大值）
+                    const upRatios = historyData.map(d => {
+                        if (d.up_ratio !== undefined) {
+                            return d.up_ratio;
+                        } else if (d.changes) {
+                            const changesArray = Object.values(d.changes);
+                            const upCoins = changesArray.filter(coin => coin.change_pct > 0).length;
+                            const totalCoins = changesArray.length;
+                            return totalCoins > 0 ? (upCoins / totalCoins * 100) : 0;
+                        }
+                        return 0;
+                    }).filter(v => v !== undefined);
+                    
+                    if (upRatios.length > 0) {
+                        const avgUpRatio = upRatios.reduce((sum, v) => sum + v, 0) / upRatios.length;
+                        const minUpRatio = Math.min(...upRatios);
+                        const maxUpRatio = Math.max(...upRatios);
+                        
+                        // 更新显示
+                        document.getElementById('upRatioAvg').textContent = avgUpRatio.toFixed(1) + '%';
+                        document.getElementById('upRatioMin').textContent = minUpRatio.toFixed(1) + '%';
+                        document.getElementById('upRatioMax').textContent = maxUpRatio.toFixed(1) + '%';
+                        
+                        console.log('📊 上涨占比统计:', {
+                            平均值: avgUpRatio.toFixed(1) + '%',
+                            最小值: minUpRatio.toFixed(1) + '%',
+                            最大值: maxUpRatio.toFixed(1) + '%',
+                            数据点: upRatios.length
+                        });
+                    }
                     
                     // 提取时间和总涨跌幅（使用beijing_time字段，格式化为HH:MM:SS）
                     const times = historyData.map(d => {

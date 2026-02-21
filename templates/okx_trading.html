@@ -7804,6 +7804,69 @@ ${data.sMsg || result.message || ''}`);
             }
         }
         
+        // 🔧 新增：保存单个开关设置（先加载服务器当前配置，再更新指定字段）
+        async function saveSingleSwitchSetting(fieldName, fieldValue, silent = false) {
+            const account = accounts.find(acc => acc.id === currentAccount);
+            if (!account) {
+                if (!silent) alert('⚠️ 请先选择账户');
+                return false;
+            }
+            
+            try {
+                // 1. 先从服务器加载当前配置
+                const getResponse = await fetch(`/api/okx-trading/tpsl-settings/${account.id}`);
+                const currentData = await getResponse.json();
+                
+                if (!currentData.success) {
+                    console.error('❌ 加载当前配置失败:', currentData.error);
+                    return false;
+                }
+                
+                // 2. 合并当前配置和新的字段值
+                const settings = {
+                    takeProfitThreshold: currentData.settings.takeProfitThreshold || 50,
+                    stopLossThreshold: currentData.settings.stopLossThreshold || -30,
+                    takeProfitEnabled: currentData.settings.takeProfitEnabled || false,
+                    stopLossEnabled: currentData.settings.stopLossEnabled || false,
+                    rsiTakeProfitThreshold: currentData.settings.rsiTakeProfitThreshold || 1900,
+                    rsiTakeProfitEnabled: currentData.settings.rsiTakeProfitEnabled || false,
+                    rsiShortTakeProfitThreshold: currentData.settings.rsiShortTakeProfitThreshold || 810,
+                    rsiShortTakeProfitEnabled: currentData.settings.rsiShortTakeProfitEnabled || false,
+                    top_signal_top8_short_enabled: currentData.settings.top_signal_top8_short_enabled || false,
+                    top_signal_bottom8_short_enabled: currentData.settings.top_signal_bottom8_short_enabled || false,
+                    bottom_signal_top8_long_enabled: currentData.settings.bottom_signal_top8_long_enabled || false,
+                    bottom_signal_bottom8_long_enabled: currentData.settings.bottom_signal_bottom8_long_enabled || false,
+                    sentimentTakeProfitEnabled: currentData.settings.sentimentTakeProfitEnabled || false,
+                    maxPositionValueUsdt: currentData.settings.maxPositionValueUsdt || 5.0
+                };
+                
+                // 3. 更新指定字段
+                settings[fieldName] = fieldValue;
+                
+                console.log(`🔄 [saveSingleSwitch] 字段=${fieldName}, 新值=${fieldValue}`, settings);
+                
+                // 4. 保存到服务器
+                const saveResponse = await fetch(`/api/okx-trading/tpsl-settings/${account.id}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings)
+                });
+                
+                const result = await saveResponse.json();
+                
+                if (result.success) {
+                    console.log(`✅ [saveSingleSwitch] ${fieldName} 已保存为 ${fieldValue}`);
+                    return true;
+                } else {
+                    console.error(`❌ [saveSingleSwitch] 保存失败:`, result.error);
+                    return false;
+                }
+            } catch (e) {
+                console.error(`❌ [saveSingleSwitch] 异常:`, e);
+                return false;
+            }
+        }
+        
         // 保存止盈止损设置（到服务器API和JSONL文件，按账户独立存储）
         async function saveTakeProfitStopLossSettings(silent = false) {
             const account = accounts.find(acc => acc.id === currentAccount);
@@ -8449,8 +8512,13 @@ ${data.sMsg || result.message || ''}`);
                     const enabled = this.checked;
                     const threshold = parseFloat(document.getElementById('takeProfitThreshold').value) || 50;
                     
-                    // 保存设置（静默模式）
-                    await saveTakeProfitStopLossSettings(true);
+                    // 🔧 使用新函数：只更新本开关，不影响其他开关
+                    const saved = await saveSingleSwitchSetting('takeProfitEnabled', enabled, true);
+                    if (!saved) {
+                        console.error('❌ 止盈开关保存失败');
+                        this.checked = !enabled;  // 恢复原状态
+                        return;
+                    }
                     
                     // 记录策略日志
                     try {
@@ -8497,8 +8565,13 @@ ${data.sMsg || result.message || ''}`);
                     const enabled = this.checked;
                     const threshold = parseFloat(document.getElementById('stopLossThreshold').value) || -30;
                     
-                    // 保存设置（静默模式）
-                    await saveTakeProfitStopLossSettings(true);
+                    // 🔧 使用新函数：只更新本开关，不影响其他开关
+                    const saved = await saveSingleSwitchSetting('stopLossEnabled', enabled, true);
+                    if (!saved) {
+                        console.error('❌ 止损开关保存失败');
+                        this.checked = !enabled;  // 恢复原状态
+                        return;
+                    }
                     
                     // 记录策略日志
                     try {
@@ -8545,8 +8618,13 @@ ${data.sMsg || result.message || ''}`);
                     const enabled = this.checked;
                     const rsiValue = parseFloat(document.getElementById('rsiTakeProfitThreshold').value) || 1900;
                     
-                    // 1. 保存设置（静默模式）
-                    await saveTakeProfitStopLossSettings(true);
+                    // 1. 🔧 使用新函数：只更新本开关，不影响其他开关
+                    const saved = await saveSingleSwitchSetting('rsiTakeProfitEnabled', enabled, true);
+                    if (!saved) {
+                        console.error('❌ RSI多单止盈开关保存失败');
+                        this.checked = !enabled;  // 恢复原状态
+                        return;
+                    }
                     
                     // 2. 设置JSONL执行许可（多单）
                     try {
@@ -8613,8 +8691,13 @@ ${data.sMsg || result.message || ''}`);
                     const enabled = this.checked;
                     const rsiValue = parseFloat(document.getElementById('rsiShortTakeProfitThreshold').value) || 810;
                     
-                    // 1. 保存设置（静默模式）
-                    await saveTakeProfitStopLossSettings(true);
+                    // 1. 🔧 使用新函数：只更新本开关，不影响其他开关
+                    const saved = await saveSingleSwitchSetting('rsiShortTakeProfitEnabled', enabled, true);
+                    if (!saved) {
+                        console.error('❌ RSI空单止盈开关保存失败');
+                        this.checked = !enabled;  // 恢复原状态
+                        return;
+                    }
                     
                     // 2. 设置JSONL执行许可（空单）
                     try {
@@ -8689,8 +8772,13 @@ ${data.sMsg || result.message || ''}`);
                     
                     const enabled = this.checked;
                     
-                    // 1. 保存设置（静默模式）
-                    await saveTakeProfitStopLossSettings(true);
+                    // 1. 🔧 使用新函数：只更新本开关，不影响其他开关
+                    const saved = await saveSingleSwitchSetting('sentimentTakeProfitEnabled', enabled, true);
+                    if (!saved) {
+                        console.error('❌ 市场情绪止盈开关保存失败');
+                        this.checked = !enabled;  // 恢复原状态
+                        return;
+                    }
                     
                     // 2. 记录策略日志
                     try {

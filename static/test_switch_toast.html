@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>开关测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .switch-container {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .switch-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        input[type="number"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100px;
+        }
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 25px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 25px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 17px;
+            width: 17px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #4CAF50;
+        }
+        input:checked + .slider:before {
+            transform: translateX(25px);
+        }
+        #log {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        button {
+            margin: 10px 5px;
+            padding: 10px 20px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0b7dda;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 开关保存功能测试</h1>
+    
+    <div class="switch-container">
+        <div class="switch-label">
+            <span>止盈管理</span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="takeProfitSwitch">
+                <span class="slider"></span>
+            </label>
+        </div>
+        <label>阈值 (USDT): <input type="number" id="takeProfitThreshold" value="50"></label>
+    </div>
+
+    <div class="switch-container">
+        <div class="switch-label">
+            <span>止损管理</span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="stopLossSwitch">
+                <span class="slider"></span>
+            </label>
+        </div>
+        <label>阈值 (USDT): <input type="number" id="stopLossThreshold" value="-30"></label>
+    </div>
+
+    <div class="switch-container">
+        <div class="switch-label">
+            <span>RSI多单止盈</span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="rsiTakeProfitSwitch">
+                <span class="slider"></span>
+            </label>
+        </div>
+        <label>阈值 (RSI): <input type="number" id="rsiTakeProfitThreshold" value="1900"></label>
+    </div>
+
+    <div>
+        <button onclick="checkSettings()">📊 查看当前设置</button>
+        <button onclick="testToggle()">🧪 测试开关切换</button>
+        <button onclick="clearLog()">🗑️ 清空日志</button>
+    </div>
+
+    <div id="log">
+        <div class="log-entry">📝 等待操作...</div>
+    </div>
+
+    <script>
+        const ACCOUNT_ID = 'account_main';
+        let currentSettings = null;
+
+        // Toast 通知函数
+        function showSuccessToast(message, duration = 3000) {
+            const oldToast = document.getElementById('successToast');
+            if (oldToast) oldToast.remove();
+            
+            const toast = document.createElement('div');
+            toast.id = 'successToast';
+            toast.style.cssText = `
+                position: fixed; top: 80px; right: 20px;
+                background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+                color: white; padding: 16px 24px; border-radius: 12px;
+                box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+                font-size: 15px; font-weight: 500; z-index: 10000;
+                animation: slideInRight 0.3s ease-out;
+                min-width: 280px; max-width: 400px;
+                display: flex; align-items: center; gap: 12px;
+                border: 2px solid rgba(255, 255, 255, 0.3);
+            `;
+            
+            toast.innerHTML = `
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                <span>${message}</span>
+            `;
+            
+            if (!document.getElementById('toastAnimations')) {
+                const style = document.createElement('style');
+                style.id = 'toastAnimations';
+                style.textContent = `
+                    @keyframes slideInRight {
+                        from { transform: translateX(400px); opacity: 0; }
+                        to { transform: translateX(0); opacity: 1; }
+                    }
+                    @keyframes slideOutRight {
+                        from { transform: translateX(0); opacity: 1; }
+                        to { transform: translateX(400px); opacity: 0; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideOutRight 0.3s ease-out';
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
+
+        function addLog(message, type = 'info') {
+            const log = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            const timestamp = new Date().toLocaleTimeString();
+            entry.innerHTML = `[${timestamp}] ${message}`;
+            if (type === 'success') entry.style.color = '#4CAF50';
+            if (type === 'error') entry.style.color = '#f44336';
+            log.insertBefore(entry, log.firstChild);
+        }
+
+        async function loadSettings() {
+            try {
+                const response = await fetch(`/api/okx-trading/tpsl-settings/${ACCOUNT_ID}`);
+                const data = await response.json();
+                if (data.success) {
+                    currentSettings = data.settings;
+                    
+                    // 更新 UI
+                    document.getElementById('takeProfitSwitch').checked = currentSettings.takeProfitEnabled || false;
+                    document.getElementById('stopLossSwitch').checked = currentSettings.stopLossEnabled || false;
+                    document.getElementById('rsiTakeProfitSwitch').checked = currentSettings.rsiTakeProfitEnabled || false;
+                    
+                    document.getElementById('takeProfitThreshold').value = currentSettings.takeProfitThreshold || 50;
+                    document.getElementById('stopLossThreshold').value = currentSettings.stopLossThreshold || -30;
+                    document.getElementById('rsiTakeProfitThreshold').value = currentSettings.rsiTakeProfitThreshold || 1900;
+                    
+                    addLog('✅ 设置加载成功', 'success');
+                    return true;
+                }
+            } catch (e) {
+                addLog('❌ 加载设置失败: ' + e.message, 'error');
+                return false;
+            }
+        }
+
+        async function saveSingleSwitchSetting(fieldName, fieldValue) {
+            try {
+                // 1. 先加载当前设置
+                const response = await fetch(`/api/okx-trading/tpsl-settings/${ACCOUNT_ID}`);
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error('加载当前配置失败');
+                }
+                
+                // 2. 复制当前配置
+                const settings = { ...data.settings };
+                
+                // 3. 只更新指定字段
+                settings[fieldName] = fieldValue;
+                
+                addLog(`🔄 保存 ${fieldName} = ${fieldValue}`, 'info');
+                
+                // 4. 保存到服务器
+                const saveResponse = await fetch(`/api/okx-trading/tpsl-settings/${ACCOUNT_ID}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings)
+                });
+                
+                const result = await saveResponse.json();
+                
+                if (result.success) {
+                    addLog(`✅ ${fieldName} 保存成功`, 'success');
+                    return true;
+                } else {
+                    addLog(`❌ ${fieldName} 保存失败: ${result.error}`, 'error');
+                    return false;
+                }
+            } catch (e) {
+                addLog(`❌ 保存异常: ${e.message}`, 'error');
+                return false;
+            }
+        }
+
+        // 开关事件处理
+        document.getElementById('takeProfitSwitch').addEventListener('change', async function() {
+            const enabled = this.checked;
+            const threshold = parseFloat(document.getElementById('takeProfitThreshold').value) || 50;
+            
+            const saved = await saveSingleSwitchSetting('takeProfitEnabled', enabled);
+            if (saved) {
+                showSuccessToast(`✅ 止盈设置已保存：${enabled ? '已启用' : '已停用'}，阈值 ${threshold} USDT`);
+            } else {
+                this.checked = !enabled;
+                alert('❌ 保存失败，请重试');
+            }
+        });
+
+        document.getElementById('stopLossSwitch').addEventListener('change', async function() {
+            const enabled = this.checked;
+            const threshold = parseFloat(document.getElementById('stopLossThreshold').value) || -30;
+            
+            const saved = await saveSingleSwitchSetting('stopLossEnabled', enabled);
+            if (saved) {
+                showSuccessToast(`✅ 止损设置已保存：${enabled ? '已启用' : '已停用'}，阈值 ${threshold} USDT`);
+            } else {
+                this.checked = !enabled;
+                alert('❌ 保存失败，请重试');
+            }
+        });
+
+        document.getElementById('rsiTakeProfitSwitch').addEventListener('change', async function() {
+            const enabled = this.checked;
+            const threshold = parseFloat(document.getElementById('rsiTakeProfitThreshold').value) || 1900;
+            
+            const saved = await saveSingleSwitchSetting('rsiTakeProfitEnabled', enabled);
+            if (saved) {
+                showSuccessToast(`✅ RSI多单止盈已保存：${enabled ? '已启用' : '已停用'}，阈值 ${threshold}`);
+            } else {
+                this.checked = !enabled;
+                alert('❌ 保存失败，请重试');
+            }
+        });
+
+        async function checkSettings() {
+            await loadSettings();
+            if (currentSettings) {
+                const msg = `
+                    止盈: ${currentSettings.takeProfitEnabled ? '✅' : '❌'} (${currentSettings.takeProfitThreshold})
+                    止损: ${currentSettings.stopLossEnabled ? '✅' : '❌'} (${currentSettings.stopLossThreshold})
+                    RSI多单: ${currentSettings.rsiTakeProfitEnabled ? '✅' : '❌'} (${currentSettings.rsiTakeProfitThreshold})
+                `;
+                alert(msg);
+            }
+        }
+
+        async function testToggle() {
+            addLog('🧪 开始测试...', 'info');
+            
+            // 测试1: 打开止盈
+            document.getElementById('takeProfitSwitch').click();
+            await new Promise(r => setTimeout(r, 500));
+            
+            // 测试2: 打开止损
+            document.getElementById('stopLossSwitch').click();
+            await new Promise(r => setTimeout(r, 500));
+            
+            addLog('🧪 测试完成，请查看右上角的 Toast 通知', 'info');
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '<div class="log-entry">📝 日志已清空</div>';
+        }
+
+        // 页面加载时加载设置
+        window.addEventListener('load', () => {
+            addLog('🚀 页面加载完成', 'info');
+            loadSettings();
+        });
+    </script>
+</body>
+</html>

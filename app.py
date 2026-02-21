@@ -25794,12 +25794,6 @@ def set_bottom_signal_strategy_allowed(account_id, strategy_type):
         }), 500
 
 
-# 数据管理页面路由
-@app.route('/data-management')
-def data_management_page():
-    """数据管理和备份页面"""
-    return render_template('data_management.html')
-
 # ==================== 订单调度中心路由 ====================
 from order_scheduler import get_scheduler
 

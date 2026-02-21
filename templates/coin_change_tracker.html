@@ -2451,6 +2451,15 @@ pm2 status                                                # 查看所有进程�
                     </span>
                 </div>
                 <div id="trendChart" style="height: 800px;"></div>
+                
+                <!-- 10分钟上涨占比柱状图 -->
+                <div class="mt-4 bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <h3 class="text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-chart-bar mr-2 text-blue-600"></i>
+                        10分钟上涨占比平均值
+                    </h3>
+                    <div id="upRatioBarChart" style="height: 200px;"></div>
+                </div>
             </div>
         </div>
 
@@ -2994,10 +3003,12 @@ pm2 status                                                # 查看所有进程�
         // 图表实例
         let trendChart = null;
         let rankChart = null;
+        let upRatioBarChart = null;  // 10分钟上涨占比柱状图
         
         // 历史数据（用于趋势图）
         let historyData = [];
         let rsiHistoryData = [];  // RSI历史数据
+        let upRatioHistory = [];  // 上涨占比历史数据
         
         // 最后的RSI数据缓存
         let lastRSIData = {
@@ -3039,22 +3050,26 @@ pm2 status                                                # 查看所有进程�
         function initCharts() {
             const trendChartDom = document.getElementById('trendChart');
             const rankChartDom = document.getElementById('rankChart');
+            const upRatioBarChartDom = document.getElementById('upRatioBarChart');
             
             console.log('📊 初始化图表...');
             console.log('趋势图容器:', trendChartDom, '宽度:', trendChartDom.offsetWidth, '高度:', trendChartDom.offsetHeight);
             console.log('排行榜容器:', rankChartDom, '宽度:', rankChartDom.offsetWidth, '高度:', rankChartDom.offsetHeight);
+            console.log('上涨占比柱状图容器:', upRatioBarChartDom, '宽度:', upRatioBarChartDom.offsetWidth, '高度:', upRatioBarChartDom.offsetHeight);
             
             trendChart = echarts.init(trendChartDom);
             rankChart = echarts.init(rankChartDom);
+            upRatioBarChart = echarts.init(upRatioBarChartDom);
             
             // 强制resize确保图表正确显示
             setTimeout(() => {
                 trendChart.resize();
                 rankChart.resize();
+                upRatioBarChart.resize();
                 console.log('📊 图表已resize');
             }, 100);
             
-            console.log('📊 ECharts实例已创建:', {trendChart, rankChart});
+            console.log('📊 ECharts实例已创建:', {trendChart, rankChart, upRatioBarChart});
             
             // 趋势图配置
             trendChart.setOption({
@@ -4582,6 +4597,9 @@ pm2 status                                                # 查看所有进程�
                     
                     // 更新B-A-C波峰详情框
                     updateWavePeakDetails(wavePeaksData, currentState);
+                    
+                    // 更新10分钟上涨占比柱状图
+                    update10MinUpRatioBarChart(historyData);
                 } else {
                     console.warn('历史数据为空或加载失败');
                     console.warn('Result:', result);
@@ -4590,10 +4608,160 @@ pm2 status                                                # 查看所有进程�
                         xAxis: { data: [] },
                         series: [{ data: [] }]
                     }, true, true); // notMerge=true, lazyUpdate=true
+                    
+                    // 清空柱状图
+                    if (upRatioBarChart) {
+                        upRatioBarChart.setOption({
+                            xAxis: { data: [] },
+                            series: [{ data: [] }]
+                        }, true);
+                    }
                 }
             } catch (error) {
                 console.error('更新历史数据异常:', error);
             }
+        }
+        
+        // 更新10分钟上涨占比柱状图
+        function update10MinUpRatioBarChart(data) {
+            if (!upRatioBarChart || !data || data.length === 0) {
+                console.warn('柱状图实例不存在或数据为空');
+                return;
+            }
+            
+            // 按10分钟分组计算平均上涨占比
+            const interval = 10; // 10分钟
+            const groupedData = [];
+            const labels = [];
+            
+            // 遍历数据，每10分钟取一个平均值
+            for (let i = 0; i < data.length; i++) {
+                const item = data[i];
+                const timeStr = item.beijing_time ? item.beijing_time.split(' ')[1] : (item.time || '');
+                
+                if (!timeStr) continue;
+                
+                // 解析时间 HH:MM:SS
+                const [hours, minutes, seconds] = timeStr.split(':').map(Number);
+                const totalMinutes = hours * 60 + minutes;
+                
+                // 计算属于哪个10分钟区间
+                const groupIndex = Math.floor(totalMinutes / interval);
+                
+                // 计算上涨占比
+                let upRatio = 0;
+                if (item.up_ratio !== undefined) {
+                    upRatio = item.up_ratio;
+                } else if (item.changes) {
+                    const changesArray = Object.values(item.changes);
+                    const upCoins = changesArray.filter(coin => coin.change_pct > 0).length;
+                    const totalCoins = changesArray.length;
+                    upRatio = totalCoins > 0 ? (upCoins / totalCoins * 100) : 0;
+                }
+                
+                // 初始化分组
+                if (!groupedData[groupIndex]) {
+                    groupedData[groupIndex] = {
+                        sum: 0,
+                        count: 0,
+                        startTime: `${String(Math.floor(groupIndex * interval / 60)).padStart(2, '0')}:${String(groupIndex * interval % 60).padStart(2, '0')}`
+                    };
+                }
+                
+                groupedData[groupIndex].sum += upRatio;
+                groupedData[groupIndex].count++;
+            }
+            
+            // 计算平均值并生成最终数据
+            const barData = [];
+            const timeLabels = [];
+            
+            groupedData.forEach((group, index) => {
+                if (group && group.count > 0) {
+                    const avgUpRatio = group.sum / group.count;
+                    barData.push(avgUpRatio.toFixed(2));
+                    timeLabels.push(group.startTime);
+                }
+            });
+            
+            console.log('📊 10分钟柱状图数据:', {barData, timeLabels});
+            
+            // 更新柱状图
+            upRatioBarChart.setOption({
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    },
+                    formatter: function(params) {
+                        const p = params[0];
+                        const value = parseFloat(p.value);
+                        const time = p.axisValue;
+                        
+                        let color = '#6B7280';
+                        if (value >= 60) color = '#10B981'; // 绿色
+                        else if (value >= 40) color = '#F59E0B'; // 橙色
+                        else color = '#EF4444'; // 红色
+                        
+                        return `
+                            <div style="padding: 8px; min-width: 150px;">
+                                <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px;">
+                                    <i class="far fa-clock" style="margin-right: 4px;"></i>${time}
+                                </div>
+                                <div style="margin-bottom: 4px;">
+                                    ${p.marker}<span style="font-weight: 600;">上涨占比平均值</span>
+                                </div>
+                                <div style="font-size: 16px; font-weight: bold; color: ${color};">
+                                    ${value}%
+                                </div>
+                            </div>
+                        `;
+                    }
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '10%',
+                    top: '10%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    data: timeLabels,
+                    axisLabel: {
+                        rotate: 45,
+                        fontSize: 10,
+                        interval: Math.floor(timeLabels.length / 20) // 自动调整显示间隔
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '上涨占比(%)',
+                    nameTextStyle: {
+                        fontSize: 11
+                    },
+                    axisLabel: {
+                        formatter: '{value}%',
+                        fontSize: 10
+                    },
+                    min: 0,
+                    max: 100
+                },
+                series: [{
+                    name: '上涨占比',
+                    type: 'bar',
+                    data: barData,
+                    itemStyle: {
+                        color: function(params) {
+                            const value = parseFloat(params.value);
+                            if (value >= 60) return '#10B981'; // 绿色
+                            if (value >= 40) return '#F59E0B'; // 橙色
+                            return '#EF4444'; // 红色
+                        }
+                    },
+                    barWidth: '60%'
+                }]
+            }, true);
         }
         
         // 强制刷新数据（用户手动触发）

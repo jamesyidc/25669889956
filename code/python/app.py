@@ -16071,6 +16071,142 @@ def save_okx_auto_strategy(account_id):
             'traceback': traceback.format_exc()
         })
 
+# ==================== RSI策略独立配置 API ====================
+@app.route('/api/okx-trading/rsi-strategies/<account_id>', methods=['GET'])
+def get_rsi_strategies(account_id):
+    """获取指定账户的RSI策略配置"""
+    try:
+        import json
+        import os
+        
+        # 获取项目根目录
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(os.path.dirname(current_dir))
+        settings_dir = os.path.join(project_root, 'data', 'okx_rsi_strategies')
+        os.makedirs(settings_dir, exist_ok=True)
+        
+        settings_file = os.path.join(settings_dir, f'{account_id}_rsi_strategies.jsonl')
+        
+        # 如果文件存在，读取最新配置
+        if os.path.exists(settings_file):
+            with open(settings_file, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+                if lines:
+                    # 读取最后一行（最新配置）
+                    last_line = lines[-1].strip()
+                    if last_line:
+                        settings = json.loads(last_line)
+                        return jsonify({
+                            'success': True,
+                            'settings': settings
+                        })
+        
+        # 返回默认设置
+        default_settings = {
+            'account_id': account_id,
+            'enabled': True,
+            
+            # 见顶信号做空策略 - 涨幅前8
+            'top_signal_top8_short_enabled': False,
+            'top_signal_top8_short_rsi_threshold': 1800,
+            'top_signal_top8_short_max_per_coin': 5.0,
+            
+            # 见顶信号做空策略 - 涨幅后8
+            'top_signal_bottom8_short_enabled': False,
+            'top_signal_bottom8_short_rsi_threshold': 1800,
+            'top_signal_bottom8_short_max_per_coin': 5.0,
+            
+            # 见底信号做多策略 - 涨幅前8
+            'bottom_signal_top8_long_enabled': False,
+            'bottom_signal_top8_long_rsi_threshold': 800,
+            'bottom_signal_top8_long_max_per_coin': 5.0,
+            
+            # 见底信号做多策略 - 涨幅后8
+            'bottom_signal_bottom8_long_enabled': False,
+            'bottom_signal_bottom8_long_rsi_threshold': 800,
+            'bottom_signal_bottom8_long_max_per_coin': 5.0,
+            
+            'last_updated': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'comment': 'RSI策略独立配置 - 包含4个自动交易策略'
+        }
+        
+        return jsonify({
+            'success': True,
+            'settings': default_settings
+        })
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        })
+
+@app.route('/api/okx-trading/rsi-strategies/<account_id>', methods=['POST'])
+def save_rsi_strategies(account_id):
+    """保存指定账户的RSI策略配置到JSONL"""
+    try:
+        import json
+        import os
+        from datetime import datetime
+        
+        # 获取项目根目录
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(os.path.dirname(current_dir))
+        settings_dir = os.path.join(project_root, 'data', 'okx_rsi_strategies')
+        os.makedirs(settings_dir, exist_ok=True)
+        
+        settings_file = os.path.join(settings_dir, f'{account_id}_rsi_strategies.jsonl')
+        
+        # 获取前端传来的设置
+        data = request.get_json()
+        
+        # 构建设置对象
+        settings = {
+            'account_id': account_id,
+            'enabled': bool(data.get('enabled', True)),
+            
+            # 见顶信号做空策略 - 涨幅前8
+            'top_signal_top8_short_enabled': bool(data.get('top_signal_top8_short_enabled', False)),
+            'top_signal_top8_short_rsi_threshold': float(data.get('top_signal_top8_short_rsi_threshold', 1800)),
+            'top_signal_top8_short_max_per_coin': float(data.get('top_signal_top8_short_max_per_coin', 5.0)),
+            
+            # 见顶信号做空策略 - 涨幅后8
+            'top_signal_bottom8_short_enabled': bool(data.get('top_signal_bottom8_short_enabled', False)),
+            'top_signal_bottom8_short_rsi_threshold': float(data.get('top_signal_bottom8_short_rsi_threshold', 1800)),
+            'top_signal_bottom8_short_max_per_coin': float(data.get('top_signal_bottom8_short_max_per_coin', 5.0)),
+            
+            # 见底信号做多策略 - 涨幅前8
+            'bottom_signal_top8_long_enabled': bool(data.get('bottom_signal_top8_long_enabled', False)),
+            'bottom_signal_top8_long_rsi_threshold': float(data.get('bottom_signal_top8_long_rsi_threshold', 800)),
+            'bottom_signal_top8_long_max_per_coin': float(data.get('bottom_signal_top8_long_max_per_coin', 5.0)),
+            
+            # 见底信号做多策略 - 涨幅后8
+            'bottom_signal_bottom8_long_enabled': bool(data.get('bottom_signal_bottom8_long_enabled', False)),
+            'bottom_signal_bottom8_long_rsi_threshold': float(data.get('bottom_signal_bottom8_long_rsi_threshold', 800)),
+            'bottom_signal_bottom8_long_max_per_coin': float(data.get('bottom_signal_bottom8_long_max_per_coin', 5.0)),
+            
+            'last_updated': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'comment': 'RSI策略独立配置 - 包含4个自动交易策略'
+        }
+        
+        # 追加到JSONL文件
+        with open(settings_file, 'a', encoding='utf-8') as f:
+            f.write(json.dumps(settings, ensure_ascii=False) + '\n')
+        
+        return jsonify({
+            'success': True,
+            'message': 'RSI策略配置已保存到JSONL',
+            'settings': settings
+        })
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        })
+
 @app.route('/api/okx-trading/market-tickers', methods=['GET'])
 def get_okx_market_tickers():
     """获取OKX市场行情数据"""
@@ -22354,4 +22490,4 @@ def get_sar_bias_ratio_2h_api():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    app.run(host='0.0.0.0', port=9002, debug=False)

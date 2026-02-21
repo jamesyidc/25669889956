@@ -1,0 +1,288 @@
+<!-- ==================== 见底信号做多策略UI模板 ==================== -->
+
+<!-- 1. CSS样式 - 添加到<style>标签中 -->
+<style>
+    /* 见底信号做多开关 - 涨幅前8 - 深绿色 */
+    #bottomSignalTop8LongSwitch:checked + .slider-bottom-signal-top8-long {
+        background-color: #16a34a;
+    }
+    
+    .slider-bottom-signal-top8-long {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #cbd5e1;
+        transition: .4s;
+        border-radius: 34px;
+    }
+    
+    .slider-bottom-signal-top8-long:before {
+        position: absolute;
+        content: "";
+        height: 20px;
+        width: 20px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+    
+    #bottomSignalTop8LongSwitch:checked + .slider-bottom-signal-top8-long:before {
+        transform: translateX(26px);
+    }
+    
+    /* 见底信号做多开关 - 涨幅后8 - 绿色 */
+    #bottomSignalBottom8LongSwitch:checked + .slider-bottom-signal-bottom8-long {
+        background-color: #22c55e;
+    }
+    
+    .slider-bottom-signal-bottom8-long {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #cbd5e1;
+        transition: .4s;
+        border-radius: 34px;
+    }
+    
+    .slider-bottom-signal-bottom8-long:before {
+        position: absolute;
+        content: "";
+        height: 20px;
+        width: 20px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+    
+    #bottomSignalBottom8LongSwitch:checked + .slider-bottom-signal-bottom8-long:before {
+        transform: translateX(26px);
+    }
+</style>
+
+<!-- 2. 见底信号+涨幅前8做多策略卡片 -->
+<div class="info-card" style="margin-top: 16px; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border: 2px solid #16a34a;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+        <span style="color: #166534; font-weight: 600; font-size: 13px;">🔼 见底信号+涨幅前8做多</span>
+        <label class="switch-container" style="position: relative; display: inline-block; width: 50px; height: 28px;">
+            <input type="checkbox" id="bottomSignalTop8LongSwitch" style="opacity: 0; width: 0; height: 0;">
+            <span class="slider-bottom-signal-top8-long"></span>
+        </label>
+    </div>
+    <div style="font-size: 11px; color: #166534; line-height: 1.6;">
+        <p style="margin: 4px 0;"><strong>触发条件：</strong></p>
+        <ul style="margin: 4px 0 8px 20px; padding: 0;">
+            <li>出现<strong>"✅见底信号"</strong>或<strong>"⬇️底部背离"</strong></li>
+            <li>RSI总和 < <input type="number" id="bottomSignalTop8RsiThreshold" value="800" min="300" max="1200" step="50" style="width: 60px; padding: 2px 4px; border: 1px solid #16a34a; border-radius: 3px; text-align: center;"></li>
+            <li>对常用币中<strong>涨幅前8</strong>（跌得最少的8个）开多单</li>
+        </ul>
+        <p style="margin: 4px 0;"><strong>交易参数：</strong></p>
+        <ul style="margin: 4px 0 8px 20px; padding: 0;">
+            <li>杠杆：10倍</li>
+            <li>仓位：可用余额×1.5%</li>
+            <li>单币限额：<input type="number" id="bottomSignalTop8MaxOrderSize" value="5" min="1" max="20" step="0.5" style="width: 50px; padding: 2px 4px; border: 1px solid #16a34a; border-radius: 3px; text-align: center;"> USDT</li>
+        </ul>
+        <!-- 当前市场状态显示 -->
+        <div style="margin-top: 8px; padding: 8px; background: rgba(255, 255, 255, 0.6); border-radius: 4px; border-left: 3px solid #16a34a;">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <span style="font-size: 11px; color: #166534;">📊 当前市场情绪：</span>
+                <span id="bottomSignalTop8SentimentDisplay" style="font-size: 12px; font-weight: 700; color: #166534;">--</span>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px;">
+                <span style="font-size: 11px; color: #166534;">📈 当前RSI总和：</span>
+                <span id="bottomSignalTop8RSIDisplay" style="font-size: 12px; font-weight: 700; color: #166534;">--</span>
+            </div>
+            <div style="margin-top: 4px; font-size: 10px; color: #166534; opacity: 0.8;" id="bottomSignalTop8UpdateTime">最后更新: --</div>
+        </div>
+    </div>
+</div>
+
+<!-- 3. 见底信号+涨幅后8做多策略卡片 -->
+<div class="info-card" style="margin-top: 16px; background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); border: 2px solid #22c55e;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+        <span style="color: #16a34a; font-weight: 600; font-size: 13px;">🔼 见底信号+涨幅后8做多</span>
+        <label class="switch-container" style="position: relative; display: inline-block; width: 50px; height: 28px;">
+            <input type="checkbox" id="bottomSignalBottom8LongSwitch" style="opacity: 0; width: 0; height: 0;">
+            <span class="slider-bottom-signal-bottom8-long"></span>
+        </label>
+    </div>
+    <div style="font-size: 11px; color: #16a34a; line-height: 1.6;">
+        <p style="margin: 4px 0;"><strong>触发条件：</strong></p>
+        <ul style="margin: 4px 0 8px 20px; padding: 0;">
+            <li>出现<strong>"✅见底信号"</strong>或<strong>"⬇️底部背离"</strong></li>
+            <li>RSI总和 < <input type="number" id="bottomSignalBottom8RsiThreshold" value="800" min="300" max="1200" step="50" style="width: 60px; padding: 2px 4px; border: 1px solid #22c55e; border-radius: 3px; text-align: center;"></li>
+            <li>对常用币中<strong>涨幅后8</strong>（跌得最多的8个）开多单</li>
+        </ul>
+        <p style="margin: 4px 0;"><strong>交易参数：</strong></p>
+        <ul style="margin: 4px 0 8px 20px; padding: 0;">
+            <li>杠杆：10倍</li>
+            <li>仓位：可用余额×1.5%</li>
+            <li>单币限额：<input type="number" id="bottomSignalBottom8MaxOrderSize" value="5" min="1" max="20" step="0.5" style="width: 50px; padding: 2px 4px; border: 1px solid #22c55e; border-radius: 3px; text-align: center;"> USDT</li>
+        </ul>
+        <!-- 当前市场状态显示 -->
+        <div style="margin-top: 8px; padding: 8px; background: rgba(255, 255, 255, 0.6); border-radius: 4px; border-left: 3px solid #22c55e;">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <span style="font-size: 11px; color: #16a34a;">📊 当前市场情绪：</span>
+                <span id="bottomSignalBottom8SentimentDisplay" style="font-size: 12px; font-weight: 700; color: #16a34a;">--</span>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px;">
+                <span style="font-size: 11px; color: #16a34a;">📈 当前RSI总和：</span>
+                <span id="bottomSignalBottom8RSIDisplay" style="font-size: 12px; font-weight: 700; color: #16a34a;">--</span>
+            </div>
+            <div style="margin-top: 4px; font-size: 10px; color: #16a34a; opacity: 0.8;" id="bottomSignalBottom8UpdateTime">最后更新: --</div>
+        </div>
+    </div>
+</div>
+
+<!-- 4. JavaScript代码模板 -->
+<script>
+// ==================== 见底信号做多策略配置保存和加载 ====================
+
+// 保存见底信号涨幅前8做多策略配置
+async function saveBottomSignalTop8LongSettings() {
+    if (!currentTradingAccount) {
+        alert('❌ 请先选择交易账户');
+        return;
+    }
+    
+    const settings = {
+        enabled: document.getElementById('bottomSignalTop8LongSwitch').checked,
+        rsi_threshold: parseFloat(document.getElementById('bottomSignalTop8RsiThreshold').value) || 800,
+        max_order_size: parseFloat(document.getElementById('bottomSignalTop8MaxOrderSize').value) || 5.0,
+        position_size_percent: 1.5,
+        leverage: 10
+    };
+    
+    try {
+        const response = await fetch(`/api/okx-trading/bottom-signal-long-top8/${currentTradingAccount.id}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(settings)
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            console.log('✅ 见底信号涨幅前8做多策略配置已保存', result);
+            
+            // 记录配置变更日志
+            await fetch('/api/okx-trading/strategy-log', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action_type: 'config_change',
+                    strategy_type: 'bottom_signal_top8_long',
+                    account: currentTradingAccount.id,
+                    config_changes: settings,
+                    reason: `用户${settings.enabled ? '开启' : '关闭'}见底信号涨幅前8做多策略`
+                })
+            });
+        } else {
+            alert('❌ 保存失败: ' + (result.error || '未知错误'));
+        }
+    } catch (error) {
+        console.error('❌ 保存见底信号涨幅前8做多策略配置失败:', error);
+        alert('❌ 保存失败: ' + error.message);
+    }
+}
+
+// 保存见底信号涨幅后8做多策略配置
+async function saveBottomSignalBottom8LongSettings() {
+    if (!currentTradingAccount) {
+        alert('❌ 请先选择交易账户');
+        return;
+    }
+    
+    const settings = {
+        enabled: document.getElementById('bottomSignalBottom8LongSwitch').checked,
+        rsi_threshold: parseFloat(document.getElementById('bottomSignalBottom8RsiThreshold').value) || 800,
+        max_order_size: parseFloat(document.getElementById('bottomSignalBottom8MaxOrderSize').value) || 5.0,
+        position_size_percent: 1.5,
+        leverage: 10
+    };
+    
+    try {
+        const response = await fetch(`/api/okx-trading/bottom-signal-long-bottom8/${currentTradingAccount.id}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(settings)
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            console.log('✅ 见底信号涨幅后8做多策略配置已保存', result);
+            
+            // 记录配置变更日志
+            await fetch('/api/okx-trading/strategy-log', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action_type: 'config_change',
+                    strategy_type: 'bottom_signal_bottom8_long',
+                    account: currentTradingAccount.id,
+                    config_changes: settings,
+                    reason: `用户${settings.enabled ? '开启' : '关闭'}见底信号涨幅后8做多策略`
+                })
+            });
+        } else {
+            alert('❌ 保存失败: ' + (result.error || '未知错误'));
+        }
+    } catch (error) {
+        console.error('❌ 保存见底信号涨幅后8做多策略配置失败:', error);
+        alert('❌ 保存失败: ' + error.message);
+    }
+}
+
+// 加载见底信号做多策略配置
+async function loadBottomSignalLongSettings() {
+    if (!currentTradingAccount) return;
+    
+    try {
+        // 加载涨幅前8配置
+        const top8Response = await fetch(`/api/okx-trading/bottom-signal-long-top8/${currentTradingAccount.id}`);
+        const top8Result = await top8Response.json();
+        
+        if (top8Result.success && top8Result.config) {
+            document.getElementById('bottomSignalTop8LongSwitch').checked = top8Result.config.enabled || false;
+            document.getElementById('bottomSignalTop8RsiThreshold').value = top8Result.config.rsi_threshold || 800;
+            document.getElementById('bottomSignalTop8MaxOrderSize').value = top8Result.config.max_order_size || 5.0;
+        }
+        
+        // 加载涨幅后8配置
+        const bottom8Response = await fetch(`/api/okx-trading/bottom-signal-long-bottom8/${currentTradingAccount.id}`);
+        const bottom8Result = await bottom8Response.json();
+        
+        if (bottom8Result.success && bottom8Result.config) {
+            document.getElementById('bottomSignalBottom8LongSwitch').checked = bottom8Result.config.enabled || false;
+            document.getElementById('bottomSignalBottom8RsiThreshold').value = bottom8Result.config.rsi_threshold || 800;
+            document.getElementById('bottomSignalBottom8MaxOrderSize').value = bottom8Result.config.max_order_size || 5.0;
+        }
+        
+        console.log('✅ 见底信号做多策略配置已加载');
+    } catch (error) {
+        console.error('❌ 加载见底信号做多策略配置失败:', error);
+    }
+}
+
+// 添加事件监听器
+document.getElementById('bottomSignalTop8LongSwitch').addEventListener('change', saveBottomSignalTop8LongSettings);
+document.getElementById('bottomSignalTop8RsiThreshold').addEventListener('change', saveBottomSignalTop8LongSettings);
+document.getElementById('bottomSignalTop8MaxOrderSize').addEventListener('change', saveBottomSignalTop8LongSettings);
+
+document.getElementById('bottomSignalBottom8LongSwitch').addEventListener('change', saveBottomSignalBottom8LongSettings);
+document.getElementById('bottomSignalBottom8RsiThreshold').addEventListener('change', saveBottomSignalBottom8LongSettings);
+document.getElementById('bottomSignalBottom8MaxOrderSize').addEventListener('change', saveBottomSignalBottom8LongSettings);
+
+// 在selectAccount函数中添加加载调用
+// 在原有的selectAccount函数中，添加以下行：
+// loadBottomSignalLongSettings();
+
+</script>

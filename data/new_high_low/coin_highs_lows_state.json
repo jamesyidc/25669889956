@@ -42,14 +42,14 @@
     "lowest_time": "2026-02-17 19:26:31"
   },
   "TRX": {
-    "highest_price": 0.28534,
-    "highest_time": "2026-02-17 09:11:24",
+    "highest_price": 0.2868,
+    "highest_time": "2026-02-21 17:32:03",
     "lowest_price": 0.28011,
     "lowest_time": "2026-02-17 21:53:18"
   },
   "DOT": {
-    "highest_price": 1.379,
-    "highest_time": "2026-02-17 06:03:37",
+    "highest_price": 1.395,
+    "highest_time": "2026-02-21 17:21:49",
     "lowest_price": 1.337,
     "lowest_time": "2026-02-16 23:41:12"
   },
@@ -72,20 +72,20 @@
     "lowest_time": "2026-02-16 23:34:21"
   },
   "UNI": {
-    "highest_price": 3.62,
-    "highest_time": "2026-02-17 08:40:33",
+    "highest_price": 3.631,
+    "highest_time": "2026-02-21 17:25:14",
     "lowest_price": 3.435,
     "lowest_time": "2026-02-16 23:44:38"
   },
   "FIL": {
-    "highest_price": 0.9828,
-    "highest_time": "2026-02-17 06:03:37",
+    "highest_price": 1.0044,
+    "highest_time": "2026-02-21 17:32:03",
     "lowest_price": 0.9409,
     "lowest_time": "2026-02-17 22:55:01"
   },
   "ETC": {
-    "highest_price": 9.037,
-    "highest_time": "2026-02-21 13:46:20",
+    "highest_price": 9.704,
+    "highest_time": "2026-02-21 17:32:03",
     "lowest_price": 8.59,
     "lowest_time": "2026-02-17 22:55:01"
   },
@@ -98,12 +98,12 @@
   "CRV": {
     "highest_price": 0.2567,
     "highest_time": "2026-02-17 10:26:36",
-    "lowest_price": 0.2444,
-    "lowest_time": "2026-02-21 15:11:47"
+    "lowest_price": 0.2434,
+    "lowest_time": "2026-02-21 16:13:32"
   },
   "NEAR": {
-    "highest_price": 1.0721,
-    "highest_time": "2026-02-21 13:08:45",
+    "highest_price": 1.0977,
+    "highest_time": "2026-02-21 17:28:39",
     "lowest_price": 1.0278,
     "lowest_time": "2026-02-16 23:34:21"
   },

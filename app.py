@@ -16641,6 +16641,142 @@ def save_okx_tpsl_settings(account_id):
             'traceback': traceback.format_exc()
         })
 
+@app.route('/api/okx-trading/rsi-strategies/<account_id>', methods=['GET'])
+def get_okx_rsi_strategies(account_id):
+    """获取指定账户的RSI策略设置"""
+    try:
+        import json
+        import os
+        
+        # 获取项目根目录
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        settings_dir = os.path.join(current_dir, 'data', 'okx_rsi_strategies')
+        os.makedirs(settings_dir, exist_ok=True)
+        
+        # 读取JSONL文件
+        jsonl_file = os.path.join(settings_dir, f'{account_id}_rsi_strategies.jsonl')
+        
+        if os.path.exists(jsonl_file):
+            with open(jsonl_file, 'r', encoding='utf-8') as f:
+                first_line = f.readline().strip()
+                if first_line:
+                    settings = json.loads(first_line)
+                    return jsonify({
+                        'success': True,
+                        'settings': settings
+                    })
+        
+        # 返回默认设置
+        default_settings = {
+            'account_id': account_id,
+            'enabled': True,
+            
+            # 见顶信号做空策略 - 涨幅前8
+            'top_signal_top8_short_enabled': False,
+            'top_signal_top8_short_rsi_threshold': 1800,
+            'top_signal_top8_short_max_per_coin': 5.0,
+            
+            # 见顶信号做空策略 - 涨幅后8
+            'top_signal_bottom8_short_enabled': False,
+            'top_signal_bottom8_short_rsi_threshold': 1800,
+            'top_signal_bottom8_short_max_per_coin': 5.0,
+            
+            # 见底信号做多策略 - 涨幅前8
+            'bottom_signal_top8_long_enabled': False,
+            'bottom_signal_top8_long_rsi_threshold': 800,
+            'bottom_signal_top8_long_max_per_coin': 5.0,
+            
+            # 见底信号做多策略 - 涨幅后8
+            'bottom_signal_bottom8_long_enabled': False,
+            'bottom_signal_bottom8_long_rsi_threshold': 800,
+            'bottom_signal_bottom8_long_max_per_coin': 5.0,
+            
+            'last_updated': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'comment': 'RSI策略独立配置 - 包含4个自动交易策略'
+        }
+        return jsonify({
+            'success': True,
+            'settings': default_settings
+        })
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        })
+
+@app.route('/api/okx-trading/rsi-strategies/<account_id>', methods=['POST'])
+def save_okx_rsi_strategies(account_id):
+    """保存指定账户的RSI策略设置"""
+    try:
+        import json
+        import os
+        from datetime import datetime
+        
+        # 获取项目根目录
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        settings_dir = os.path.join(current_dir, 'data', 'okx_rsi_strategies')
+        os.makedirs(settings_dir, exist_ok=True)
+        
+        # 获取前端传来的设置
+        data = request.get_json()
+        
+        # 构建设置对象
+        last_updated = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        settings = {
+            'account_id': account_id,
+            'enabled': bool(data.get('enabled', True)),
+            
+            # 见顶信号做空策略 - 涨幅前8
+            'top_signal_top8_short_enabled': bool(data.get('top_signal_top8_short_enabled', False)),
+            'top_signal_top8_short_rsi_threshold': float(data.get('top_signal_top8_short_rsi_threshold', 1800)),
+            'top_signal_top8_short_max_per_coin': float(data.get('top_signal_top8_short_max_per_coin', 5.0)),
+            
+            # 见顶信号做空策略 - 涨幅后8
+            'top_signal_bottom8_short_enabled': bool(data.get('top_signal_bottom8_short_enabled', False)),
+            'top_signal_bottom8_short_rsi_threshold': float(data.get('top_signal_bottom8_short_rsi_threshold', 1800)),
+            'top_signal_bottom8_short_max_per_coin': float(data.get('top_signal_bottom8_short_max_per_coin', 5.0)),
+            
+            # 见底信号做多策略 - 涨幅前8
+            'bottom_signal_top8_long_enabled': bool(data.get('bottom_signal_top8_long_enabled', False)),
+            'bottom_signal_top8_long_rsi_threshold': float(data.get('bottom_signal_top8_long_rsi_threshold', 800)),
+            'bottom_signal_top8_long_max_per_coin': float(data.get('bottom_signal_top8_long_max_per_coin', 5.0)),
+            
+            # 见底信号做多策略 - 涨幅后8
+            'bottom_signal_bottom8_long_enabled': bool(data.get('bottom_signal_bottom8_long_enabled', False)),
+            'bottom_signal_bottom8_long_rsi_threshold': float(data.get('bottom_signal_bottom8_long_rsi_threshold', 800)),
+            'bottom_signal_bottom8_long_max_per_coin': float(data.get('bottom_signal_bottom8_long_max_per_coin', 5.0)),
+            
+            'last_updated': last_updated,
+            'comment': 'RSI策略独立配置 - 包含4个自动交易策略'
+        }
+        
+        # 保存到JSONL文件（覆盖第一行）
+        jsonl_file = os.path.join(settings_dir, f'{account_id}_rsi_strategies.jsonl')
+        with open(jsonl_file, 'w', encoding='utf-8') as f:
+            f.write(json.dumps(settings, ensure_ascii=False) + '\n')
+        
+        # 同时保存到历史记录（追加）
+        history_file = os.path.join(settings_dir, f'{account_id}_history.jsonl')
+        with open(history_file, 'a', encoding='utf-8') as f:
+            history_entry = settings.copy()
+            history_entry['timestamp'] = datetime.now().isoformat()
+            f.write(json.dumps(history_entry, ensure_ascii=False) + '\n')
+        
+        return jsonify({
+            'success': True,
+            'message': 'RSI策略设置已保存',
+            'settings': settings
+        })
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        })
+
 @app.route('/api/okx-trading/save-account-credentials/<account_id>', methods=['POST'])
 def save_account_credentials(account_id):
     """保存账户API凭证（用于止盈止损监控）"""

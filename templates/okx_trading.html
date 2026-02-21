@@ -3436,70 +3436,6 @@ data/
                     </div>
                 </div>
 
-                <!-- 📊 RSI策略管理（独立卡片）-->
-                <div class="info-card" style="margin-top: 16px; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b;">
-                    <h3 style="color: #92400e; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
-                        <span style="display: flex; align-items: center; gap: 6px;">📊 RSI策略管理</span>
-                        <button onclick="saveAllRsiStrategies()" style="background: #f59e0b; color: white; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600;">
-                            💾 保存所有RSI策略
-                        </button>
-                    </h3>
-                    <div style="font-size: 11px; color: #92400e; margin-bottom: 12px; opacity: 0.8;">
-                        💡 独立管理所有RSI相关策略，包括RSI止盈和市场情绪策略
-                    </div>
-                    
-                    <!-- RSI多单止盈设置 -->
-                    <div style="margin-bottom: 10px; padding: 10px; background: rgba(251, 146, 60, 0.1); border-radius: 8px; border: 1px solid #fb923c;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                            <span style="color: #9a3412; font-weight: 600; font-size: 13px;">🎯 RSI多单止盈</span>
-                            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
-                                <input type="checkbox" id="rsiTakeProfitSwitch" style="opacity: 0; width: 0; height: 0;">
-                                <span class="slider slider-rsi-takeprofit" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px;"></span>
-                            </label>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <input type="number" id="rsiTakeProfitThreshold" value="1900" step="10" min="810" max="2700" 
-                                   style="flex: 1; padding: 6px 10px; border: 1px solid #fb923c; border-radius: 6px; font-size: 13px;"
-                                   placeholder="RSI阈值">
-                            <span style="color: #9a3412; font-size: 13px; font-weight: 600;">RSI</span>
-                        </div>
-                        <div style="font-size: 11px; color: #9a3412; margin-top: 6px;">
-                            RSI之和达到此阈值时触发多单止盈 (范围: 810-2700)
-                        </div>
-                    </div>
-                    
-                    <!-- RSI空单止盈设置 -->
-                    <div style="margin-bottom: 10px; padding: 10px; background: rgba(16, 185, 129, 0.1); border-radius: 8px; border: 1px solid #10b981;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                            <span style="color: #065f46; font-weight: 600; font-size: 13px;">📉 RSI空单止盈</span>
-                            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px; cursor: pointer;">
-                                <input type="checkbox" id="rsiShortTakeProfitSwitch" style="opacity: 0; width: 0; height: 0;">
-                                <span class="slider slider-rsi-short-takeprofit"></span>
-                            </label>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <input type="number" id="rsiShortTakeProfitThreshold" value="810" step="10" min="810" max="2700" 
-                                   style="flex: 1; padding: 6px 10px; border: 1px solid #10b981; border-radius: 6px; font-size: 13px;"
-                                   placeholder="RSI阈值">
-                            <span style="color: #065f46; font-size: 13px; font-weight: 600;">RSI</span>
-                        </div>
-                        <div style="font-size: 11px; color: #065f46; margin-top: 6px;">
-                            RSI之和跌破此阈值时触发空单止盈 (范围: 810-2700)
-                        </div>
-                    </div>
-                    
-                    <!-- ========== 旧的RSI策略UI已移至独立卡片 ========== -->
-                    <!-- 以下内容已被注释：见顶信号做空策略 x 2、市场情绪止盈、见底信号做多策略 x 2 -->
-                    <!-- 新的RSI策略独立卡片在上方，包含更完整的配置选项 -->
-                    <!--
-                    原RSI策略块已移除（3491-3664行）
-                    - 见顶信号+涨幅前8做空
-                    - 见顶信号+涨幅后8做空
-                    - 市场情绪止盈
-                    - 见底信号+涨幅前8做多
-                    - 见底信号+涨幅后8做多
-                    -->
-                </div>
 
                 <!-- ============ 🚀 RSI策略独立配置卡片 ============ -->
                 <div class="info-card" style="margin-top: 16px; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 2px solid #f59e0b;">
@@ -3742,192 +3678,24 @@ data/
                         </div>
                     </div>
                     
-                    <!-- 见顶信号做空策略 - 涨幅前8 -->
-                    <div style="margin-top: 10px; padding: 10px; background: rgba(220, 38, 38, 0.1); border-radius: 8px; border: 1px solid #dc2626;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                            <span style="color: #991b1b; font-weight: 600; font-size: 13px;">⚠️ 见顶信号+涨幅前8做空</span>
-                            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
-                                <input type="checkbox" id="topSignalTop8ShortSwitch" style="opacity: 0; width: 0; height: 0;">
-                                <span class="slider slider-top-signal-top8-short" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px;"></span>
-                            </label>
-                        </div>
-                        <div style="font-size: 11px; color: #991b1b; line-height: 1.5;">
-                            <strong>触发条件：</strong>
-                            <ul style="margin: 4px 0; padding-left: 16px;">
-                                <li>出现<strong>"⚠️见顶信号"</strong></li>
-                                <li><strong>RSI总和 > 1800</strong></li>
-                                <li>自动对<strong>涨幅前8名币种</strong>开空单</li>
-                            </ul>
-                            <strong>资金配置：</strong>
-                            <ul style="margin: 4px 0; padding-left: 16px;">
-                                <li>总投入：可用余额的 <strong>1.5%</strong></li>
-                                <li>分配方式：平均分配给8个币种</li>
-                                <li>单币限额：最高 <strong>5.0 USDT</strong></li>
-                            </ul>
-                            <strong>监控频率：</strong>每60秒检查一次，触发后1小时内不重复执行
-                        </div>
-                        <!-- 当前市场状态显示 -->
-                        <div style="margin-top: 8px; padding: 8px; background: rgba(255, 255, 255, 0.6); border-radius: 4px; border-left: 3px solid #dc2626;">
-                            <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <span style="font-size: 11px; color: #991b1b;">📊 当前市场情绪：</span>
-                                <span id="topSignalSentimentDisplay1" style="font-size: 12px; font-weight: 700; color: #991b1b;">--</span>
-                            </div>
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px;">
-                                <span style="font-size: 11px; color: #991b1b;">📈 当前RSI总和：</span>
-                                <span id="topSignalRSIDisplay1" style="font-size: 12px; font-weight: 700; color: #991b1b;">--</span>
-                            </div>
-                            <div style="margin-top: 4px; font-size: 10px; color: #991b1b; opacity: 0.8;" id="topSignalUpdateTime1">最后更新: --</div>
-                        </div>
-                    </div>
+                    <!-- ========== 下单策略已移至独立RSI策略卡片 ========== -->
+                    <!-- 以下4个下单策略和市场情绪止盈已移至上方的独立RSI策略卡片 -->
+                    <!--
+                    下单策略（已移至独立卡片）:
+                    - 见顶信号+涨幅前8做空
+                    - 见顶信号+涨幅后8做空
+                    - 市场情绪止盈
+                    - 见底信号+涨幅前8做多
+                    - 见底信号+涨幅后8做多
                     
-                    <!-- 见顶信号做空策略 - 涨幅后8 -->
-                    <div style="margin-top: 10px; padding: 10px; background: rgba(185, 28, 28, 0.1); border-radius: 8px; border: 1px solid #b91c1c;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                            <span style="color: #7f1d1d; font-weight: 600; font-size: 13px;">⚠️ 见顶信号+涨幅后8做空</span>
-                            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
-                                <input type="checkbox" id="topSignalBottom8ShortSwitch" style="opacity: 0; width: 0; height: 0;">
-                                <span class="slider slider-top-signal-bottom8-short" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px;"></span>
-                            </label>
-                        </div>
-                        <div style="font-size: 11px; color: #7f1d1d; line-height: 1.5;">
-                            <strong>触发条件：</strong>
-                            <ul style="margin: 4px 0; padding-left: 16px;">
-                                <li>出现<strong>"⚠️见顶信号"</strong></li>
-                                <li><strong>RSI总和 > 1800</strong></li>
-                                <li>自动对<strong>涨幅后8名币种</strong>开空单</li>
-                            </ul>
-                            <strong>资金配置：</strong>
-                            <ul style="margin: 4px 0; padding-left: 16px;">
-                                <li>总投入：可用余额的 <strong>1.5%</strong></li>
-                                <li>分配方式：平均分配给8个币种</li>
-                                <li>单币限额：最高 <strong>5.0 USDT</strong></li>
-                            </ul>
-                            <strong>监控频率：</strong>每60秒检查一次，触发后1小时内不重复执行
-                        </div>
-                        <!-- 当前市场状态显示 -->
-                        <div style="margin-top: 8px; padding: 8px; background: rgba(255, 255, 255, 0.6); border-radius: 4px; border-left: 3px solid #b91c1c;">
-                            <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <span style="font-size: 11px; color: #7f1d1d;">📊 当前市场情绪：</span>
-                                <span id="topSignalSentimentDisplay2" style="font-size: 12px; font-weight: 700; color: #7f1d1d;">--</span>
-                            </div>
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px;">
-                                <span style="font-size: 11px; color: #7f1d1d;">📈 当前RSI总和：</span>
-                                <span id="topSignalRSIDisplay2" style="font-size: 12px; font-weight: 700; color: #7f1d1d;">--</span>
-                            </div>
-                            <div style="margin-top: 4px; font-size: 10px; color: #7f1d1d; opacity: 0.8;" id="topSignalUpdateTime2">最后更新: --</div>
-                        </div>
-                    </div>
-                    
-                    <!-- 🔥 市场情绪止盈设置 -->
-                    <div style="margin-top: 10px; padding: 10px; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border: 1px solid #ef4444;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                            <span style="color: #991b1b; font-weight: 600; font-size: 13px;">🔥 市场情绪止盈</span>
-                            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
-                                <input type="checkbox" id="sentimentTakeProfitSwitch" style="opacity: 0; width: 0; height: 0;">
-                                <span class="slider slider-sentiment-takeprofit" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px;"></span>
-                            </label>
-                        </div>
-                        <div style="font-size: 11px; color: #991b1b; line-height: 1.5;">
-                            当市场情绪出现<strong>"⚠️见顶信号"</strong>或<strong>"⛔顶部背离"</strong>时，自动平掉所有多单持仓。监控频率：每60秒检查一次。
-                        </div>
-                        <!-- 当前市场情绪显示 -->
-                        <div style="margin-top: 8px; padding: 8px; background: rgba(255, 255, 255, 0.6); border-radius: 4px; border-left: 3px solid #ef4444;">
-                            <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <span style="font-size: 11px; color: #991b1b;">📊 当前市场情绪：</span>
-                                <span id="currentSentimentDisplay" style="font-size: 14px; font-weight: 700; color: #991b1b;">--</span>
-                            </div>
-                            <div style="margin-top: 4px; font-size: 10px; color: #991b1b; opacity: 0.8;" id="sentimentUpdateTime">最后更新: --</div>
-                        </div>
-                    </div>
-                    
-                    <!-- 见底信号做多策略 - 涨幅前8 -->
-                    <div style="margin-top: 10px; padding: 10px; background: rgba(34, 197, 94, 0.1); border-radius: 8px; border: 1px solid #22c55e;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                            <span style="color: #166534; font-weight: 600; font-size: 13px;">📈 见底信号+涨幅前8做多</span>
-                            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
-                                <input type="checkbox" id="bottomSignalTop8LongSwitch" style="opacity: 0; width: 0; height: 0;">
-                                <span class="slider slider-bottom-signal-top8-long" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px;"></span>
-                            </label>
-                        </div>
-                        <div style="font-size: 11px; color: #166534; line-height: 1.5;">
-                            <strong>触发条件：</strong>
-                            <ul style="margin: 4px 0; padding-left: 16px;">
-                                <li>出现<strong>"✅见底信号"</strong>或<strong>"📉底部背离"</strong></li>
-                                <li><strong>RSI总和 &lt; <span id="bottomSignalTop8RsiThresholdDisplay">800</span></strong></li>
-                                <li>自动对<strong>涨幅前8名币种</strong>开多单（10倍杠杆）</li>
-                            </ul>
-                            <strong>资金配置：</strong>
-                            <ul style="margin: 4px 0; padding-left: 16px;">
-                                <li>总投入：可用余额的 <strong>1.5%</strong></li>
-                                <li>分配方式：平均分配给8个币种</li>
-                                <li>单币限额：最高 <strong id="bottomSignalTop8MaxOrderDisplay">5.0</strong> USDT</li>
-                            </ul>
-                            <strong>RSI阈值设置：</strong>
-                            <ul style="margin: 4px 0; padding-left: 16px;">
-                                <li>RSI总和阈值：<strong id="bottomSignalTop8RsiThresholdValueDisplay">800</strong> 
-                                    <button onclick="openBottomSignalTop8ConfigModal()" style="cursor: pointer; background: none; border: none; font-size: 14px; padding: 0 4px;" title="点击编辑配置">✏️</button>
-                                </li>
-                            </ul>
-                            <strong>监控频率：</strong>每60秒检查一次，触发后1小时内不重复执行
-                        </div>
-                        <!-- 当前市场状态显示 -->
-                        <div style="margin-top: 8px; padding: 8px; background: rgba(255, 255, 255, 0.6); border-radius: 4px; border-left: 3px solid #22c55e;">
-                            <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <span style="font-size: 11px; color: #166534;">📊 当前市场情绪：</span>
-                                <span id="bottomSignalSentimentDisplay1" style="font-size: 12px; font-weight: 700; color: #166534;">--</span>
-                            </div>
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px;">
-                                <span style="font-size: 11px; color: #166534;">📈 当前RSI总和：</span>
-                                <span id="bottomSignalRSIDisplay1" style="font-size: 12px; font-weight: 700; color: #166534;">--</span>
-                            </div>
-                            <div style="margin-top: 4px; font-size: 10px; color: #166534; opacity: 0.8;" id="bottomSignalUpdateTime1">最后更新: --</div>
-                        </div>
-                    </div>
-                    
-                    <!-- 见底信号做多策略 - 涨幅后8 -->
-                    <div style="margin-top: 10px; padding: 10px; background: rgba(16, 185, 129, 0.1); border-radius: 8px; border: 1px solid #10b981;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                            <span style="color: #065f46; font-weight: 600; font-size: 13px;">📈 见底信号+涨幅后8做多</span>
-                            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
-                                <input type="checkbox" id="bottomSignalBottom8LongSwitch" style="opacity: 0; width: 0; height: 0;">
-                                <span class="slider slider-bottom-signal-bottom8-long" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px;"></span>
-                            </label>
-                        </div>
-                        <div style="font-size: 11px; color: #065f46; line-height: 1.5;">
-                            <strong>触发条件：</strong>
-                            <ul style="margin: 4px 0; padding-left: 16px;">
-                                <li>出现<strong>"✅见底信号"</strong>或<strong>"📉底部背离"</strong></li>
-                                <li><strong>RSI总和 &lt; <span id="bottomSignalBottom8RsiThresholdDisplay">800</span></strong></li>
-                                <li>自动对<strong>涨幅后8名币种</strong>开多单（10倍杠杆）</li>
-                            </ul>
-                            <strong>资金配置：</strong>
-                            <ul style="margin: 4px 0; padding-left: 16px;">
-                                <li>总投入：可用余额的 <strong>1.5%</strong></li>
-                                <li>分配方式：平均分配给8个币种</li>
-                                <li>单币限额：最高 <strong id="bottomSignalBottom8MaxOrderDisplay">5.0</strong> USDT</li>
-                            </ul>
-                            <strong>RSI阈值设置：</strong>
-                            <ul style="margin: 4px 0; padding-left: 16px;">
-                                <li>RSI总和阈值：<strong id="bottomSignalBottom8RsiThresholdValueDisplay">800</strong> 
-                                    <button onclick="openBottomSignalBottom8ConfigModal()" style="cursor: pointer; background: none; border: none; font-size: 14px; padding: 0 4px;" title="点击编辑配置">✏️</button>
-                                </li>
-                            </ul>
-                            <strong>监控频率：</strong>每60秒检查一次，触发后1小时内不重复执行
-                        </div>
-                        <!-- 当前市场状态显示 -->
-                        <div style="margin-top: 8px; padding: 8px; background: rgba(255, 255, 255, 0.6); border-radius: 4px; border-left: 3px solid #10b981;">
-                            <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <span style="font-size: 11px; color: #065f46;">📊 当前市场情绪：</span>
-                                <span id="bottomSignalSentimentDisplay2" style="font-size: 12px; font-weight: 700; color: #065f46;">--</span>
-                            </div>
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 4px;">
-                                <span style="font-size: 11px; color: #065f46;">📈 当前RSI总和：</span>
-                                <span id="bottomSignalRSIDisplay2" style="font-size: 12px; font-weight: 700; color: #065f46;">--</span>
-                            </div>
-                            <div style="margin-top: 4px; font-size: 10px; color: #065f46; opacity: 0.8;" id="bottomSignalUpdateTime2">最后更新: --</div>
-                        </div>
-                    </div>
-                    
+                    注意：RSI多单止盈和RSI空单止盈保留在止盈止损系统中
+                    -->
+                </div>
+
+                <!-- 止盈止损设置 -->
+                <div class="info-card" style="margin-top: 16px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 2px solid #22c55e;">
+                    <h3 style="color: #166534; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+                        <span style="display: flex; align-items: center; gap: 6px;">🎯 止盈止损设置（基础警报）</span>
                     <!-- RSI数据记录 -->
                     <div style="margin-top: 10px; padding: 10px; background: rgba(251, 191, 36, 0.1); border-radius: 8px; border: 1px solid #f59e0b;">
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">

@@ -3313,6 +3313,94 @@ data/
                             <strong>监控频率：</strong>每60秒检查一次，触发后1小时内不重复执行
                         </div>
                     </div>
+                    
+                    <!-- 见底信号做多策略 - 涨幅前8 -->
+                    <div style="margin-top: 10px; padding: 10px; background: rgba(34, 197, 94, 0.1); border-radius: 8px; border: 1px solid #22c55e;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: #166534; font-weight: 600; font-size: 13px;">🎯 见底信号+涨幅前8做多</span>
+                            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+                                <input type="checkbox" id="bottomSignalTop8LongSwitch" style="opacity: 0; width: 0; height: 0;">
+                                <span class="slider slider-bottom-signal-top8-long" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px;"></span>
+                            </label>
+                        </div>
+                        <div style="font-size: 11px; color: #166534; line-height: 1.5;">
+                            <strong>触发条件：</strong>
+                            <ul style="margin: 4px 0; padding-left: 16px;">
+                                <li>出现<strong>"🎯见底信号"</strong>（底部背离）</li>
+                                <li><strong>RSI总和 < <span id="bottomSignalTop8RsiThresholdDisplay">800</span></strong></li>
+                                <li>自动对<strong>涨幅前8名币种</strong>开多单（10倍杠杆）</li>
+                            </ul>
+                            <strong>参数设置：</strong>
+                            <div style="display: flex; gap: 10px; margin: 8px 0; align-items: center;">
+                                <div style="flex: 1;">
+                                    <label style="font-size: 10px; color: #166534;">RSI阈值</label>
+                                    <input type="number" id="bottomSignalTop8RsiThreshold" value="800" step="10" min="300" max="1500"
+                                           style="width: 100%; padding: 4px 8px; border: 1px solid #22c55e; border-radius: 4px; font-size: 12px;"
+                                           onchange="updateBottomSignalTop8Display()">
+                                </div>
+                                <div style="flex: 1;">
+                                    <label style="font-size: 10px; color: #166534;">单币限额(USDT)</label>
+                                    <input type="number" id="bottomSignalTop8MaxOrder" value="5" step="1" min="1" max="100"
+                                           style="width: 100%; padding: 4px 8px; border: 1px solid #22c55e; border-radius: 4px; font-size: 12px;">
+                                </div>
+                                <button onclick="saveBottomSignalTop8Config()" 
+                                        style="padding: 4px 10px; background: #22c55e; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: 600; white-space: nowrap;">
+                                    💾 保存
+                                </button>
+                            </div>
+                            <strong>资金配置：</strong>
+                            <ul style="margin: 4px 0; padding-left: 16px;">
+                                <li>总投入：可用余额的 <strong>1.5%</strong></li>
+                                <li>分配方式：平均分配给8个币种</li>
+                                <li>单币限额：最高 <strong><span id="bottomSignalTop8MaxOrderDisplay">5.0</span> USDT</strong></li>
+                            </ul>
+                            <strong>监控频率：</strong>每60秒检查一次，触发后1小时内不重复执行
+                        </div>
+                    </div>
+                    
+                    <!-- 见底信号做多策略 - 涨幅后8 -->
+                    <div style="margin-top: 10px; padding: 10px; background: rgba(16, 185, 129, 0.1); border-radius: 8px; border: 1px solid #10b981;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                            <span style="color: #065f46; font-weight: 600; font-size: 13px;">🎯 见底信号+涨幅后8做多</span>
+                            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+                                <input type="checkbox" id="bottomSignalBottom8LongSwitch" style="opacity: 0; width: 0; height: 0;">
+                                <span class="slider slider-bottom-signal-bottom8-long" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px;"></span>
+                            </label>
+                        </div>
+                        <div style="font-size: 11px; color: #065f46; line-height: 1.5;">
+                            <strong>触发条件：</strong>
+                            <ul style="margin: 4px 0; padding-left: 16px;">
+                                <li>出现<strong>"🎯见底信号"</strong>（底部背离）</li>
+                                <li><strong>RSI总和 < <span id="bottomSignalBottom8RsiThresholdDisplay">800</span></strong></li>
+                                <li>自动对<strong>涨幅后8名币种</strong>开多单（10倍杠杆）</li>
+                            </ul>
+                            <strong>参数设置：</strong>
+                            <div style="display: flex; gap: 10px; margin: 8px 0; align-items: center;">
+                                <div style="flex: 1;">
+                                    <label style="font-size: 10px; color: #065f46;">RSI阈值</label>
+                                    <input type="number" id="bottomSignalBottom8RsiThreshold" value="800" step="10" min="300" max="1500"
+                                           style="width: 100%; padding: 4px 8px; border: 1px solid #10b981; border-radius: 4px; font-size: 12px;"
+                                           onchange="updateBottomSignalBottom8Display()">
+                                </div>
+                                <div style="flex: 1;">
+                                    <label style="font-size: 10px; color: #065f46;">单币限额(USDT)</label>
+                                    <input type="number" id="bottomSignalBottom8MaxOrder" value="5" step="1" min="1" max="100"
+                                           style="width: 100%; padding: 4px 8px; border: 1px solid #10b981; border-radius: 4px; font-size: 12px;">
+                                </div>
+                                <button onclick="saveBottomSignalBottom8Config()" 
+                                        style="padding: 4px 10px; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: 600; white-space: nowrap;">
+                                    💾 保存
+                                </button>
+                            </div>
+                            <strong>资金配置：</strong>
+                            <ul style="margin: 4px 0; padding-left: 16px;">
+                                <li>总投入：可用余额的 <strong>1.5%</strong></li>
+                                <li>分配方式：平均分配给8个币种</li>
+                                <li>单币限额：最高 <strong><span id="bottomSignalBottom8MaxOrderDisplay">5.0</span> USDT</strong></li>
+                            </ul>
+                            <strong>监控频率：</strong>每60秒检查一次，触发后1小时内不重复执行
+                        </div>
+                    </div>
                 </div>
 
                 <!-- 止盈止损设置 -->
@@ -5280,7 +5368,8 @@ data/
                 setLoadingStep('step-logs');
                 Promise.all([
                     loadTradingLogs(),
-                    loadAccountLimit()
+                    loadAccountLimit(),
+                    loadBottomSignalConfig()  // 🆕 加载见底信号策略配置
                 ]);
                 updateProgress(6, '✓ 所有数据加载完成！', 'step-logs');
                 
@@ -5381,6 +5470,7 @@ data/
             loadAutoStrategySettings();  // 加载该账户的抄底策略设置
             loadAutoStrategySettingsTop();  // 🆕 加载该账户的追涨策略设置
             loadUpRatio0StrategySettings();  // 🆕 加载该账户的上涨占比0策略设置
+            loadBottomSignalConfig();  // 🆕 加载见底信号做多策略设置
             
             const account = accounts.find(acc => acc.id === accountId);
             console.log(`[selectAccount] 已切换到账户: ${account ? account.name : '未找到'} (${accountId})`);
@@ -7986,6 +8076,163 @@ ${data.sMsg || result.message || ''}`);
             }
         }
         
+        // ==================== 见底信号做多策略函数 ====================
+        
+        // 更新见底信号Top8策略显示
+        function updateBottomSignalTop8Display() {
+            const rsiThreshold = document.getElementById('bottomSignalTop8RsiThreshold').value;
+            const maxOrder = document.getElementById('bottomSignalTop8MaxOrder').value;
+            document.getElementById('bottomSignalTop8RsiThresholdDisplay').textContent = rsiThreshold;
+            document.getElementById('bottomSignalTop8MaxOrderDisplay').textContent = parseFloat(maxOrder).toFixed(1);
+        }
+        
+        // 更新见底信号Bottom8策略显示
+        function updateBottomSignalBottom8Display() {
+            const rsiThreshold = document.getElementById('bottomSignalBottom8RsiThreshold').value;
+            const maxOrder = document.getElementById('bottomSignalBottom8MaxOrder').value;
+            document.getElementById('bottomSignalBottom8RsiThresholdDisplay').textContent = rsiThreshold;
+            document.getElementById('bottomSignalBottom8MaxOrderDisplay').textContent = parseFloat(maxOrder).toFixed(1);
+        }
+        
+        // 保存见底信号Top8策略配置
+        async function saveBottomSignalTop8Config() {
+            const account = accounts.find(acc => acc.id === currentAccount);
+            if (!account) {
+                alert('❌ 请先选择账户');
+                return;
+            }
+            
+            const rsiThreshold = parseInt(document.getElementById('bottomSignalTop8RsiThreshold').value);
+            const maxOrder = parseFloat(document.getElementById('bottomSignalTop8MaxOrder').value);
+            
+            // 验证输入
+            if (rsiThreshold < 300 || rsiThreshold > 1500) {
+                alert('❌ RSI阈值必须在300-1500之间');
+                return;
+            }
+            
+            if (maxOrder < 1 || maxOrder > 100) {
+                alert('❌ 单币限额必须在1-100 USDT之间');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/okx-trading/save-bottom-signal-config/${account.id}/top8_long`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        enabled: document.getElementById('bottomSignalTop8LongSwitch').checked,
+                        rsi_threshold: rsiThreshold,
+                        max_order_usdt: maxOrder,
+                        position_percent: 1.5,
+                        leverage: 10
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    updateBottomSignalTop8Display();
+                    alert(`✅ 配置保存成功！\n\n账户：${account.name}\nRSI阈值：${rsiThreshold}\n单币限额：${maxOrder} USDT`);
+                } else {
+                    alert(`❌ 保存失败：${result.error || '未知错误'}`);
+                }
+            } catch (e) {
+                console.error('Save bottom signal top8 config error:', e);
+                alert(`❌ 保存失败: ${e.message}`);
+            }
+        }
+        
+        // 保存见底信号Bottom8策略配置
+        async function saveBottomSignalBottom8Config() {
+            const account = accounts.find(acc => acc.id === currentAccount);
+            if (!account) {
+                alert('❌ 请先选择账户');
+                return;
+            }
+            
+            const rsiThreshold = parseInt(document.getElementById('bottomSignalBottom8RsiThreshold').value);
+            const maxOrder = parseFloat(document.getElementById('bottomSignalBottom8MaxOrder').value);
+            
+            // 验证输入
+            if (rsiThreshold < 300 || rsiThreshold > 1500) {
+                alert('❌ RSI阈值必须在300-1500之间');
+                return;
+            }
+            
+            if (maxOrder < 1 || maxOrder > 100) {
+                alert('❌ 单币限额必须在1-100 USDT之间');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/okx-trading/save-bottom-signal-config/${account.id}/bottom8_long`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        enabled: document.getElementById('bottomSignalBottom8LongSwitch').checked,
+                        rsi_threshold: rsiThreshold,
+                        max_order_usdt: maxOrder,
+                        position_percent: 1.5,
+                        leverage: 10
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    updateBottomSignalBottom8Display();
+                    alert(`✅ 配置保存成功！\n\n账户：${account.name}\nRSI阈值：${rsiThreshold}\n单币限额：${maxOrder} USDT`);
+                } else {
+                    alert(`❌ 保存失败：${result.error || '未知错误'}`);
+                }
+            } catch (e) {
+                console.error('Save bottom signal bottom8 config error:', e);
+                alert(`❌ 保存失败: ${e.message}`);
+            }
+        }
+        
+        // 加载见底信号策略配置
+        async function loadBottomSignalConfig() {
+            const account = accounts.find(acc => acc.id === currentAccount);
+            if (!account) {
+                console.log('No account selected, skip loading bottom signal config');
+                return;
+            }
+            
+            try {
+                // 加载Top8策略配置
+                const top8Response = await fetch(`/api/okx-trading/get-bottom-signal-config/${account.id}/top8_long`);
+                const top8Result = await top8Response.json();
+                
+                if (top8Result.success && top8Result.config) {
+                    document.getElementById('bottomSignalTop8LongSwitch').checked = top8Result.config.enabled || false;
+                    document.getElementById('bottomSignalTop8RsiThreshold').value = top8Result.config.rsi_threshold || 800;
+                    document.getElementById('bottomSignalTop8MaxOrder').value = top8Result.config.max_order_usdt || 5;
+                    updateBottomSignalTop8Display();
+                }
+                
+                // 加载Bottom8策略配置
+                const bottom8Response = await fetch(`/api/okx-trading/get-bottom-signal-config/${account.id}/bottom8_long`);
+                const bottom8Result = await bottom8Response.json();
+                
+                if (bottom8Result.success && bottom8Result.config) {
+                    document.getElementById('bottomSignalBottom8LongSwitch').checked = bottom8Result.config.enabled || false;
+                    document.getElementById('bottomSignalBottom8RsiThreshold').value = bottom8Result.config.rsi_threshold || 800;
+                    document.getElementById('bottomSignalBottom8MaxOrder').value = bottom8Result.config.max_order_usdt || 5;
+                    updateBottomSignalBottom8Display();
+                }
+                
+                console.log(`✅ Loaded bottom signal config for ${account.name}`);
+            } catch (e) {
+                console.error('Load bottom signal config error:', e);
+            }
+        }
+        
+        // ==================== 见底信号做多策略函数结束 ====================
+        
         // 更新自动交易状态显示
         function updateAutoTradeStatus(enabled, lastExecutedTime, suffix = '') {
             const statusId = suffix ? `autoTradeStatus${suffix}` : 'autoTradeStatus';
@@ -8466,6 +8713,22 @@ ${data.sMsg || result.message || ''}`);
                         console.error('❌ 设置见顶信号+涨幅后8做空执行许可失败', e);
                         alert('❌ 设置失败，请检查网络连接');
                     }
+                });
+            }
+            
+            // 🎯 见底信号+涨幅前8做多开关：保存设置 + 设置JSONL执行许可
+            const bottomSignalTop8LongSwitchEl = document.getElementById('bottomSignalTop8LongSwitch');
+            if (bottomSignalTop8LongSwitchEl) {
+                bottomSignalTop8LongSwitchEl.addEventListener('change', async function() {
+                    await saveBottomSignalTop8Config();
+                });
+            }
+            
+            // 🎯 见底信号+涨幅后8做多开关：保存设置 + 设置JSONL执行许可
+            const bottomSignalBottom8LongSwitchEl = document.getElementById('bottomSignalBottom8LongSwitch');
+            if (bottomSignalBottom8LongSwitchEl) {
+                bottomSignalBottom8LongSwitchEl.addEventListener('change', async function() {
+                    await saveBottomSignalBottom8Config();
                 });
             }
             

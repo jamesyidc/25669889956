@@ -17043,6 +17043,130 @@ def set_top_signal_strategy_allowed(account_id, strategy_type):
             'traceback': traceback.format_exc()
         })
 
+@app.route('/api/okx-trading/save-bottom-signal-config/<account_id>/<strategy_type>', methods=['POST'])
+def save_bottom_signal_config(account_id, strategy_type):
+    """保存见底信号做多策略配置到JSONL文件
+    strategy_type: 'top8_long' 或 'bottom8_long'
+    """
+    try:
+        import json
+        import os
+        from datetime import datetime
+        
+        data = request.get_json()
+        
+        # 读取配置参数
+        enabled = bool(data.get('enabled', False))
+        rsi_threshold = int(data.get('rsi_threshold', 800))
+        max_order_usdt = float(data.get('max_order_usdt', 5.0))
+        position_percent = float(data.get('position_percent', 1.5))
+        leverage = int(data.get('leverage', 10))
+        
+        # 验证参数
+        if rsi_threshold < 300 or rsi_threshold > 1500:
+            return jsonify({'success': False, 'error': 'RSI阈值必须在300-1500之间'})
+        
+        if max_order_usdt < 1 or max_order_usdt > 100:
+            return jsonify({'success': False, 'error': '单币限额必须在1-100 USDT之间'})
+        
+        # 准备配置记录
+        config = {
+            'timestamp': datetime.now().isoformat(),
+            'time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'account_id': account_id,
+            'strategy_type': strategy_type,
+            'enabled': enabled,
+            'rsi_threshold': rsi_threshold,
+            'max_order_usdt': max_order_usdt,
+            'position_percent': position_percent,
+            'leverage': leverage,
+            'description': f'见底信号+{"涨幅前8" if strategy_type == "top8_long" else "涨幅后8"}做多策略'
+        }
+        
+        # 保存到JSONL文件
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        jsonl_dir = os.path.join(current_dir, 'data', 'okx_bottom_signal_strategies')
+        os.makedirs(jsonl_dir, exist_ok=True)
+        
+        jsonl_file = os.path.join(jsonl_dir, f'{account_id}_bottom_signal_{strategy_type}.jsonl')
+        
+        # 写入配置（覆盖模式，只保留最新配置）
+        with open(jsonl_file, 'w', encoding='utf-8') as f:
+            f.write(json.dumps(config, ensure_ascii=False) + '\n')
+        
+        print(f"✅ 已保存见底信号策略配置: {account_id}/{strategy_type}")
+        print(f"   RSI阈值: {rsi_threshold}, 单币限额: {max_order_usdt} USDT, 杠杆: {leverage}x")
+        
+        return jsonify({
+            'success': True,
+            'message': f'底部信号 {strategy_type} 配置已保存',
+            'config': config
+        })
+        
+    except Exception as e:
+        print(f"❌ 保存见底信号策略配置失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        })
+
+@app.route('/api/okx-trading/get-bottom-signal-config/<account_id>/<strategy_type>', methods=['GET'])
+def get_bottom_signal_config(account_id, strategy_type):
+    """读取见底信号做多策略配置
+    strategy_type: 'top8_long' 或 'bottom8_long'
+    """
+    try:
+        import json
+        import os
+        
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        jsonl_file = os.path.join(current_dir, 'data', 'okx_bottom_signal_strategies', f'{account_id}_bottom_signal_{strategy_type}.jsonl')
+        
+        if not os.path.exists(jsonl_file):
+            # 返回默认配置
+            return jsonify({
+                'success': True,
+                'config': {
+                    'enabled': False,
+                    'rsi_threshold': 800,
+                    'max_order_usdt': 5.0,
+                    'position_percent': 1.5,
+                    'leverage': 10
+                },
+                'message': '使用默认配置（文件不存在）'
+            })
+        
+        # 读取最新配置（JSONL文件最后一行）
+        with open(jsonl_file, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+            if lines:
+                config = json.loads(lines[-1].strip())
+                return jsonify({
+                    'success': True,
+                    'config': config
+                })
+            else:
+                return jsonify({
+                    'success': True,
+                    'config': {
+                        'enabled': False,
+                        'rsi_threshold': 800,
+                        'max_order_usdt': 5.0,
+                        'position_percent': 1.5,
+                        'leverage': 10
+                    },
+                    'message': '文件为空，使用默认配置'
+                })
+        
+    except Exception as e:
+        print(f"❌ 读取见底信号策略配置失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        })
+
 @app.route('/api/okx-trading/market-tickers', methods=['GET'])
 def get_okx_market_tickers():
     """获取OKX市场行情数据"""

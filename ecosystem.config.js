@@ -288,6 +288,19 @@ module.exports = {
       max_memory_restart: '500M',
       error_file: '/home/user/webapp/logs/rsi-takeprofit-error.log',
       out_file: '/home/user/webapp/logs/rsi-takeprofit-out.log'
+    },
+    
+    // Bottom Signal Long Monitor - 见底信号做多监控
+    {
+      name: 'bottom-signal-long-monitor',
+      script: 'source_code/bottom_signal_long_monitor.py',
+      interpreter: 'python3',
+      cwd: '/home/user/webapp',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '500M',
+      error_file: '/home/user/webapp/logs/bottom-signal-long-error.log',
+      out_file: '/home/user/webapp/logs/bottom-signal-long-out.log'
     }
   ]
 };

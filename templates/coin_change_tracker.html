@@ -3535,7 +3535,19 @@ pm2 status                                                # 查看所有进程�
                     historyData = result.data;
                     
                     // 计算上涨占比的统计值（平均值、最小值、最大值）
-                    const upRatios = historyData.map(d => {
+                    // 只统计00:30之后的数据
+                    const filteredData = historyData.filter(d => {
+                        let timeStr = '';
+                        if (d.beijing_time) {
+                            timeStr = d.beijing_time.split(' ')[1] || '';
+                        } else if (d.time) {
+                            timeStr = d.time;
+                        }
+                        // 比较时间字符串，只保留 >= "00:30:00" 的数据
+                        return timeStr >= '00:30:00';
+                    });
+                    
+                    const upRatios = filteredData.map(d => {
                         if (d.up_ratio !== undefined) {
                             return d.up_ratio;
                         } else if (d.changes) {
@@ -3557,11 +3569,13 @@ pm2 status                                                # 查看所有进程�
                         document.getElementById('upRatioMin').textContent = minUpRatio.toFixed(1) + '%';
                         document.getElementById('upRatioMax').textContent = maxUpRatio.toFixed(1) + '%';
                         
-                        console.log('📊 上涨占比统计:', {
+                        console.log('📊 上涨占比统计 (从00:30开始):', {
                             平均值: avgUpRatio.toFixed(1) + '%',
                             最小值: minUpRatio.toFixed(1) + '%',
                             最大值: maxUpRatio.toFixed(1) + '%',
-                            数据点: upRatios.length
+                            数据点: upRatios.length,
+                            开始时间: filteredData.length > 0 ? (filteredData[0].beijing_time || filteredData[0].time) : 'N/A',
+                            结束时间: filteredData.length > 0 ? (filteredData[filteredData.length-1].beijing_time || filteredData[filteredData.length-1].time) : 'N/A'
                         });
                     }
                     

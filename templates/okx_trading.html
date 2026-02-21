@@ -3235,6 +3235,26 @@ data/
                     </div>
                 </div>
 
+                <!-- 📊 策略执行日志 -->
+                <div class="info-card" style="margin-top: 16px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2px solid #3b82f6;">
+                    <h3 style="color: #1e40af; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+                        <span style="display: flex; align-items: center; gap: 6px;">📊 策略执行日志</span>
+                        <button onclick="refreshStrategyLogs()" style="background: #3b82f6; color: white; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600;">
+                            🔄 刷新
+                        </button>
+                    </h3>
+                    <div style="font-size: 11px; color: #1e40af; margin-bottom: 12px; opacity: 0.8;">
+                        💡 记录所有自动触发和手动执行的策略，包括开仓、平仓、止盈、止损等操作
+                    </div>
+                    
+                    <!-- 日志列表 -->
+                    <div id="strategyLogsList" style="max-height: 500px; overflow-y: auto;">
+                        <div style="text-align: center; padding: 30px; color: #94a3b8;">
+                            ⏳ 加载中...
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 止盈止损设置 -->
                 <div class="info-card" style="margin-top: 16px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 2px solid #22c55e;">
                     <h3 style="color: #166534; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
@@ -3529,26 +3549,6 @@ data/
                         <p style="color: #0369a1; font-size: 11px; margin: 0; line-height: 1.5; background: rgba(14, 165, 233, 0.1); padding: 6px; border-radius: 4px;">
                             📊 <strong>开仓金额限制：</strong>自动策略下单金额 = 总权益×1.5%，但不超过5 USDT。例如：总权益200U时下单3U✅；总权益500U时下单5U✅（不是7.5U）。
                         </p>
-                    </div>
-                </div>
-
-                <!-- 📊 策略执行日志 -->
-                <div class="info-card" style="margin-top: 16px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2px solid #3b82f6;">
-                    <h3 style="color: #1e40af; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
-                        <span style="display: flex; align-items: center; gap: 6px;">📊 策略执行日志</span>
-                        <button onclick="refreshStrategyLogs()" style="background: #3b82f6; color: white; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600;">
-                            🔄 刷新
-                        </button>
-                    </h3>
-                    <div style="font-size: 11px; color: #1e40af; margin-bottom: 12px; opacity: 0.8;">
-                        💡 记录所有自动触发和手动执行的策略，包括开仓、平仓、止盈、止损等操作
-                    </div>
-                    
-                    <!-- 日志列表 -->
-                    <div id="strategyLogsList" style="max-height: 500px; overflow-y: auto;">
-                        <div style="text-align: center; padding: 30px; color: #94a3b8;">
-                            ⏳ 加载中...
-                        </div>
                     </div>
                 </div>
 

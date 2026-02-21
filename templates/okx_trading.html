@@ -8303,22 +8303,44 @@ ${data.sMsg || result.message || ''}`);
                 const top8Response = await fetch(`/api/okx-trading/check-top-signal-status/${account.id}/top8_short`);
                 const top8Result = await top8Response.json();
                 
+                console.log('🔍 [loadTopSignalConfig] top8_short API返回:', top8Result);
+                
                 if (top8Result.success) {
                     const top8Switch = document.getElementById('topSignalTop8ShortSwitch');
                     if (top8Switch) {
-                        top8Switch.checked = top8Result.allowed || false;
+                        // 明确使用 === true 来处理 false 值
+                        top8Switch.checked = top8Result.allowed === true;
+                        console.log('🔍 [loadTopSignalConfig] 设置top8_short开关:', {
+                            allowed: top8Result.allowed,
+                            checked: top8Switch.checked
+                        });
+                    } else {
+                        console.warn('⚠️ [loadTopSignalConfig] 未找到topSignalTop8ShortSwitch元素');
                     }
+                } else {
+                    console.error('❌ [loadTopSignalConfig] top8_short API返回失败');
                 }
                 
                 // 加载Bottom8做空策略状态
                 const bottom8Response = await fetch(`/api/okx-trading/check-top-signal-status/${account.id}/bottom8_short`);
                 const bottom8Result = await bottom8Response.json();
                 
+                console.log('🔍 [loadTopSignalConfig] bottom8_short API返回:', bottom8Result);
+                
                 if (bottom8Result.success) {
                     const bottom8Switch = document.getElementById('topSignalBottom8ShortSwitch');
                     if (bottom8Switch) {
-                        bottom8Switch.checked = bottom8Result.allowed || false;
+                        // 明确使用 === false 来处理 false 值
+                        bottom8Switch.checked = bottom8Result.allowed === true;
+                        console.log('🔍 [loadTopSignalConfig] 设置bottom8_short开关:', {
+                            allowed: bottom8Result.allowed,
+                            checked: bottom8Switch.checked
+                        });
+                    } else {
+                        console.warn('⚠️ [loadTopSignalConfig] 未找到topSignalBottom8ShortSwitch元素');
                     }
+                } else {
+                    console.error('❌ [loadTopSignalConfig] bottom8_short API返回失败');
                 }
                 
                 console.log(`✅ Loaded top signal config for ${account.name}`, {

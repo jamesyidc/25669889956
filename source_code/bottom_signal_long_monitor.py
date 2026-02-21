@@ -235,7 +235,9 @@ def get_top_gainers(symbols, count=8, reverse=False):
         sorted_tickers = sorted(filtered_tickers, key=lambda x: x['change'], reverse=not reverse)
         top_coins = sorted_tickers[:count]
         
-        log(f"📈 {'涨幅后' if reverse else '涨幅前'}{count}名: {', '.join([f\"{c['symbol']}({c['change']:.2f}%)\" for c in top_coins])}")
+        type_name = '涨幅后' if reverse else '涨幅前'
+        coins_str = ', '.join([f"{c['symbol']}({c['change']:.2f}%)" for c in top_coins])
+        log(f"📈 {type_name}{count}名: {coins_str}")
         return top_coins
         
     except Exception as e:

@@ -299,6 +299,17 @@ module.exports = {
       max_memory_restart: '500M',
       error_file: '/home/user/webapp/logs/new-high-low-error.log',
       out_file: '/home/user/webapp/logs/new-high-low-out.log'
+    },
+    {
+      name: 'signal-stats-generator',
+      script: 'source_code/signal_stats_generator.py',
+      interpreter: 'python3',
+      cwd: '/home/user/webapp',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '300M',
+      error_file: '/home/user/webapp/logs/signal-stats-error.log',
+      out_file: '/home/user/webapp/logs/signal-stats-out.log'
     }
   ]
 };

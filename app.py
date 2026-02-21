@@ -25242,6 +25242,79 @@ def api_market_sentiment_stats():
         }), 500
 
 
+@app.route('/api/market-sentiment/insert-test', methods=['POST'])
+def api_market_sentiment_insert_test():
+    """
+    测试API：手动插入市场情绪数据
+    用于端到端测试
+    POST请求体：
+    {
+        "sentiment": "✅见底信号",
+        "timestamp": "2026-02-21 08:10:00"  # 可选，默认当前时间
+    }
+    """
+    try:
+        from datetime import datetime, timezone, timedelta
+        from pathlib import Path
+        import json
+        
+        # 获取请求数据
+        data = request.get_json()
+        if not data or 'sentiment' not in data:
+            return jsonify({
+                'success': False,
+                'error': '缺少sentiment参数'
+            }), 400
+        
+        sentiment = data['sentiment']
+        timestamp = data.get('timestamp')
+        
+        # 如果没有提供时间戳，使用当前北京时间
+        beijing_tz = timezone(timedelta(hours=8))
+        if not timestamp:
+            timestamp = datetime.now(beijing_tz).strftime('%Y-%m-%d %H:%M:%S')
+        
+        # 确定情绪类型
+        if '见底信号' in sentiment or '底部背离' in sentiment:
+            sentiment_type = 'bottom'
+        elif '见顶信号' in sentiment or '顶部背离' in sentiment:
+            sentiment_type = 'top'
+        else:
+            sentiment_type = 'neutral'
+        
+        # 构建数据记录
+        test_record = {
+            'sentiment': sentiment,
+            'sentiment_type': sentiment_type,
+            'timestamp': timestamp,
+            'is_test': True  # 标记为测试数据
+        }
+        
+        # 构建今天的JSONL文件路径（使用北京时间）
+        today = datetime.now(beijing_tz).strftime('%Y%m%d')
+        jsonl_dir = Path('/home/user/webapp/data/market_sentiment')
+        jsonl_dir.mkdir(parents=True, exist_ok=True)
+        jsonl_path = jsonl_dir / f'market_sentiment_{today}.jsonl'
+        
+        # 追加到文件
+        with open(jsonl_path, 'a', encoding='utf-8') as f:
+            f.write(json.dumps(test_record, ensure_ascii=False) + '\n')
+        
+        return jsonify({
+            'success': True,
+            'message': '测试数据已插入',
+            'record': test_record
+        })
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+
 # 数据管理页面路由
 @app.route('/data-management')
 def data_management_page():

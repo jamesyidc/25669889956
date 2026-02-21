@@ -6,15 +6,48 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>OKX实盘交易系统 v2.6.7</title>
+    <title>OKX实盘交易系统 v2.7.0</title>
     <!-- 
-    版本: 2026-02-21 v2.6.7 
+    版本: 2026-02-21 v2.7.0 
     
-    🎉 重大更新 (2026-02-21):
-    ✨ 新增策略执行日志功能
+    🎉 重大更新 (2026-02-21 v2.7.0):
+    ✨ 新增见底信号做多策略（智能抄底）
     
-    📊 核心功能:
-    1. ✅ 策略执行日志系统（位于账户信息下方）
+    📈 见底信号做多策略:
+    1. ✅ 双策略布局
+       - 策略1：见底信号+涨幅前8做多（绿色卡片）
+       - 策略2：见底信号+涨幅后8做多（深绿色卡片）
+       
+    2. ✅ 触发条件（三个条件同时满足）
+       - 市场情绪出现"✅见底信号"或"📉底部背离"
+       - RSI总和 < 阈值（默认800，可调整300-1500）
+       - 自动选择15个常用币种中涨幅前8名或后8名
+       
+    3. ✅ 资金配置
+       - 总投入：可用余额的 1.5%
+       - 杠杆倍数：10倍
+       - 单币限额：默认 5 USDT（可调整1-100 USDT）
+       - 分配方式：平均分配给8个币种
+       
+    4. ✅ 智能监控
+       - 监控频率：每60秒检查一次
+       - 冷却时间：触发后1小时内不重复执行
+       - 实时显示：当前市场情绪、RSI总和
+       
+    5. ✅ 灵活配置
+       - RSI阈值可调节（300-1500，步进10）
+       - 单币限额可调节（1-100 USDT，步进0.1）
+       - 点击铅笔图标✏️打开弹窗进行编辑
+       - 弹窗支持输入验证和实时保存
+       
+    6. ✅ 后台监控
+       - PM2进程：bottom-signal-long-monitor
+       - 自动检测市场信号并执行开仓
+       - Telegram推送通知
+       - JSONL日志记录
+    
+    📊 策略执行日志系统 (v2.6.7):
+    1. ✅ 完整记录所有策略执行
        - 记录所有自动触发的策略执行（RSI止盈、市场情绪止盈、见顶信号做空等）
        - 记录所有手动执行的操作（手动开仓、手动平仓）
        - 记录配置变更（止盈止损设置、策略开关变更）
@@ -32,8 +65,8 @@
     
     📝 日志类型:
     3. ✅ 支持的日志类型
-       - 配置变更：止盈止损配置、RSI策略开关、见顶信号策略开关、市场情绪止盈开关
-       - 开仓记录：手动开仓、自动涨幅前8策略、自动涨幅后8策略、见顶信号做空
+       - 配置变更：止盈止损配置、RSI策略开关、见顶信号策略开关、见底信号策略开关、市场情绪止盈开关
+       - 开仓记录：手动开仓、自动涨幅前8策略、自动涨幅后8策略、见顶信号做空、见底信号做多
        - 平仓记录：手动平仓、RSI止盈、市场情绪止盈、止盈止损触发
     
     🔧 技术实现:
@@ -41,9 +74,13 @@
        - POST /api/okx-trading/strategy-log (记录日志)
        - GET /api/okx-trading/strategy-logs (查询日志，支持按账户和日期)
        - POST /api/okx-trading/verify-strategy-logs (验证日志完整性)
+       - GET/POST /api/okx-trading/bottom-signal-long-top8/<account_id> (涨幅前8配置)
+       - GET/POST /api/okx-trading/bottom-signal-long-bottom8/<account_id> (涨幅后8配置)
     
     📍 使用指南:
-    - 位置：打开OKX交易页面 → 查看"💰 账户信息"卡片 → 向下滚动即可看到"📊 策略执行日志"
+    - 见底信号策略：位于"📊 RSI数据记录"卡片上方的绿色卡片区域
+    - 策略日志：打开OKX交易页面 → 查看"💰 账户信息"卡片 → 向下滚动即可看到"📊 策略执行日志"
+    - 配置编辑：点击策略卡片中的✏️图标，打开配置弹窗进行编辑
     - 功能：点击日志卡片可展开查看详情，包括具体币种、金额、盈亏等信息
     - 状态：✅ 成功（绿色）、⚠️ 部分成功（橙色）、❌ 失败（红色）
     - 刷新：点击右上角"🔄 刷新"按钮可手动刷新日志列表
@@ -62,6 +99,8 @@
        - 一键查看所有账户的7个策略开关状态
     
     历史版本:
+    - v2.7.0: 见底信号做多策略、配置弹窗编辑
+    - v2.6.7: 策略执行日志系统
     - v2.6.6: 见顶信号做空优化、状态总览面板
     - v2.6.5: 修复XRP等大面值合约超额开仓Bug
     - v2.6.4: RSI空单止盈功能
@@ -3538,13 +3577,13 @@ data/
                             <ul style="margin: 4px 0; padding-left: 16px;">
                                 <li>总投入：可用余额的 <strong>1.5%</strong></li>
                                 <li>分配方式：平均分配给8个币种</li>
-                                <li>单币限额：最高 <strong id="bottomSignalTop8MaxOrderDisplay">5.0</strong> USDT <span style="cursor: pointer;" onclick="document.getElementById('bottomSignalTop8MaxOrderInput').style.display='inline-block';this.style.display='none';">✏️</span></li>
-                                <input type="number" id="bottomSignalTop8MaxOrderInput" placeholder="5.0" step="0.1" min="1" max="100" style="width: 60px; font-size: 11px; padding: 2px 4px; border: 1px solid #22c55e; border-radius: 4px; display: none;" onblur="saveBottomSignalTop8Config()" onchange="saveBottomSignalTop8Config()">
+                                <li>单币限额：最高 <strong id="bottomSignalTop8MaxOrderDisplay">5.0</strong> USDT</li>
                             </ul>
                             <strong>RSI阈值设置：</strong>
                             <ul style="margin: 4px 0; padding-left: 16px;">
-                                <li>RSI总和阈值：<strong id="bottomSignalTop8RsiThresholdValueDisplay">800</strong> <span style="cursor: pointer;" onclick="document.getElementById('bottomSignalTop8RsiThresholdInput').style.display='inline-block';this.style.display='none';">✏️</span></li>
-                                <input type="number" id="bottomSignalTop8RsiThresholdInput" placeholder="800" step="10" min="300" max="1500" style="width: 70px; font-size: 11px; padding: 2px 4px; border: 1px solid #22c55e; border-radius: 4px; display: none;" onblur="saveBottomSignalTop8Config()" onchange="saveBottomSignalTop8Config()">
+                                <li>RSI总和阈值：<strong id="bottomSignalTop8RsiThresholdValueDisplay">800</strong> 
+                                    <button onclick="openBottomSignalTop8ConfigModal()" style="cursor: pointer; background: none; border: none; font-size: 14px; padding: 0 4px;" title="点击编辑配置">✏️</button>
+                                </li>
                             </ul>
                             <strong>监控频率：</strong>每60秒检查一次，触发后1小时内不重复执行
                         </div>
@@ -3582,13 +3621,13 @@ data/
                             <ul style="margin: 4px 0; padding-left: 16px;">
                                 <li>总投入：可用余额的 <strong>1.5%</strong></li>
                                 <li>分配方式：平均分配给8个币种</li>
-                                <li>单币限额：最高 <strong id="bottomSignalBottom8MaxOrderDisplay">5.0</strong> USDT <span style="cursor: pointer;" onclick="document.getElementById('bottomSignalBottom8MaxOrderInput').style.display='inline-block';this.style.display='none';">✏️</span></li>
-                                <input type="number" id="bottomSignalBottom8MaxOrderInput" placeholder="5.0" step="0.1" min="1" max="100" style="width: 60px; font-size: 11px; padding: 2px 4px; border: 1px solid #10b981; border-radius: 4px; display: none;" onblur="saveBottomSignalBottom8Config()" onchange="saveBottomSignalBottom8Config()">
+                                <li>单币限额：最高 <strong id="bottomSignalBottom8MaxOrderDisplay">5.0</strong> USDT</li>
                             </ul>
                             <strong>RSI阈值设置：</strong>
                             <ul style="margin: 4px 0; padding-left: 16px;">
-                                <li>RSI总和阈值：<strong id="bottomSignalBottom8RsiThresholdValueDisplay">800</strong> <span style="cursor: pointer;" onclick="document.getElementById('bottomSignalBottom8RsiThresholdInput').style.display='inline-block';this.style.display='none';">✏️</span></li>
-                                <input type="number" id="bottomSignalBottom8RsiThresholdInput" placeholder="800" step="10" min="300" max="1500" style="width: 70px; font-size: 11px; padding: 2px 4px; border: 1px solid #10b981; border-radius: 4px; display: none;" onblur="saveBottomSignalBottom8Config()" onchange="saveBottomSignalBottom8Config()">
+                                <li>RSI总和阈值：<strong id="bottomSignalBottom8RsiThresholdValueDisplay">800</strong> 
+                                    <button onclick="openBottomSignalBottom8ConfigModal()" style="cursor: pointer; background: none; border: none; font-size: 14px; padding: 0 4px;" title="点击编辑配置">✏️</button>
+                                </li>
                             </ul>
                             <strong>监控频率：</strong>每60秒检查一次，触发后1小时内不重复执行
                         </div>
@@ -9358,13 +9397,14 @@ ${data.sMsg || result.message || ''}`);
             }
             
             const switchEl = document.getElementById('bottomSignalTop8LongSwitch');
-            const rsiThresholdEl = document.getElementById('bottomSignalTop8RsiThresholdInput');
-            const maxOrderEl = document.getElementById('bottomSignalTop8MaxOrderInput');
+            // 从显示元素读取值（因为不再使用内联输入框）
+            const rsiThresholdDisplay = document.getElementById('bottomSignalTop8RsiThresholdValueDisplay');
+            const maxOrderDisplay = document.getElementById('bottomSignalTop8MaxOrderDisplay');
             
             const settings = {
                 enabled: switchEl?.checked || false,
-                rsi_threshold: parseInt(rsiThresholdEl?.value || '800'),
-                max_order_size: parseFloat(maxOrderEl?.value || '5.0'),
+                rsi_threshold: parseInt(rsiThresholdDisplay?.textContent || '800'),
+                max_order_size: parseFloat(maxOrderDisplay?.textContent || '5.0'),
                 position_size_percent: 1.5,
                 leverage: 10
             };
@@ -9384,10 +9424,6 @@ ${data.sMsg || result.message || ''}`);
                     document.getElementById('bottomSignalTop8RsiThresholdDisplay').textContent = settings.rsi_threshold;
                     document.getElementById('bottomSignalTop8RsiThresholdValueDisplay').textContent = settings.rsi_threshold;
                     document.getElementById('bottomSignalTop8MaxOrderDisplay').textContent = settings.max_order_size.toFixed(1);
-                    
-                    // 隐藏输入框
-                    if (rsiThresholdEl) rsiThresholdEl.style.display = 'none';
-                    if (maxOrderEl) maxOrderEl.style.display = 'none';
                     
                     // 记录日志
                     try {
@@ -9441,13 +9477,14 @@ ${data.sMsg || result.message || ''}`);
             }
             
             const switchEl = document.getElementById('bottomSignalBottom8LongSwitch');
-            const rsiThresholdEl = document.getElementById('bottomSignalBottom8RsiThresholdInput');
-            const maxOrderEl = document.getElementById('bottomSignalBottom8MaxOrderInput');
+            // 从显示元素读取值（因为不再使用内联输入框）
+            const rsiThresholdDisplay = document.getElementById('bottomSignalBottom8RsiThresholdValueDisplay');
+            const maxOrderDisplay = document.getElementById('bottomSignalBottom8MaxOrderDisplay');
             
             const settings = {
                 enabled: switchEl?.checked || false,
-                rsi_threshold: parseInt(rsiThresholdEl?.value || '800'),
-                max_order_size: parseFloat(maxOrderEl?.value || '5.0'),
+                rsi_threshold: parseInt(rsiThresholdDisplay?.textContent || '800'),
+                max_order_size: parseFloat(maxOrderDisplay?.textContent || '5.0'),
                 position_size_percent: 1.5,
                 leverage: 10
             };
@@ -9467,10 +9504,6 @@ ${data.sMsg || result.message || ''}`);
                     document.getElementById('bottomSignalBottom8RsiThresholdDisplay').textContent = settings.rsi_threshold;
                     document.getElementById('bottomSignalBottom8RsiThresholdValueDisplay').textContent = settings.rsi_threshold;
                     document.getElementById('bottomSignalBottom8MaxOrderDisplay').textContent = settings.max_order_size.toFixed(1);
-                    
-                    // 隐藏输入框
-                    if (rsiThresholdEl) rsiThresholdEl.style.display = 'none';
-                    if (maxOrderEl) maxOrderEl.style.display = 'none';
                     
                     // 记录日志
                     try {
@@ -9522,12 +9555,8 @@ ${data.sMsg || result.message || ''}`);
                 if (result.success && result.settings) {
                     const s = result.settings;
                     const switchEl = document.getElementById('bottomSignalTop8LongSwitch');
-                    const rsiThresholdEl = document.getElementById('bottomSignalTop8RsiThresholdInput');
-                    const maxOrderEl = document.getElementById('bottomSignalTop8MaxOrderInput');
                     
                     if (switchEl) switchEl.checked = s.enabled || false;
-                    if (rsiThresholdEl) rsiThresholdEl.value = s.rsi_threshold || 800;
-                    if (maxOrderEl) maxOrderEl.value = s.max_order_size || 5.0;
                     
                     // 更新显示
                     document.getElementById('bottomSignalTop8RsiThresholdDisplay').textContent = s.rsi_threshold || 800;
@@ -9553,12 +9582,8 @@ ${data.sMsg || result.message || ''}`);
                 if (result.success && result.settings) {
                     const s = result.settings;
                     const switchEl = document.getElementById('bottomSignalBottom8LongSwitch');
-                    const rsiThresholdEl = document.getElementById('bottomSignalBottom8RsiThresholdInput');
-                    const maxOrderEl = document.getElementById('bottomSignalBottom8MaxOrderInput');
                     
                     if (switchEl) switchEl.checked = s.enabled || false;
-                    if (rsiThresholdEl) rsiThresholdEl.value = s.rsi_threshold || 800;
-                    if (maxOrderEl) maxOrderEl.value = s.max_order_size || 5.0;
                     
                     // 更新显示
                     document.getElementById('bottomSignalBottom8RsiThresholdDisplay').textContent = s.rsi_threshold || 800;
@@ -9572,6 +9597,215 @@ ${data.sMsg || result.message || ''}`);
             }
         }
 
+        // ==================== 弹窗配置编辑功能 ====================
+        
+        function openBottomSignalTop8ConfigModal() {
+            const modal = document.getElementById('bottomSignalTop8ConfigModal');
+            const rsiInput = document.getElementById('bottomSignalTop8RsiThresholdModalInput');
+            const maxOrderInput = document.getElementById('bottomSignalTop8MaxOrderModalInput');
+            
+            // 读取当前值
+            const currentRsi = document.getElementById('bottomSignalTop8RsiThresholdValueDisplay').textContent;
+            const currentMaxOrder = document.getElementById('bottomSignalTop8MaxOrderDisplay').textContent;
+            
+            rsiInput.value = currentRsi;
+            maxOrderInput.value = currentMaxOrder;
+            
+            modal.style.display = 'flex';
+        }
+        
+        function openBottomSignalBottom8ConfigModal() {
+            const modal = document.getElementById('bottomSignalBottom8ConfigModal');
+            const rsiInput = document.getElementById('bottomSignalBottom8RsiThresholdModalInput');
+            const maxOrderInput = document.getElementById('bottomSignalBottom8MaxOrderModalInput');
+            
+            // 读取当前值
+            const currentRsi = document.getElementById('bottomSignalBottom8RsiThresholdValueDisplay').textContent;
+            const currentMaxOrder = document.getElementById('bottomSignalBottom8MaxOrderDisplay').textContent;
+            
+            rsiInput.value = currentRsi;
+            maxOrderInput.value = currentMaxOrder;
+            
+            modal.style.display = 'flex';
+        }
+        
+        function closeBottomSignalTop8ConfigModal() {
+            document.getElementById('bottomSignalTop8ConfigModal').style.display = 'none';
+        }
+        
+        function closeBottomSignalBottom8ConfigModal() {
+            document.getElementById('bottomSignalBottom8ConfigModal').style.display = 'none';
+        }
+        
+        async function saveBottomSignalTop8ConfigFromModal() {
+            const rsiInput = document.getElementById('bottomSignalTop8RsiThresholdModalInput');
+            const maxOrderInput = document.getElementById('bottomSignalTop8MaxOrderModalInput');
+            
+            const rsiValue = parseInt(rsiInput.value);
+            const maxOrderValue = parseFloat(maxOrderInput.value);
+            
+            // 验证输入
+            if (isNaN(rsiValue) || rsiValue < 300 || rsiValue > 1500) {
+                alert('RSI阈值必须在 300-1500 之间');
+                return;
+            }
+            
+            if (isNaN(maxOrderValue) || maxOrderValue < 1 || maxOrderValue > 100) {
+                alert('单币限额必须在 1-100 USDT 之间');
+                return;
+            }
+            
+            // 更新显示
+            document.getElementById('bottomSignalTop8RsiThresholdDisplay').textContent = rsiValue;
+            document.getElementById('bottomSignalTop8RsiThresholdValueDisplay').textContent = rsiValue;
+            document.getElementById('bottomSignalTop8MaxOrderDisplay').textContent = maxOrderValue.toFixed(1);
+            
+            // 保存配置
+            await saveBottomSignalTop8Config();
+            
+            // 关闭弹窗
+            closeBottomSignalTop8ConfigModal();
+        }
+        
+        async function saveBottomSignalBottom8ConfigFromModal() {
+            const rsiInput = document.getElementById('bottomSignalBottom8RsiThresholdModalInput');
+            const maxOrderInput = document.getElementById('bottomSignalBottom8MaxOrderModalInput');
+            
+            const rsiValue = parseInt(rsiInput.value);
+            const maxOrderValue = parseFloat(maxOrderInput.value);
+            
+            // 验证输入
+            if (isNaN(rsiValue) || rsiValue < 300 || rsiValue > 1500) {
+                alert('RSI阈值必须在 300-1500 之间');
+                return;
+            }
+            
+            if (isNaN(maxOrderValue) || maxOrderValue < 1 || maxOrderValue > 100) {
+                alert('单币限额必须在 1-100 USDT 之间');
+                return;
+            }
+            
+            // 更新显示
+            document.getElementById('bottomSignalBottom8RsiThresholdDisplay').textContent = rsiValue;
+            document.getElementById('bottomSignalBottom8RsiThresholdValueDisplay').textContent = rsiValue;
+            document.getElementById('bottomSignalBottom8MaxOrderDisplay').textContent = maxOrderValue.toFixed(1);
+            
+            // 保存配置
+            await saveBottomSignalBottom8Config();
+            
+            // 关闭弹窗
+            closeBottomSignalBottom8ConfigModal();
+        }
+        
+        // 点击弹窗外部关闭
+        window.onclick = function(event) {
+            const modal1 = document.getElementById('bottomSignalTop8ConfigModal');
+            const modal2 = document.getElementById('bottomSignalBottom8ConfigModal');
+            
+            if (event.target === modal1) {
+                closeBottomSignalTop8ConfigModal();
+            } else if (event.target === modal2) {
+                closeBottomSignalBottom8ConfigModal();
+            }
+        }
+
     </script>
+    
+    <!-- 配置编辑弹窗 - 见底信号涨幅前8 -->
+    <div id="bottomSignalTop8ConfigModal" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
+        <div style="background-color: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 500px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 2px solid #22c55e; padding-bottom: 10px;">
+                <h3 style="margin: 0; color: #166534; font-size: 18px; font-weight: 700;">
+                    <i class="fas fa-cog" style="margin-right: 8px;"></i>
+                    见底信号+涨幅前8做多 - 配置编辑
+                </h3>
+                <button onclick="closeBottomSignalTop8ConfigModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666; line-height: 1;">&times;</button>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; color: #166534; font-weight: 600; font-size: 14px;">
+                    <i class="fas fa-chart-line" style="margin-right: 6px;"></i>
+                    RSI总和阈值
+                </label>
+                <input type="number" id="bottomSignalTop8RsiThresholdModalInput" 
+                       placeholder="800" step="10" min="300" max="1500"
+                       style="width: 100%; padding: 12px; border: 2px solid #22c55e; border-radius: 8px; font-size: 16px; box-sizing: border-box;">
+                <p style="margin-top: 6px; font-size: 12px; color: #666;">范围：300 - 1500，默认：800</p>
+            </div>
+            
+            <div style="margin-bottom: 25px;">
+                <label style="display: block; margin-bottom: 8px; color: #166534; font-weight: 600; font-size: 14px;">
+                    <i class="fas fa-dollar-sign" style="margin-right: 6px;"></i>
+                    单币限额 (USDT)
+                </label>
+                <input type="number" id="bottomSignalTop8MaxOrderModalInput" 
+                       placeholder="5.0" step="0.1" min="1" max="100"
+                       style="width: 100%; padding: 12px; border: 2px solid #22c55e; border-radius: 8px; font-size: 16px; box-sizing: border-box;">
+                <p style="margin-top: 6px; font-size: 12px; color: #666;">范围：1 - 100 USDT，默认：5.0 USDT</p>
+            </div>
+            
+            <div style="display: flex; gap: 12px;">
+                <button onclick="saveBottomSignalTop8ConfigFromModal()" 
+                        style="flex: 1; padding: 12px; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+                    <i class="fas fa-save" style="margin-right: 6px;"></i>
+                    保存配置
+                </button>
+                <button onclick="closeBottomSignalTop8ConfigModal()" 
+                        style="flex: 1; padding: 12px; background: #e5e7eb; color: #374151; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+                    <i class="fas fa-times" style="margin-right: 6px;"></i>
+                    取消
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 配置编辑弹窗 - 见底信号涨幅后8 -->
+    <div id="bottomSignalBottom8ConfigModal" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
+        <div style="background-color: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 500px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 2px solid #10b981; padding-bottom: 10px;">
+                <h3 style="margin: 0; color: #065f46; font-size: 18px; font-weight: 700;">
+                    <i class="fas fa-cog" style="margin-right: 8px;"></i>
+                    见底信号+涨幅后8做多 - 配置编辑
+                </h3>
+                <button onclick="closeBottomSignalBottom8ConfigModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666; line-height: 1;">&times;</button>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; color: #065f46; font-weight: 600; font-size: 14px;">
+                    <i class="fas fa-chart-line" style="margin-right: 6px;"></i>
+                    RSI总和阈值
+                </label>
+                <input type="number" id="bottomSignalBottom8RsiThresholdModalInput" 
+                       placeholder="800" step="10" min="300" max="1500"
+                       style="width: 100%; padding: 12px; border: 2px solid #10b981; border-radius: 8px; font-size: 16px; box-sizing: border-box;">
+                <p style="margin-top: 6px; font-size: 12px; color: #666;">范围：300 - 1500，默认：800</p>
+            </div>
+            
+            <div style="margin-bottom: 25px;">
+                <label style="display: block; margin-bottom: 8px; color: #065f46; font-weight: 600; font-size: 14px;">
+                    <i class="fas fa-dollar-sign" style="margin-right: 6px;"></i>
+                    单币限额 (USDT)
+                </label>
+                <input type="number" id="bottomSignalBottom8MaxOrderModalInput" 
+                       placeholder="5.0" step="0.1" min="1" max="100"
+                       style="width: 100%; padding: 12px; border: 2px solid #10b981; border-radius: 8px; font-size: 16px; box-sizing: border-box;">
+                <p style="margin-top: 6px; font-size: 12px; color: #666;">范围：1 - 100 USDT，默认：5.0 USDT</p>
+            </div>
+            
+            <div style="display: flex; gap: 12px;">
+                <button onclick="saveBottomSignalBottom8ConfigFromModal()" 
+                        style="flex: 1; padding: 12px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+                    <i class="fas fa-save" style="margin-right: 6px;"></i>
+                    保存配置
+                </button>
+                <button onclick="closeBottomSignalBottom8ConfigModal()" 
+                        style="flex: 1; padding: 12px; background: #e5e7eb; color: #374151; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s;">
+                    <i class="fas fa-times" style="margin-right: 6px;"></i>
+                    取消
+                </button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>

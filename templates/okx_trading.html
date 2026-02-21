@@ -3262,6 +3262,17 @@ data/
                         💡 <strong>说明：</strong>基于市场情绪信号和RSI指标自动开仓，独立于止盈止损系统
                     </div>
                     
+                    <!-- 策略状态总览窗口 -->
+                    <div id="strategyStatusOverview" style="margin-bottom: 12px; padding: 10px; background: rgba(255, 255, 255, 0.8); border-radius: 6px; border: 1px solid #d97706;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-size: 12px; font-weight: 600; color: #92400e;">📊 当前账户策略状态</span>
+                            <button onclick="refreshStrategyStatus()" style="padding: 2px 8px; background: #f59e0b; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 10px;">🔄 刷新</button>
+                        </div>
+                        <div id="strategyStatusContent" style="font-size: 10px; color: #78350f; line-height: 1.6;">
+                            <div style="text-align: center; padding: 10px; color: #a16207;">⏳ 正在加载策略状态...</div>
+                        </div>
+                    </div>
+                    
                     <!-- 见顶信号做空策略 - 涨幅前8 -->
                     <div style="margin-top: 10px; padding: 10px; background: rgba(220, 38, 38, 0.1); border-radius: 8px; border: 1px solid #dc2626;">
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
@@ -5471,6 +5482,7 @@ data/
             loadAutoStrategySettingsTop();  // 🆕 加载该账户的追涨策略设置
             loadUpRatio0StrategySettings();  // 🆕 加载该账户的上涨占比0策略设置
             loadBottomSignalConfig();  // 🆕 加载见底信号做多策略设置
+            refreshStrategyStatus();  // 🆕 刷新策略状态总览
             
             const account = accounts.find(acc => acc.id === accountId);
             console.log(`[selectAccount] 已切换到账户: ${account ? account.name : '未找到'} (${accountId})`);
@@ -8228,6 +8240,103 @@ ${data.sMsg || result.message || ''}`);
                 console.log(`✅ Loaded bottom signal config for ${account.name}`);
             } catch (e) {
                 console.error('Load bottom signal config error:', e);
+            }
+        }
+        
+        // 刷新策略状态总览
+        async function refreshStrategyStatus() {
+            const account = accounts.find(acc => acc.id === currentAccount);
+            if (!account) {
+                document.getElementById('strategyStatusContent').innerHTML = 
+                    '<div style="text-align: center; padding: 10px; color: #dc2626;">❌ 请先选择账户</div>';
+                return;
+            }
+            
+            document.getElementById('strategyStatusContent').innerHTML = 
+                '<div style="text-align: center; padding: 10px; color: #a16207;">⏳ 正在加载策略状态...</div>';
+            
+            try {
+                // 获取4个策略的状态
+                const strategies = [
+                    { type: 'top8_short', name: '⚠️ 见顶+前8空', api: 'top-signal', color: '#dc2626' },
+                    { type: 'bottom8_short', name: '⚠️ 见顶+后8空', api: 'top-signal', color: '#b91c1c' },
+                    { type: 'top8_long', name: '🎯 见底+前8多', api: 'bottom-signal', color: '#22c55e' },
+                    { type: 'bottom8_long', name: '🎯 见底+后8多', api: 'bottom-signal', color: '#10b981' }
+                ];
+                
+                let statusHTML = '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">';
+                
+                for (const strategy of strategies) {
+                    // 获取配置状态
+                    let enabled = false;
+                    let allowed = true;
+                    
+                    try {
+                        if (strategy.api === 'top-signal') {
+                            // 见顶信号策略 - 从UI元素获取enabled状态
+                            if (strategy.type === 'top8_short') {
+                                enabled = document.getElementById('topSignalTop8ShortSwitch')?.checked || false;
+                            } else if (strategy.type === 'bottom8_short') {
+                                enabled = document.getElementById('topSignalBottom8ShortSwitch')?.checked || false;
+                            }
+                            // 检查execution文件（假设后端API存在）
+                            try {
+                                const execResponse = await fetch(`/api/okx-trading/check-top-signal-status/${account.id}/${strategy.type}`);
+                                if (execResponse.ok) {
+                                    const execData = await execResponse.json();
+                                    allowed = execData.allowed !== false;
+                                }
+                            } catch (e) {
+                                // 如果API不存在，默认allowed=true
+                                allowed = true;
+                            }
+                        } else {
+                            // 见底信号策略 - 从config获取
+                            const configResponse = await fetch(`/api/okx-trading/get-bottom-signal-config/${account.id}/${strategy.type}`);
+                            if (configResponse.ok) {
+                                const configData = await configResponse.json();
+                                enabled = configData.config?.enabled || false;
+                            }
+                            // 检查execution状态（假设后端API存在）
+                            try {
+                                const execResponse = await fetch(`/api/okx-trading/check-bottom-signal-status/${account.id}/${strategy.type}`);
+                                if (execResponse.ok) {
+                                    const execData = await execResponse.json();
+                                    allowed = execData.allowed !== false;
+                                }
+                            } catch (e) {
+                                // 如果API不存在，默认allowed=true
+                                allowed = true;
+                            }
+                        }
+                    } catch (e) {
+                        console.error(`Failed to load status for ${strategy.type}:`, e);
+                    }
+                    
+                    // 生成状态卡片
+                    const enabledIcon = enabled ? '✅' : '⚪';
+                    const allowedIcon = allowed ? '✅' : '🚫';
+                    const bgColor = enabled ? 'rgba(34, 197, 94, 0.1)' : 'rgba(156, 163, 175, 0.1)';
+                    
+                    statusHTML += `
+                        <div style="padding: 6px; background: ${bgColor}; border-radius: 4px; border: 1px solid ${strategy.color};">
+                            <div style="font-size: 10px; font-weight: 600; color: ${strategy.color}; margin-bottom: 2px;">${strategy.name}</div>
+                            <div style="font-size: 9px; color: #78350f;">
+                                ${enabledIcon} 开关 | ${allowedIcon} 许可
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                statusHTML += '</div>';
+                statusHTML += '<div style="font-size: 9px; color: #92400e; margin-top: 6px; text-align: center;">✅=已开启/允许 | ⚪=已关闭 | 🚫=冷却中</div>';
+                
+                document.getElementById('strategyStatusContent').innerHTML = statusHTML;
+                
+            } catch (error) {
+                console.error('刷新策略状态失败:', error);
+                document.getElementById('strategyStatusContent').innerHTML = 
+                    '<div style="text-align: center; padding: 10px; color: #dc2626;">❌ 加载失败，请重试</div>';
             }
         }
         

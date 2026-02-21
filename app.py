@@ -25135,6 +25135,126 @@ def api_market_sentiment_stats():
         }), 500
 
 
+@app.route('/api/okx-trading/check-top-signal-status/<account_id>/<strategy_type>', methods=['GET'])
+def check_top_signal_status(account_id, strategy_type):
+    """检查见顶信号策略的执行状态
+    strategy_type: 'top8_short' 或 'bottom8_short'
+    """
+    try:
+        import json
+        import os
+        from datetime import datetime, timedelta
+        
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        execution_file = os.path.join(current_dir, 'data', 'okx_auto_strategy', f'{account_id}_top_signal_{strategy_type}_execution.jsonl')
+        
+        if not os.path.exists(execution_file):
+            return jsonify({
+                'success': True,
+                'allowed': True,
+                'reason': '首次执行'
+            })
+        
+        # 读取文件头（第一行）
+        with open(execution_file, 'r', encoding='utf-8') as f:
+            first_line = f.readline().strip()
+            if first_line:
+                header = json.loads(first_line)
+                allowed = header.get('allowed', True)
+                timestamp_str = header.get('timestamp', '')
+                
+                # 检查是否超过1小时冷却期
+                if timestamp_str and not allowed:
+                    try:
+                        last_time = datetime.fromisoformat(timestamp_str)
+                        now = datetime.now()
+                        if (now - last_time).total_seconds() > 3600:  # 1小时 = 3600秒
+                            allowed = True
+                    except:
+                        pass
+                
+                return jsonify({
+                    'success': True,
+                    'allowed': allowed,
+                    'timestamp': timestamp_str,
+                    'reason': header.get('reason', '')
+                })
+        
+        return jsonify({
+            'success': True,
+            'allowed': True,
+            'reason': '文件为空'
+        })
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+
+@app.route('/api/okx-trading/check-bottom-signal-status/<account_id>/<strategy_type>', methods=['GET'])
+def check_bottom_signal_status(account_id, strategy_type):
+    """检查见底信号策略的执行状态
+    strategy_type: 'top8_long' 或 'bottom8_long'
+    """
+    try:
+        import json
+        import os
+        from datetime import datetime, timedelta
+        
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        execution_file = os.path.join(current_dir, 'data', 'okx_bottom_signal_execution', f'{account_id}_bottom_signal_{strategy_type}_execution.jsonl')
+        
+        if not os.path.exists(execution_file):
+            return jsonify({
+                'success': True,
+                'allowed': True,
+                'reason': '首次执行'
+            })
+        
+        # 读取文件头（第一行）
+        with open(execution_file, 'r', encoding='utf-8') as f:
+            first_line = f.readline().strip()
+            if first_line:
+                header = json.loads(first_line)
+                allowed = header.get('allowed', True)
+                timestamp_str = header.get('timestamp', '')
+                
+                # 检查是否超过1小时冷却期
+                if timestamp_str and not allowed:
+                    try:
+                        last_time = datetime.fromisoformat(timestamp_str)
+                        now = datetime.now()
+                        if (now - last_time).total_seconds() > 3600:  # 1小时 = 3600秒
+                            allowed = True
+                    except:
+                        pass
+                
+                return jsonify({
+                    'success': True,
+                    'allowed': allowed,
+                    'timestamp': timestamp_str,
+                    'reason': header.get('reason', '')
+                })
+        
+        return jsonify({
+            'success': True,
+            'allowed': True,
+            'reason': '文件为空'
+        })
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+
 # 数据管理页面路由
 @app.route('/data-management')
 def data_management_page():

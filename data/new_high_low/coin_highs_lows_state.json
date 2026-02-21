@@ -26,8 +26,8 @@
   "XRP": {
     "highest_price": 1.503,
     "highest_time": "2026-02-16 22:49:58",
-    "lowest_price": 1.4265,
-    "lowest_time": "2026-02-21 12:44:50"
+    "lowest_price": 1.426,
+    "lowest_time": "2026-02-21 12:51:40"
   },
   "ADA": {
     "highest_price": 0.2894,
@@ -84,8 +84,8 @@
     "lowest_time": "2026-02-17 22:55:01"
   },
   "ETC": {
-    "highest_price": 8.866,
-    "highest_time": "2026-02-17 06:03:37",
+    "highest_price": 8.903,
+    "highest_time": "2026-02-21 12:58:30",
     "lowest_price": 8.59,
     "lowest_time": "2026-02-17 22:55:01"
   },
@@ -98,12 +98,12 @@
   "CRV": {
     "highest_price": 0.2567,
     "highest_time": "2026-02-17 10:26:36",
-    "lowest_price": 0.2446,
-    "lowest_time": "2026-02-21 12:34:35"
+    "lowest_price": 0.2445,
+    "lowest_time": "2026-02-21 12:51:40"
   },
   "NEAR": {
-    "highest_price": 1.065,
-    "highest_time": "2026-02-17 20:34:46",
+    "highest_price": 1.0687,
+    "highest_time": "2026-02-21 12:58:30",
     "lowest_price": 1.0278,
     "lowest_time": "2026-02-16 23:34:21"
   },
@@ -164,7 +164,7 @@
   "XLM": {
     "highest_price": 0.17027,
     "highest_time": "2026-02-16 23:03:38",
-    "lowest_price": 0.16169,
-    "lowest_time": "2026-02-21 12:41:26"
+    "lowest_price": 0.16167,
+    "lowest_time": "2026-02-21 12:48:15"
   }
 }

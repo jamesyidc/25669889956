@@ -8461,14 +8461,24 @@ ${data.sMsg || result.message || ''}`);
         }
         
         async function refreshStrategyStatus() {
+            console.log('🔄 [refreshStrategyStatus] 开始刷新策略状态');
+            
+            const statusElement = document.getElementById('strategyStatusContent');
+            if (!statusElement) {
+                console.error('❌ [refreshStrategyStatus] 未找到strategyStatusContent元素');
+                return;
+            }
+            
             const account = accounts.find(acc => acc.id === currentAccount);
             if (!account) {
-                document.getElementById('strategyStatusContent').innerHTML = 
+                console.warn('⚠️ [refreshStrategyStatus] 未选择账户');
+                statusElement.innerHTML = 
                     '<div style="text-align: center; padding: 10px; color: #dc2626;">❌ 请先选择账户</div>';
                 return;
             }
             
-            document.getElementById('strategyStatusContent').innerHTML = 
+            console.log('📋 [refreshStrategyStatus] 当前账户:', account.id);
+            statusElement.innerHTML = 
                 '<div style="text-align: center; padding: 10px; color: #a16207;">⏳ 正在加载策略状态...</div>';
             
             try {
@@ -8483,6 +8493,8 @@ ${data.sMsg || result.message || ''}`);
                 let statusHTML = '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">';
                 
                 for (const strategy of strategies) {
+                    console.log(`🔍 [refreshStrategyStatus] 检查策略: ${strategy.type}`);
+                    
                     // 获取配置状态
                     let enabled = false;
                     let allowed = true;
@@ -8495,38 +8507,83 @@ ${data.sMsg || result.message || ''}`);
                             } else if (strategy.type === 'bottom8_short') {
                                 enabled = document.getElementById('topSignalBottom8ShortSwitch')?.checked || false;
                             }
-                            // 检查execution文件（假设后端API存在）
+                            console.log(`  📊 ${strategy.type} enabled from UI:`, enabled);
+                            
+                            // 检查execution文件，设置5秒超时
                             try {
-                                const execResponse = await fetch(`/api/okx-trading/check-top-signal-status/${account.id}/${strategy.type}`);
+                                const controller = new AbortController();
+                                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                                
+                                const execResponse = await fetch(`/api/okx-trading/check-top-signal-status/${account.id}/${strategy.type}`, {
+                                    signal: controller.signal
+                                });
+                                clearTimeout(timeoutId);
+                                
                                 if (execResponse.ok) {
                                     const execData = await execResponse.json();
                                     allowed = execData.allowed !== false;
+                                    console.log(`  ✅ ${strategy.type} allowed from API:`, allowed);
+                                } else {
+                                    console.warn(`  ⚠️ ${strategy.type} API返回非200:`, execResponse.status);
                                 }
                             } catch (e) {
-                                // 如果API不存在，默认allowed=true
-                                allowed = true;
+                                if (e.name === 'AbortError') {
+                                    console.error(`  ⏱️ ${strategy.type} API超时`);
+                                } else {
+                                    console.error(`  ❌ ${strategy.type} API错误:`, e.message);
+                                }
+                                allowed = true;  // 默认允许
                             }
                         } else {
                             // 见底信号策略 - 从config获取
-                            const configResponse = await fetch(`/api/okx-trading/get-bottom-signal-config/${account.id}/${strategy.type}`);
-                            if (configResponse.ok) {
-                                const configData = await configResponse.json();
-                                enabled = configData.config?.enabled || false;
-                            }
-                            // 检查execution状态（假设后端API存在）
                             try {
-                                const execResponse = await fetch(`/api/okx-trading/check-bottom-signal-status/${account.id}/${strategy.type}`);
+                                const controller = new AbortController();
+                                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                                
+                                const configResponse = await fetch(`/api/okx-trading/get-bottom-signal-config/${account.id}/${strategy.type}`, {
+                                    signal: controller.signal
+                                });
+                                clearTimeout(timeoutId);
+                                
+                                if (configResponse.ok) {
+                                    const configData = await configResponse.json();
+                                    enabled = configData.config?.enabled || false;
+                                    console.log(`  📊 ${strategy.type} enabled from config:`, enabled);
+                                }
+                            } catch (e) {
+                                if (e.name === 'AbortError') {
+                                    console.error(`  ⏱️ ${strategy.type} 配置API超时`);
+                                } else {
+                                    console.error(`  ❌ ${strategy.type} 配置API错误:`, e.message);
+                                }
+                            }
+                            
+                            // 检查execution状态，设置5秒超时
+                            try {
+                                const controller = new AbortController();
+                                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                                
+                                const execResponse = await fetch(`/api/okx-trading/check-bottom-signal-status/${account.id}/${strategy.type}`, {
+                                    signal: controller.signal
+                                });
+                                clearTimeout(timeoutId);
+                                
                                 if (execResponse.ok) {
                                     const execData = await execResponse.json();
                                     allowed = execData.allowed !== false;
+                                    console.log(`  ✅ ${strategy.type} allowed from API:`, allowed);
                                 }
                             } catch (e) {
-                                // 如果API不存在，默认allowed=true
-                                allowed = true;
+                                if (e.name === 'AbortError') {
+                                    console.error(`  ⏱️ ${strategy.type} 执行API超时`);
+                                } else {
+                                    console.error(`  ❌ ${strategy.type} 执行API错误:`, e.message);
+                                }
+                                allowed = true;  // 默认允许
                             }
                         }
                     } catch (e) {
-                        console.error(`Failed to load status for ${strategy.type}:`, e);
+                        console.error(`❌ 加载 ${strategy.type} 状态失败:`, e);
                     }
                     
                     // 生成状态卡片
@@ -8547,11 +8604,12 @@ ${data.sMsg || result.message || ''}`);
                 statusHTML += '</div>';
                 statusHTML += '<div style="font-size: 9px; color: #92400e; margin-top: 6px; text-align: center;">✅=已开启/允许 | ⚪=已关闭 | 🚫=冷却中</div>';
                 
-                document.getElementById('strategyStatusContent').innerHTML = statusHTML;
+                statusElement.innerHTML = statusHTML;
+                console.log('✅ [refreshStrategyStatus] 策略状态刷新完成');
                 
             } catch (error) {
-                console.error('刷新策略状态失败:', error);
-                document.getElementById('strategyStatusContent').innerHTML = 
+                console.error('❌ [refreshStrategyStatus] 刷新策略状态失败:', error);
+                statusElement.innerHTML = 
                     '<div style="text-align: center; padding: 10px; color: #dc2626;">❌ 加载失败，请重试</div>';
             }
         }

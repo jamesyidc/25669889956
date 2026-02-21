@@ -3846,6 +3846,55 @@ pm2 status                                                # 查看所有进程�
                                         }
                                     }
                                     
+                                    // 计算截止到当前时间点的累积统计（从00:30开始到当前dataIndex）
+                                    let avgUpRatio = null;
+                                    let minUpRatio = null;
+                                    let maxUpRatio = null;
+                                    
+                                    if (historyData && historyData.length > 0) {
+                                        const upRatiosUpToNow = [];
+                                        
+                                        // 从第一个有效数据点到当前dataIndex
+                                        for (let i = 0; i <= dataIndex; i++) {
+                                            if (historyData[i]) {
+                                                let ratio = null;
+                                                
+                                                // 优先使用up_ratio字段
+                                                if (historyData[i].up_ratio !== undefined) {
+                                                    ratio = historyData[i].up_ratio;
+                                                } else if (historyData[i].changes) {
+                                                    // 否则从changes计算
+                                                    const changes = historyData[i].changes;
+                                                    const changesArray = Object.values(changes);
+                                                    const upCoins = changesArray.filter(coin => coin.change_pct > 0).length;
+                                                    const totalCoins = changesArray.length;
+                                                    if (totalCoins > 0) {
+                                                        ratio = (upCoins / totalCoins * 100);
+                                                    }
+                                                }
+                                                
+                                                // 只统计时间>=00:30的数据
+                                                let timeStr = '';
+                                                if (historyData[i].beijing_time) {
+                                                    timeStr = historyData[i].beijing_time.split(' ')[1] || '';
+                                                } else if (historyData[i].time) {
+                                                    timeStr = historyData[i].time;
+                                                }
+                                                
+                                                if (ratio !== null && timeStr >= '00:30:00') {
+                                                    upRatiosUpToNow.push(ratio);
+                                                }
+                                            }
+                                        }
+                                        
+                                        // 计算统计值
+                                        if (upRatiosUpToNow.length > 0) {
+                                            avgUpRatio = upRatiosUpToNow.reduce((sum, v) => sum + v, 0) / upRatiosUpToNow.length;
+                                            minUpRatio = Math.min(...upRatiosUpToNow);
+                                            maxUpRatio = Math.max(...upRatiosUpToNow);
+                                        }
+                                    }
+                                    
                                     html += `<div style="margin-bottom: 4px;">
                                         ${changeParam.marker}<span style="font-weight: 600;">${changeParam.seriesName}</span>
                                     </div>
@@ -3858,9 +3907,9 @@ pm2 status                                                # 查看所有进程�
                                             <span style="font-weight: 600; color: #10B981;">${upRatio}</span>
                                         </div>
                                         <div style="display: flex; align-items: center; justify-content: space-between; font-size: 11px; margin-top: 2px; color: #9CA3AF;">
-                                            <span>平均: ${upRatioStats.avg !== null ? upRatioStats.avg.toFixed(1) + '%' : '--'}</span>
-                                            <span>最小: ${upRatioStats.min !== null ? upRatioStats.min.toFixed(1) + '%' : '--'}</span>
-                                            <span>最大: ${upRatioStats.max !== null ? upRatioStats.max.toFixed(1) + '%' : '--'}</span>
+                                            <span>平均: ${avgUpRatio !== null ? avgUpRatio.toFixed(1) + '%' : '--'}</span>
+                                            <span>最小: ${minUpRatio !== null ? minUpRatio.toFixed(1) + '%' : '--'}</span>
+                                            <span>最大: ${maxUpRatio !== null ? maxUpRatio.toFixed(1) + '%' : '--'}</span>
                                         </div>
                                     </div>`;
                                 }

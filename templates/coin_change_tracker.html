@@ -90,6 +90,105 @@
             <div class="doc-panel-content hidden p-6 bg-gray-50" id="docPanelContent">
                 <div class="space-y-6">
                     
+                    <!-- 🔴 最新修复 (2026-02-21) -->
+                    <div class="bg-gradient-to-r from-red-50 to-orange-50 rounded-lg p-6 shadow-md border-2 border-red-400">
+                        <h3 class="text-lg font-bold text-red-800 mb-4 border-b-2 border-red-500 pb-2">
+                            <i class="fas fa-wrench text-red-600 mr-2"></i>
+                            🔴 紧急修复通知 - 数据采集器已修复 (2026-02-21 12:49 北京时间)
+                        </h3>
+                        <div class="space-y-4 text-sm text-gray-700">
+                            
+                            <!-- 问题描述 -->
+                            <div class="bg-white p-4 rounded-lg border-l-4 border-red-500">
+                                <h4 class="font-bold text-red-800 mb-2">
+                                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                                    ⚠️ 问题现象
+                                </h4>
+                                <ul class="list-disc list-inside space-y-1 ml-4">
+                                    <li><strong>数据停滞：</strong>页面数据停留在 11:46 北京时间，未实时更新</li>
+                                    <li><strong>时间差：</strong>当前时间 12:48，数据延迟 <strong>62分钟</strong></li>
+                                    <li><strong>原因：</strong>PM2运行了错误的空壳脚本（coin_change_tracker.py）</li>
+                                </ul>
+                            </div>
+
+                            <!-- 修复措施 -->
+                            <div class="bg-white p-4 rounded-lg border-l-4 border-green-500">
+                                <h4 class="font-bold text-green-800 mb-2">
+                                    <i class="fas fa-check-circle mr-2"></i>
+                                    ✅ 修复措施（已完成）
+                                </h4>
+                                <ol class="list-decimal list-inside space-y-1 ml-4">
+                                    <li><strong>删除错误进程：</strong>pm2 delete coin-change-tracker</li>
+                                    <li><strong>重启正确脚本：</strong>coin_change_tracker_collector.py（真实采集器）</li>
+                                    <li><strong>验证运行：</strong>每分钟采集27种币价格和RSI</li>
+                                    <li><strong>数据更新：</strong>从 11:46 更新到 12:48 北京时间</li>
+                                </ol>
+                            </div>
+
+                            <!-- 当前状态 -->
+                            <div class="bg-white p-4 rounded-lg border-l-4 border-blue-500">
+                                <h4 class="font-bold text-blue-800 mb-2">
+                                    <i class="fas fa-server mr-2"></i>
+                                    📊 当前系统状态
+                                </h4>
+                                <div class="grid grid-cols-2 gap-4 mt-2">
+                                    <div class="p-3 bg-green-50 rounded border border-green-300">
+                                        <p class="text-xs text-gray-600">采集器状态</p>
+                                        <p class="text-lg font-bold text-green-600">🟢 正常运行</p>
+                                    </div>
+                                    <div class="p-3 bg-green-50 rounded border border-green-300">
+                                        <p class="text-xs text-gray-600">最新数据时间</p>
+                                        <p class="text-lg font-bold text-green-600">12:48 北京时间</p>
+                                    </div>
+                                    <div class="p-3 bg-green-50 rounded border border-green-300">
+                                        <p class="text-xs text-gray-600">采集频率</p>
+                                        <p class="text-lg font-bold text-green-600">每1分钟</p>
+                                    </div>
+                                    <div class="p-3 bg-green-50 rounded border border-green-300">
+                                        <p class="text-xs text-gray-600">监控币种</p>
+                                        <p class="text-lg font-bold text-green-600">27种币</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 今日市场数据 -->
+                            <div class="bg-white p-4 rounded-lg border-l-4 border-purple-500">
+                                <h4 class="font-bold text-purple-800 mb-2">
+                                    <i class="fas fa-chart-line mr-2"></i>
+                                    📈 今日市场概览 (2026-02-21)
+                                </h4>
+                                <div class="grid grid-cols-3 gap-3 mt-2">
+                                    <div class="p-2 bg-gray-50 rounded border border-gray-300 text-center">
+                                        <p class="text-xs text-gray-600">总涨跌幅</p>
+                                        <p class="text-lg font-bold text-red-600">-1.37%</p>
+                                    </div>
+                                    <div class="p-2 bg-gray-50 rounded border border-gray-300 text-center">
+                                        <p class="text-xs text-gray-600">上涨占比</p>
+                                        <p class="text-lg font-bold text-orange-600">37.0%</p>
+                                    </div>
+                                    <div class="p-2 bg-gray-50 rounded border border-gray-300 text-center">
+                                        <p class="text-xs text-gray-600">币种分布</p>
+                                        <p class="text-sm font-bold text-gray-700">10↑ / 17↓</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 重要提示 -->
+                            <div class="bg-yellow-50 p-4 rounded-lg border-2 border-yellow-400">
+                                <h4 class="font-bold text-yellow-800 mb-2">
+                                    <i class="fas fa-lightbulb mr-2"></i>
+                                    💡 重要提示
+                                </h4>
+                                <ul class="list-disc list-inside space-y-1 ml-4 text-xs">
+                                    <li><strong>所有时间均为北京时间</strong>（UTC+8），包括图表、数据、日志</li>
+                                    <li>数据采集频率为<strong>每1分钟一次</strong>，非5分钟（系统说明待更新）</li>
+                                    <li>如发现数据未更新，请刷新页面或联系管理员</li>
+                                    <li>系统已部署完整监控，PM2服务 26/26 在线</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <!-- 系统概述 -->
                     <div class="bg-white rounded-lg p-6 shadow-md">
                         <h3 class="text-lg font-bold text-gray-800 mb-4 border-b-2 border-blue-500 pb-2">

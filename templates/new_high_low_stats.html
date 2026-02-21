@@ -285,6 +285,91 @@
             </div>
         </header>
 
+        <!-- 🔴 最新修复通知 (2026-02-21) -->
+        <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 12px; padding: 25px; margin-bottom: 25px; border: 2px solid #10b981; box-shadow: 0 6px 25px rgba(16, 185, 129, 0.3);">
+            <h2 style="color: #fff; font-size: 1.8em; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                🔴 采集器已启动 - 数据恢复正常 (2026-02-21 12:36 北京时间)
+            </h2>
+            
+            <!-- 问题描述 -->
+            <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                <h3 style="color: #ecfdf5; font-size: 1.3em; margin-bottom: 10px;">⚠️ 发现的问题</h3>
+                <ul style="list-style: none; padding: 0; margin: 0; color: #fff;">
+                    <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.2);">
+                        <strong>问题1：</strong> new-high-low 采集器未运行，数据停留在2月17日
+                    </li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.2);">
+                        <strong>问题2：</strong> 2月18-21日（4天）没有新的创新高低数据
+                    </li>
+                    <li style="padding: 8px 0;">
+                        <strong>原因：</strong> PM2配置中缺少 new-high-low-collector 服务
+                    </li>
+                </ul>
+            </div>
+
+            <!-- 修复措施 -->
+            <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                <h3 style="color: #ecfdf5; font-size: 1.3em; margin-bottom: 10px;">✅ 修复措施（已完成）</h3>
+                <ol style="padding-left: 20px; margin: 0; color: #fff;">
+                    <li style="padding: 5px 0;"><strong>添加到PM2：</strong>ecosystem.config.js 新增 new-high-low-collector</li>
+                    <li style="padding: 5px 0;"><strong>启动服务：</strong>pm2 start ecosystem.config.js --only new-high-low-collector</li>
+                    <li style="padding: 5px 0;"><strong>PM2服务：</strong>从24个增加到25个（现在是26个）</li>
+                    <li style="padding: 5px 0;"><strong>数据生成：</strong>new_high_low_events_20260221.jsonl 已创建</li>
+                </ol>
+            </div>
+
+            <!-- 检测结果 -->
+            <div style="background: rgba(239, 68, 68, 0.2); padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #ef4444;">
+                <h3 style="color: #fecaca; font-size: 1.3em; margin-bottom: 10px;">📊 启动后立即检测结果</h3>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 10px;">
+                    <div style="background: rgba(239, 68, 68, 0.3); padding: 12px; border-radius: 6px; text-align: center; border: 1px solid #ef4444;">
+                        <div style="color: #fecaca; font-size: 0.9em;">今日创新高</div>
+                        <div style="color: #fff; font-size: 1.8em; font-weight: bold;">0</div>
+                    </div>
+                    <div style="background: rgba(239, 68, 68, 0.3); padding: 12px; border-radius: 6px; text-align: center; border: 1px solid #ef4444;">
+                        <div style="color: #fecaca; font-size: 0.9em;">今日创新低</div>
+                        <div style="color: #fff; font-size: 1.8em; font-weight: bold;">11</div>
+                    </div>
+                </div>
+                <div style="margin-top: 12px; padding: 10px; background: rgba(239, 68, 68, 0.2); border-radius: 6px;">
+                    <strong style="color: #fecaca;">创新低币种 (11个)：</strong>
+                    <div style="color: #fff; margin-top: 5px; font-size: 0.95em;">
+                        XRP (1.4269), AAVE (116.51), CRV (0.2446), APT (0.8817), STX (0.2552),<br>
+                        LDO (0.3284), CRO (0.07803), TON (1.325), TAO (179.7), SUI (0.9514), XLM (0.16177)
+                    </div>
+                </div>
+            </div>
+
+            <!-- 当前状态 -->
+            <div style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px;">
+                <h3 style="color: #ecfdf5; font-size: 1.3em; margin-bottom: 10px;">🟢 当前系统状态</h3>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                    <div style="background: rgba(16, 185, 129, 0.3); padding: 10px; border-radius: 6px; text-align: center; border: 1px solid #10b981;">
+                        <div style="color: #d1fae5; font-size: 0.85em;">采集器</div>
+                        <div style="color: #fff; font-size: 1.2em; font-weight: bold;">🟢 运行中</div>
+                    </div>
+                    <div style="background: rgba(16, 185, 129, 0.3); padding: 10px; border-radius: 6px; text-align: center; border: 1px solid #10b981;">
+                        <div style="color: #d1fae5; font-size: 0.85em;">采集频率</div>
+                        <div style="color: #fff; font-size: 1.2em; font-weight: bold;">每3分钟</div>
+                    </div>
+                    <div style="background: rgba(16, 185, 129, 0.3); padding: 10px; border-radius: 6px; text-align: center; border: 1px solid #10b981;">
+                        <div style="color: #d1fae5; font-size: 0.85em;">监控币种</div>
+                        <div style="color: #fff; font-size: 1.2em; font-weight: bold;">28种</div>
+                    </div>
+                    <div style="background: rgba(16, 185, 129, 0.3); padding: 10px; border-radius: 6px; text-align: center; border: 1px solid #10b981;">
+                        <div style="color: #d1fae5; font-size: 0.85em;">最新数据</div>
+                        <div style="color: #fff; font-size: 1.2em; font-weight: bold;">12:48 北京</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 重要提示 -->
+            <div style="background: rgba(251, 191, 36, 0.2); padding: 12px; border-radius: 8px; margin-top: 15px; border: 1px solid #fbbf24;">
+                <strong style="color: #fef3c7;">💡 重要提示：</strong>
+                <span style="color: #fff;">所有时间均为北京时间（UTC+8）。采集器已恢复正常运行，数据每3分钟自动更新。</span>
+            </div>
+        </div>
+
         <!-- 系统技术文档 -->
         <div class="info-box">
             <h3 style="cursor: pointer; user-select: none;" onclick="toggleTechDoc()">

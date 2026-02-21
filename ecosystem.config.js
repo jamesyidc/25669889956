@@ -194,17 +194,6 @@ module.exports = {
       out_file: '/home/user/webapp/logs/system-health-out.log'
     },
     {
-      name: 'major-events-monitor',
-      script: 'major-events-system/major_events_monitor.py',
-      interpreter: 'python3',
-      cwd: '/home/user/webapp',
-      autorestart: true,
-      watch: false,
-      max_memory_restart: '300M',
-      error_file: '/home/user/webapp/logs/major-events-error.log',
-      out_file: '/home/user/webapp/logs/major-events-out.log'
-    },
-    {
       name: 'liquidation-alert-monitor',
       script: 'code/python/liquidation_alert_monitor.py',
       interpreter: 'python3',
@@ -240,6 +229,65 @@ module.exports = {
       max_memory_restart: '500M',
       error_file: '/home/user/webapp/logs/gdrive-jsonl-error.log',
       out_file: '/home/user/webapp/logs/gdrive-jsonl-out.log'
+    },
+    
+    // OKX Trading Systems
+    {
+      name: 'okx-tpsl-monitor',
+      script: 'source_code/okx_tpsl_monitor.py',
+      interpreter: 'python3',
+      cwd: '/home/user/webapp',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '500M',
+      error_file: '/home/user/webapp/logs/okx-tpsl-monitor-error.log',
+      out_file: '/home/user/webapp/logs/okx-tpsl-monitor-out.log'
+    },
+    {
+      name: 'okx-trade-history',
+      script: 'source_code/okx_trade_history_collector.py',
+      interpreter: 'python3',
+      cwd: '/home/user/webapp',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '500M',
+      error_file: '/home/user/webapp/logs/okx-trade-history-error.log',
+      out_file: '/home/user/webapp/logs/okx-trade-history-out.log'
+    },
+    
+    // Market Analysis Systems
+    {
+      name: 'market-sentiment-collector',
+      script: 'source_code/market_sentiment_collector.py',
+      interpreter: 'python3',
+      cwd: '/home/user/webapp',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '500M',
+      error_file: '/home/user/webapp/logs/market-sentiment-error.log',
+      out_file: '/home/user/webapp/logs/market-sentiment-out.log'
+    },
+    {
+      name: 'price-position-collector',
+      script: 'source_code/price_position_collector.py',
+      interpreter: 'python3',
+      cwd: '/home/user/webapp',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '500M',
+      error_file: '/home/user/webapp/logs/price-position-error.log',
+      out_file: '/home/user/webapp/logs/price-position-out.log'
+    },
+    {
+      name: 'rsi-takeprofit-monitor',
+      script: 'source_code/rsi_takeprofit_monitor.py',
+      interpreter: 'python3',
+      cwd: '/home/user/webapp',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '500M',
+      error_file: '/home/user/webapp/logs/rsi-takeprofit-error.log',
+      out_file: '/home/user/webapp/logs/rsi-takeprofit-out.log'
     }
   ]
 };

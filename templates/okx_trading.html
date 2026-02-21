@@ -7847,32 +7847,8 @@ ${data.sMsg || result.message || ''}`);
                 const result = await response.json();
                 
                 if (result.success) {
-                    // 2. 记录配置变更到策略日志
-                    try {
-                        const logData = {
-                            account: account.id,
-                            strategy_type: 'config_change',
-                            action_type: 'settings',
-                            total_amount: 0,
-                            status: 'success',
-                            positions: [],
-                            trigger_info: {
-                                config_type: '止盈止损设置',
-                                changes: settings,
-                                custom_reason: `用户修改止盈止损配置：止盈${settings.takeProfitEnabled?'启用':'停用'}(${settings.takeProfitThreshold}U)、止损${settings.stopLossEnabled?'启用':'停用'}(${settings.stopLossThreshold}U)、RSI多单止盈${settings.rsiTakeProfitEnabled?'启用':'停用'}(${settings.rsiTakeProfitThreshold})、RSI空单止盈${settings.rsiShortTakeProfitEnabled?'启用':'停用'}(${settings.rsiShortTakeProfitThreshold})、见顶信号前8做空${settings.top_signal_top8_short_enabled?'启用':'停用'}、见顶信号后8做空${settings.top_signal_bottom8_short_enabled?'启用':'停用'}、市场情绪止盈${settings.sentimentTakeProfitEnabled?'启用':'停用'}、最大持仓${settings.maxPositionValueUsdt}U`
-                            }
-                        };
-                        
-                        await fetch('/api/okx-trading/strategy-log', {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify(logData)
-                        });
-                        
-                        console.log('📝 已记录止盈止损设置变更到策略日志');
-                    } catch (e) {
-                        console.warn('⚠️ 记录策略日志失败:', e);
-                    }
+                    // 2. 不再记录配置变更到策略日志（每个开关都会单独记录）
+                    // 策略日志由各个开关的change事件监听器负责记录
                     
                     // 3. 同时保存API凭证（用于止盈止损监控）
                     if (account.apiKey && account.apiSecret && account.passphrase) {
@@ -8459,27 +8435,120 @@ ${data.sMsg || result.message || ''}`);
                 }
             });
             
-            ['takeProfitSwitch', 'stopLossSwitch'].forEach(id => {
-                const element = document.getElementById(id);
-                if (element) {
-                    element.addEventListener('change', saveTakeProfitStopLossSettings);
-                }
-            });
+            // 止盈开关：记录独立的策略日志
+            const takeProfitSwitchEl = document.getElementById('takeProfitSwitch');
+            if (takeProfitSwitchEl) {
+                takeProfitSwitchEl.addEventListener('change', async function() {
+                    const account = accounts.find(acc => acc.id === currentAccount);
+                    if (!account) {
+                        alert('⚠️ 请先选择账户');
+                        this.checked = false;
+                        return;
+                    }
+                    
+                    const enabled = this.checked;
+                    const threshold = parseFloat(document.getElementById('takeProfitThreshold').value) || 50;
+                    
+                    // 保存设置（静默模式）
+                    await saveTakeProfitStopLossSettings(true);
+                    
+                    // 记录策略日志
+                    try {
+                        const logData = {
+                            account: account.id,
+                            strategy_type: 'config_change',
+                            action_type: 'settings',
+                            total_amount: 0,
+                            status: 'success',
+                            positions: [],
+                            trigger_info: {
+                                config_type: '止盈止损设置',
+                                custom_reason: `${enabled ? '✅ 启用' : '❌ 停用'}当前未实现盈亏止盈，阈值：${threshold} USDT`
+                            }
+                        };
+                        
+                        await fetch('/api/okx-trading/strategy-log', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify(logData)
+                        });
+                        
+                        console.log(`📝 已记录止盈设置变更到策略日志: ${enabled ? '启用' : '停用'}`);
+                        
+                        // 刷新策略日志显示
+                        refreshStrategyLogs();
+                    } catch (e) {
+                        console.warn('⚠️ 记录策略日志失败:', e);
+                    }
+                });
+            }
             
-            // RSI止盈开关特殊处理：同时设置JSONL执行许可
+            // 止损开关：记录独立的策略日志
+            const stopLossSwitchEl = document.getElementById('stopLossSwitch');
+            if (stopLossSwitchEl) {
+                stopLossSwitchEl.addEventListener('change', async function() {
+                    const account = accounts.find(acc => acc.id === currentAccount);
+                    if (!account) {
+                        alert('⚠️ 请先选择账户');
+                        this.checked = false;
+                        return;
+                    }
+                    
+                    const enabled = this.checked;
+                    const threshold = parseFloat(document.getElementById('stopLossThreshold').value) || -30;
+                    
+                    // 保存设置（静默模式）
+                    await saveTakeProfitStopLossSettings(true);
+                    
+                    // 记录策略日志
+                    try {
+                        const logData = {
+                            account: account.id,
+                            strategy_type: 'config_change',
+                            action_type: 'settings',
+                            total_amount: 0,
+                            status: 'success',
+                            positions: [],
+                            trigger_info: {
+                                config_type: '止盈止损设置',
+                                custom_reason: `${enabled ? '✅ 启用' : '❌ 停用'}当前未实现盈亏止损，阈值：${threshold} USDT`
+                            }
+                        };
+                        
+                        await fetch('/api/okx-trading/strategy-log', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify(logData)
+                        });
+                        
+                        console.log(`📝 已记录止损设置变更到策略日志: ${enabled ? '启用' : '停用'}`);
+                        
+                        // 刷新策略日志显示
+                        refreshStrategyLogs();
+                    } catch (e) {
+                        console.warn('⚠️ 记录策略日志失败:', e);
+                    }
+                });
+            }
+            
+            // RSI多单止盈开关：保存设置 + 设置JSONL执行许可 + 记录策略日志
             const rsiTakeProfitSwitchEl = document.getElementById('rsiTakeProfitSwitch');
             if (rsiTakeProfitSwitchEl) {
                 rsiTakeProfitSwitchEl.addEventListener('change', async function() {
-                    // 保存设置
-                    await saveTakeProfitStopLossSettings();
-                    
-                    // 设置JSONL执行许可（多单）
                     const account = accounts.find(acc => acc.id === currentAccount);
-                    if (!account) return;
+                    if (!account) {
+                        alert('⚠️ 请先选择账户');
+                        this.checked = false;
+                        return;
+                    }
                     
                     const enabled = this.checked;
                     const rsiValue = parseFloat(document.getElementById('rsiTakeProfitThreshold').value) || 1900;
                     
+                    // 1. 保存设置（静默模式）
+                    await saveTakeProfitStopLossSettings(true);
+                    
+                    // 2. 设置JSONL执行许可（多单）
                     try {
                         const response = await fetch(`/api/okx-trading/set-allowed-takeprofit/${account.id}`, {
                             method: 'POST',
@@ -8498,23 +8567,56 @@ ${data.sMsg || result.message || ''}`);
                     } catch (e) {
                         console.error('❌ 设置RSI多单止盈执行许可失败', e);
                     }
+                    
+                    // 3. 记录策略日志
+                    try {
+                        const logData = {
+                            account: account.id,
+                            strategy_type: 'config_change',
+                            action_type: 'settings',
+                            total_amount: 0,
+                            status: 'success',
+                            positions: [],
+                            trigger_info: {
+                                config_type: 'RSI策略设置',
+                                custom_reason: `${enabled ? '✅ 启用' : '❌ 停用'}RSI多单止盈监控，阈值：${rsiValue}（当RSI总和≥${rsiValue}时自动平掉所有多单）`
+                            }
+                        };
+                        
+                        await fetch('/api/okx-trading/strategy-log', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify(logData)
+                        });
+                        
+                        console.log(`📝 已记录RSI多单止盈设置变更到策略日志: ${enabled ? '启用' : '停用'}`);
+                        
+                        // 刷新策略日志显示
+                        refreshStrategyLogs();
+                    } catch (e) {
+                        console.warn('⚠️ 记录策略日志失败:', e);
+                    }
                 });
             }
             
-            // RSI空单止盈开关特殊处理：同时设置JSONL执行许可
+            // RSI空单止盈开关：保存设置 + 设置JSONL执行许可 + 记录策略日志
             const rsiShortTakeProfitSwitchEl = document.getElementById('rsiShortTakeProfitSwitch');
             if (rsiShortTakeProfitSwitchEl) {
                 rsiShortTakeProfitSwitchEl.addEventListener('change', async function() {
-                    // 保存设置
-                    await saveTakeProfitStopLossSettings();
-                    
-                    // 设置JSONL执行许可（空单）
                     const account = accounts.find(acc => acc.id === currentAccount);
-                    if (!account) return;
+                    if (!account) {
+                        alert('⚠️ 请先选择账户');
+                        this.checked = false;
+                        return;
+                    }
                     
                     const enabled = this.checked;
                     const rsiValue = parseFloat(document.getElementById('rsiShortTakeProfitThreshold').value) || 810;
                     
+                    // 1. 保存设置（静默模式）
+                    await saveTakeProfitStopLossSettings(true);
+                    
+                    // 2. 设置JSONL执行许可（空单）
                     try {
                         const response = await fetch(`/api/okx-trading/set-allowed-takeprofit/${account.id}`, {
                             method: 'POST',
@@ -8542,15 +8644,83 @@ ${data.sMsg || result.message || ''}`);
                         console.error('❌ 设置RSI空单止盈执行许可失败', e);
                         alert('❌ 设置失败，请检查网络连接');
                     }
+                    
+                    // 3. 记录策略日志
+                    try {
+                        const logData = {
+                            account: account.id,
+                            strategy_type: 'config_change',
+                            action_type: 'settings',
+                            total_amount: 0,
+                            status: 'success',
+                            positions: [],
+                            trigger_info: {
+                                config_type: 'RSI策略设置',
+                                custom_reason: `${enabled ? '✅ 启用' : '❌ 停用'}RSI空单止盈监控，阈值：${rsiValue}（当RSI总和≤${rsiValue}时自动平掉所有空单）`
+                            }
+                        };
+                        
+                        await fetch('/api/okx-trading/strategy-log', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify(logData)
+                        });
+                        
+                        console.log(`📝 已记录RSI空单止盈设置变更到策略日志: ${enabled ? '启用' : '停用'}`);
+                        
+                        // 刷新策略日志显示
+                        refreshStrategyLogs();
+                    } catch (e) {
+                        console.warn('⚠️ 记录策略日志失败:', e);
+                    }
                 });
             }
             
-            // 🔥 市场情绪止盈开关：只保存设置，不需要JSONL许可
+            // 🔥 市场情绪止盈开关：保存设置 + 记录策略日志
             const sentimentTakeProfitSwitchEl = document.getElementById('sentimentTakeProfitSwitch');
             if (sentimentTakeProfitSwitchEl) {
                 sentimentTakeProfitSwitchEl.addEventListener('change', async function() {
-                    await saveTakeProfitStopLossSettings();
+                    const account = accounts.find(acc => acc.id === currentAccount);
+                    if (!account) {
+                        alert('⚠️ 请先选择账户');
+                        this.checked = false;
+                        return;
+                    }
+                    
                     const enabled = this.checked;
+                    
+                    // 1. 保存设置（静默模式）
+                    await saveTakeProfitStopLossSettings(true);
+                    
+                    // 2. 记录策略日志
+                    try {
+                        const logData = {
+                            account: account.id,
+                            strategy_type: 'config_change',
+                            action_type: 'settings',
+                            total_amount: 0,
+                            status: 'success',
+                            positions: [],
+                            trigger_info: {
+                                config_type: '市场情绪止盈设置',
+                                custom_reason: `${enabled ? '✅ 启用' : '❌ 停用'}市场情绪止盈监控（当出现见顶信号或顶部背离时，自动平掉所有多单）`
+                            }
+                        };
+                        
+                        await fetch('/api/okx-trading/strategy-log', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify(logData)
+                        });
+                        
+                        console.log(`📝 已记录市场情绪止盈设置变更到策略日志: ${enabled ? '启用' : '停用'}`);
+                        
+                        // 刷新策略日志显示
+                        refreshStrategyLogs();
+                    } catch (e) {
+                        console.warn('⚠️ 记录策略日志失败:', e);
+                    }
+                    
                     console.log(enabled ? `✅ 已开启市场情绪止盈监控` : `⚪ 已关闭市场情绪止盈监控`);
                 });
             }

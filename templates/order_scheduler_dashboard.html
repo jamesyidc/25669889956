@@ -347,6 +347,71 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* Account Strategies Table */
+        .strategies-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .strategies-table th {
+            background: #f9fafb;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .strategies-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .strategies-table tr:hover {
+            background: #f9fafb;
+        }
+
+        .account-name {
+            font-weight: 600;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .account-id {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 2px;
+        }
+
+        .strategy-switch {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .strategy-switch.enabled {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .strategy-switch.disabled {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .strategy-time {
+            font-size: 11px;
+            color: #9ca3af;
+            margin-top: 2px;
+        }
     </style>
 </head>
 <body>
@@ -399,6 +464,22 @@
                 </div>
                 <div class="stat-value" id="lockedAccounts">0</div>
                 <div class="stat-subtext" id="totalAccounts">总账户: 0</div>
+            </div>
+        </div>
+
+        <!-- Account Strategies Status -->
+        <div class="panel" style="margin-bottom: 20px;">
+            <div class="panel-header">
+                <div class="panel-title">
+                    👥 账户策略状态
+                </div>
+                <button class="refresh-btn" onclick="refreshAccountStrategies()">🔄 刷新</button>
+            </div>
+            <div class="panel-body" id="accountStrategiesContainer">
+                <div style="text-align: center; padding: 40px; color: #6b7280;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">⏳</div>
+                    <div>加载中...</div>
+                </div>
             </div>
         </div>
 
@@ -682,6 +763,130 @@
                 refreshInterval = setInterval(refreshData, 5000);
             }
         });
+
+        // Load account strategies
+        async function refreshAccountStrategies() {
+            try {
+                const response = await fetch('/api/order-scheduler/account-strategies');
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayAccountStrategies(data.accounts);
+                } else {
+                    document.getElementById('accountStrategiesContainer').innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">⚠️</div>
+                            <div>加载失败: ${data.error || '未知错误'}</div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading account strategies:', error);
+                document.getElementById('accountStrategiesContainer').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">❌</div>
+                        <div>加载失败: ${error.message}</div>
+                    </div>
+                `;
+            }
+        }
+
+        function displayAccountStrategies(accounts) {
+            if (!accounts || accounts.length === 0) {
+                document.getElementById('accountStrategiesContainer').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📝</div>
+                        <div>暂无账户信息</div>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <table class="strategies-table">
+                    <thead>
+                        <tr>
+                            <th>账户</th>
+                            <th>涨幅前8做多</th>
+                            <th>涨幅后8做多</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            accounts.forEach(account => {
+                html += `
+                    <tr>
+                        <td>
+                            <div class="account-name">
+                                <span>👤</span>
+                                <div>
+                                    <div>${account.account_name}</div>
+                                    <div class="account-id">${account.account_id}</div>
+                                </div>
+                            </div>
+                        </td>
+                `;
+
+                // 找到对应的策略状态
+                const top8Strategy = account.strategies.find(s => s.key === 'top8_long');
+                const bottom8Strategy = account.strategies.find(s => s.key === 'bottom8_long');
+
+                // 涨幅前8做多
+                html += '<td>';
+                if (top8Strategy) {
+                    const enabledClass = top8Strategy.enabled ? 'enabled' : 'disabled';
+                    const statusIcon = top8Strategy.enabled ? '✅' : '❌';
+                    const statusText = top8Strategy.enabled ? '已开启' : '未开启';
+                    html += `
+                        <div class="strategy-switch ${enabledClass}">
+                            <span>${statusIcon}</span>
+                            <span>${statusText}</span>
+                        </div>
+                    `;
+                    if (top8Strategy.last_update) {
+                        const updateTime = new Date(top8Strategy.last_update).toLocaleString('zh-CN');
+                        html += `<div class="strategy-time">更新: ${updateTime}</div>`;
+                    }
+                } else {
+                    html += '<span style="color: #9ca3af;">-</span>';
+                }
+                html += '</td>';
+
+                // 涨幅后8做多
+                html += '<td>';
+                if (bottom8Strategy) {
+                    const enabledClass = bottom8Strategy.enabled ? 'enabled' : 'disabled';
+                    const statusIcon = bottom8Strategy.enabled ? '✅' : '❌';
+                    const statusText = bottom8Strategy.enabled ? '已开启' : '未开启';
+                    html += `
+                        <div class="strategy-switch ${enabledClass}">
+                            <span>${statusIcon}</span>
+                            <span>${statusText}</span>
+                        </div>
+                    `;
+                    if (bottom8Strategy.last_update) {
+                        const updateTime = new Date(bottom8Strategy.last_update).toLocaleString('zh-CN');
+                        html += `<div class="strategy-time">更新: ${updateTime}</div>`;
+                    }
+                } else {
+                    html += '<span style="color: #9ca3af;">-</span>';
+                }
+                html += '</td>';
+
+                html += '</tr>';
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            `;
+
+            document.getElementById('accountStrategiesContainer').innerHTML = html;
+        }
+
+        // Initial load
+        refreshAccountStrategies();
     </script>
 </body>
 </html>

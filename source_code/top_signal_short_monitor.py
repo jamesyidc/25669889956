@@ -92,18 +92,18 @@ def check_allowed_execution(account_id, strategy_key):
     execution_file = get_execution_file_path(account_id, strategy_key)
     
     if not execution_file.exists():
-        # 文件不存在，创建并允许执行
+        # 文件不存在，创建并默认不允许执行（需要用户手动开启）
         try:
             DATA_DIR.mkdir(parents=True, exist_ok=True)
             with open(execution_file, 'w', encoding='utf-8') as f:
                 record = {
-                    'allowed': True,
+                    'allowed': False,  # 🔧 修复：默认不允许执行，需用户手动开启
                     'timestamp': datetime.now().isoformat(),
-                    'reason': '初始化，允许执行'
+                    'reason': '初始化，默认关闭（需用户手动开启）'
                 }
                 f.write(json.dumps(record, ensure_ascii=False) + '\n')
-            log(f"✅ [{account_id}] 创建执行许可文件: {strategy_key}")
-            return True
+            log(f"✅ [{account_id}] 创建执行许可文件（默认关闭）: {strategy_key}")
+            return False  # 🔧 返回False
         except Exception as e:
             log(f"❌ [{account_id}] 创建执行许可文件失败: {e}")
             return False

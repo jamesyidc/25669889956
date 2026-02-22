@@ -10336,6 +10336,153 @@ def telegram_send_message():
             'traceback': traceback.format_exc()
         })
 
+def send_trading_telegram_notification(action_type, details):
+    """
+    发送交易相关的Telegram通知
+    
+    Args:
+        action_type: 操作类型 ('open_position', 'take_profit', 'stop_loss', 'close_position')
+        details: 订单详情字典
+            - instId: 交易对
+            - side: buy/sell
+            - posSide: long/short
+            - size: 数量
+            - price: 价格
+            - usdt: USDT金额
+            - leverage: 杠杆倍数
+            - tpPrice: 止盈价（可选）
+            - slPrice: 止损价（可选）
+            - pnl: 盈亏（可选）
+    """
+    try:
+        import requests
+        import json
+        import os
+        from datetime import datetime
+        
+        # 读取Telegram配置
+        config_path = os.path.join(os.path.dirname(__file__), 'config', 'configs', 'telegram_config.json')
+        if not os.path.exists(config_path):
+            print(f"[TG通知] 配置文件不存在: {config_path}")
+            return False
+            
+        with open(config_path, 'r', encoding='utf-8') as f:
+            tg_config = json.load(f)
+        
+        bot_token = tg_config.get('bot_token')
+        chat_id = tg_config.get('chat_id')
+        
+        if not bot_token or not chat_id:
+            print(f"[TG通知] Telegram配置不完整")
+            return False
+        
+        # 构建消息内容
+        inst_id = details.get('instId', 'Unknown')
+        side = details.get('side', '')
+        pos_side = details.get('posSide', '')
+        size = details.get('size', 0)
+        price = details.get('price', 0)
+        usdt = details.get('usdt', 0)
+        leverage = details.get('leverage', 1)
+        
+        # 根据操作类型生成不同的消息
+        if action_type == 'open_position':
+            emoji = "🚀" if pos_side == 'long' else "🔻"
+            action_text = "开多仓" if pos_side == 'long' else "开空仓"
+            
+            message = f"""
+{emoji} <b>OKX开仓通知</b>
+
+📊 <b>交易对:</b> {inst_id}
+📈 <b>方向:</b> {action_text}
+💰 <b>金额:</b> {usdt:.2f} USDT
+⚡ <b>杠杆:</b> {leverage}x
+💵 <b>价格:</b> {price:.4f}
+📏 <b>数量:</b> {size}
+"""
+            
+            # 如果有止盈止损
+            tp_price = details.get('tpPrice')
+            sl_price = details.get('slPrice')
+            if tp_price:
+                message += f"🎯 <b>止盈:</b> {tp_price:.4f}\n"
+            if sl_price:
+                message += f"🛡️ <b>止损:</b> {sl_price:.4f}\n"
+                
+        elif action_type == 'take_profit':
+            emoji = "✅"
+            pnl = details.get('pnl', 0)
+            pnl_percent = details.get('pnlPercent', 0)
+            
+            message = f"""
+{emoji} <b>OKX止盈触发</b>
+
+📊 <b>交易对:</b> {inst_id}
+💰 <b>盈亏:</b> {pnl:.2f} USDT ({pnl_percent:+.2f}%)
+💵 <b>平仓价:</b> {price:.4f}
+📏 <b>数量:</b> {size}
+"""
+            
+        elif action_type == 'stop_loss':
+            emoji = "⛔"
+            pnl = details.get('pnl', 0)
+            pnl_percent = details.get('pnlPercent', 0)
+            
+            message = f"""
+{emoji} <b>OKX止损触发</b>
+
+📊 <b>交易对:</b> {inst_id}
+💰 <b>盈亏:</b> {pnl:.2f} USDT ({pnl_percent:+.2f}%)
+💵 <b>平仓价:</b> {price:.4f}
+📏 <b>数量:</b> {size}
+"""
+            
+        elif action_type == 'close_position':
+            emoji = "🔚"
+            pnl = details.get('pnl', 0)
+            pnl_percent = details.get('pnlPercent', 0)
+            avg_price = details.get('avgPrice', 0)
+            
+            message = f"""
+{emoji} <b>OKX手动平仓</b>
+
+📊 <b>交易对:</b> {inst_id}
+💰 <b>盈亏:</b> {pnl:.2f} USDT ({pnl_percent:+.2f}%)
+📍 <b>平仓价:</b> {avg_price:.4f}
+📏 <b>数量:</b> {size}
+"""
+        else:
+            message = f"<b>OKX交易通知</b>\n\n{json.dumps(details, indent=2, ensure_ascii=False)}"
+        
+        # 添加时间戳
+        now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        message += f"\n⏰ <b>时间:</b> {now}"
+        
+        # 发送消息
+        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+        payload = {
+            'chat_id': chat_id,
+            'text': message,
+            'parse_mode': 'HTML',
+            'disable_web_page_preview': True
+        }
+        
+        response = requests.post(url, json=payload, timeout=10)
+        result = response.json()
+        
+        if result.get('ok'):
+            print(f"[TG通知] {action_type} 通知发送成功")
+            return True
+        else:
+            print(f"[TG通知] 发送失败: {result.get('description', '未知错误')}")
+            return False
+            
+    except Exception as e:
+        print(f"[TG通知] 发送异常: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return False
+
 @app.route('/api/telegram/status')
 def telegram_status():
     """获取Telegram监控系统状态"""
@@ -10779,6 +10926,121 @@ def api_sell_point_1_latest():
 def telegram_dashboard():
     """Telegram信号推送系统仪表板"""
     return render_template('telegram_signal_dashboard.html')
+
+@app.route('/telegram-message-system')
+def telegram_message_system():
+    """Telegram消息系统 - 单向发送消息"""
+    return render_template('telegram_message_system.html')
+
+@app.route('/api/telegram-system/test-connection', methods=['POST'])
+def telegram_system_test_connection():
+    """测试Telegram连接"""
+    try:
+        import requests
+        
+        # 硬编码的配置
+        BOT_TOKEN = '8437045462:AAFePnwdC21cqeWhZISMQHGGgjmroVqE2H0'
+        CHAT_ID = '-1003227444260'
+        
+        # 测试发送一条消息
+        url = f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage'
+        payload = {
+            'chat_id': CHAT_ID,
+            'text': '✅ <b>连接测试成功</b>\n\n这是一条测试消息，Telegram消息系统工作正常！',
+            'parse_mode': 'HTML',
+            'disable_web_page_preview': True
+        }
+        
+        response = requests.post(url, json=payload, timeout=10)
+        result = response.json()
+        
+        if result.get('ok'):
+            return jsonify({
+                'success': True,
+                'message': '连接测试成功',
+                'telegram_response': result
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': result.get('description', '未知错误'),
+                'telegram_response': result
+            })
+            
+    except requests.exceptions.Timeout:
+        return jsonify({
+            'success': False,
+            'error': 'API请求超时，请检查网络连接'
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
+
+@app.route('/api/telegram-system/send', methods=['POST'])
+def telegram_system_send_message():
+    """发送Telegram消息"""
+    try:
+        import requests
+        from datetime import datetime
+        
+        # 硬编码的配置
+        BOT_TOKEN = '8437045462:AAFePnwdC21cqeWhZISMQHGGgjmroVqE2H0'
+        CHAT_ID = '-1003227444260'
+        
+        data = request.get_json()
+        message = data.get('message', '').strip()
+        
+        if not message:
+            return jsonify({
+                'success': False,
+                'error': '消息内容不能为空'
+            })
+        
+        # 发送消息到Telegram
+        url = f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage'
+        payload = {
+            'chat_id': CHAT_ID,
+            'text': message,
+            'parse_mode': 'HTML',
+            'disable_web_page_preview': True
+        }
+        
+        print(f"[TG消息系统] 发送消息: {message[:100]}...")
+        
+        response = requests.post(url, json=payload, timeout=10)
+        result = response.json()
+        
+        if result.get('ok'):
+            print(f"[TG消息系统] ✅ 消息发送成功")
+            return jsonify({
+                'success': True,
+                'message': '消息发送成功',
+                'message_id': result['result']['message_id'],
+                'sent_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            })
+        else:
+            error_msg = result.get('description', '未知错误')
+            print(f"[TG消息系统] ❌ 发送失败: {error_msg}")
+            return jsonify({
+                'success': False,
+                'error': error_msg
+            })
+            
+    except requests.exceptions.Timeout:
+        return jsonify({
+            'success': False,
+            'error': 'API请求超时，请检查网络连接'
+        })
+    except Exception as e:
+        print(f"[TG消息系统] ❌ 异常: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
 
 @app.route('/cache-help')
 def cache_help():
@@ -16107,6 +16369,22 @@ def place_okx_order():
                     else:
                         response_data['message'] += f"\n⚠️ 止盈止损设置失败: {tpsl_result.get('error', '未知错误')}"
                 
+                # 🔔 发送Telegram开仓通知
+                try:
+                    send_trading_telegram_notification('open_position', {
+                        'instId': inst_id,
+                        'side': side,
+                        'posSide': pos_side,
+                        'size': contracts_str,
+                        'price': current_price,
+                        'usdt': user_usdt,
+                        'leverage': leverage_value,
+                        'tpPrice': tpsl_result.get('tpPrice') if tpsl_result else None,
+                        'slPrice': tpsl_result.get('slPrice') if tpsl_result else None
+                    })
+                except Exception as e:
+                    print(f"[TG通知] 开仓通知发送失败: {str(e)}")
+                
                 return jsonify(response_data)
             else:
                 return jsonify({
@@ -16365,9 +16643,11 @@ def save_okx_tpsl_settings(account_id):
             'sentiment_take_profit_enabled': bool(data.get('sentimentTakeProfitEnabled', False)),  # 🔥 市场情绪止盈
             'sentiment_signals': ['见顶信号', '顶部背离'],  # 固定触发信号
             'sentiment_position_side': 'long',  # 只平多单
+            'top_signal_top8_short_enabled': bool(data.get('top_signal_top8_short_enabled', False)),  # 🔧 见顶信号+涨幅前8做空
+            'top_signal_bottom8_short_enabled': bool(data.get('top_signal_bottom8_short_enabled', False)),  # 🔧 见顶信号+涨幅后8做空
             'max_position_value_usdt': float(data.get('maxPositionValueUsdt', 5.0)),
             'last_updated': last_updated,
-            'comment': '止盈止损配置 - 最大单笔保护 + RSI多单止盈 + RSI空单止盈 + 市场情绪止盈'
+            'comment': '止盈止损配置 - 最大单笔保护 + RSI多单止盈 + RSI空单止盈 + 市场情绪止盈 + 见顶信号做空'
         }
         
         # 保存到JSONL文件（覆盖第一行）
@@ -16393,6 +16673,8 @@ def save_okx_tpsl_settings(account_id):
             'rsiShortTakeProfitThreshold': jsonl_settings['rsi_short_take_profit_threshold'],
             'rsiShortTakeProfitEnabled': jsonl_settings['rsi_short_take_profit_enabled'],
             'sentimentTakeProfitEnabled': jsonl_settings['sentiment_take_profit_enabled'],  # 🔥 市场情绪止盈
+            'top_signal_top8_short_enabled': jsonl_settings['top_signal_top8_short_enabled'],  # 🔧 见顶信号+涨幅前8做空
+            'top_signal_bottom8_short_enabled': jsonl_settings['top_signal_bottom8_short_enabled'],  # 🔧 见顶信号+涨幅后8做空
             'maxPositionValueUsdt': jsonl_settings['max_position_value_usdt'],
             'enabled': jsonl_settings['enabled'],
             'lastUpdated': last_updated
@@ -17037,6 +17319,254 @@ def set_top_signal_strategy_allowed(account_id, strategy_type):
         })
         
     except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        })
+
+@app.route('/api/okx-trading/save-bottom-signal-config/<account_id>/<strategy_type>', methods=['POST'])
+def save_bottom_signal_config(account_id, strategy_type):
+    """保存见底信号做多策略配置到JSONL文件
+    strategy_type: 'top8_long' 或 'bottom8_long'
+    """
+    try:
+        import json
+        import os
+        from datetime import datetime
+        
+        data = request.get_json()
+        
+        # 读取配置参数
+        enabled = bool(data.get('enabled', False))
+        rsi_threshold = int(data.get('rsi_threshold', 800))
+        max_order_usdt = float(data.get('max_order_usdt', 5.0))
+        position_percent = float(data.get('position_percent', 1.5))
+        leverage = int(data.get('leverage', 10))
+        
+        # 验证参数
+        if rsi_threshold < 300 or rsi_threshold > 1500:
+            return jsonify({'success': False, 'error': 'RSI阈值必须在300-1500之间'})
+        
+        if max_order_usdt < 1 or max_order_usdt > 100:
+            return jsonify({'success': False, 'error': '单币限额必须在1-100 USDT之间'})
+        
+        # 准备配置记录
+        config = {
+            'timestamp': datetime.now().isoformat(),
+            'time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'account_id': account_id,
+            'strategy_type': strategy_type,
+            'enabled': enabled,
+            'rsi_threshold': rsi_threshold,
+            'max_order_usdt': max_order_usdt,
+            'position_percent': position_percent,
+            'leverage': leverage,
+            'description': f'见底信号+{"涨幅前8" if strategy_type == "top8_long" else "涨幅后8"}做多策略'
+        }
+        
+        # 保存到JSONL文件
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        jsonl_dir = os.path.join(current_dir, 'data', 'okx_bottom_signal_strategies')
+        os.makedirs(jsonl_dir, exist_ok=True)
+        
+        jsonl_file = os.path.join(jsonl_dir, f'{account_id}_bottom_signal_{strategy_type}.jsonl')
+        
+        # 写入配置（覆盖模式，只保留最新配置）
+        with open(jsonl_file, 'w', encoding='utf-8') as f:
+            f.write(json.dumps(config, ensure_ascii=False) + '\n')
+        
+        print(f"✅ 已保存见底信号策略配置: {account_id}/{strategy_type}")
+        print(f"   RSI阈值: {rsi_threshold}, 单币限额: {max_order_usdt} USDT, 杠杆: {leverage}x")
+        
+        return jsonify({
+            'success': True,
+            'message': f'底部信号 {strategy_type} 配置已保存',
+            'config': config
+        })
+        
+    except Exception as e:
+        print(f"❌ 保存见底信号策略配置失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        })
+
+@app.route('/api/okx-trading/get-bottom-signal-config/<account_id>/<strategy_type>', methods=['GET'])
+def get_bottom_signal_config(account_id, strategy_type):
+    """读取见底信号做多策略配置
+    strategy_type: 'top8_long' 或 'bottom8_long'
+    """
+    try:
+        import json
+        import os
+        
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        jsonl_file = os.path.join(current_dir, 'data', 'okx_bottom_signal_strategies', f'{account_id}_bottom_signal_{strategy_type}.jsonl')
+        
+        if not os.path.exists(jsonl_file):
+            # 返回默认配置
+            return jsonify({
+                'success': True,
+                'config': {
+                    'enabled': False,
+                    'rsi_threshold': 800,
+                    'max_order_usdt': 5.0,
+                    'position_percent': 1.5,
+                    'leverage': 10
+                },
+                'message': '使用默认配置（文件不存在）'
+            })
+        
+        # 读取最新配置（JSONL文件最后一行）
+        with open(jsonl_file, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+            if lines:
+                config = json.loads(lines[-1].strip())
+                return jsonify({
+                    'success': True,
+                    'config': config
+                })
+            else:
+                return jsonify({
+                    'success': True,
+                    'config': {
+                        'enabled': False,
+                        'rsi_threshold': 800,
+                        'max_order_usdt': 5.0,
+                        'position_percent': 1.5,
+                        'leverage': 10
+                    },
+                    'message': '文件为空，使用默认配置'
+                })
+        
+    except Exception as e:
+        print(f"❌ 读取见底信号策略配置失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        })
+
+@app.route('/api/okx-trading/save-top-signal-config/<account_id>/<strategy_type>', methods=['POST'])
+def save_top_signal_config(account_id, strategy_type):
+    """保存见顶信号做空策略配置到JSONL文件
+    strategy_type: 'top8_short' 或 'bottom8_short'
+    """
+    try:
+        import json
+        import os
+        from datetime import datetime
+        
+        data = request.get_json()
+        
+        # 读取配置参数
+        enabled = bool(data.get('enabled', False))
+        rsi_threshold = int(data.get('rsi_threshold', 1800))
+        max_order_usdt = float(data.get('max_order_usdt', 5.0))
+        position_percent = float(data.get('position_percent', 1.5))
+        leverage = int(data.get('leverage', 10))
+        
+        # 验证参数
+        if rsi_threshold < 1000 or rsi_threshold > 3000:
+            return jsonify({'success': False, 'error': 'RSI阈值必须在1000-3000之间'})
+        
+        if max_order_usdt < 1 or max_order_usdt > 100:
+            return jsonify({'success': False, 'error': '单币限额必须在1-100 USDT之间'})
+        
+        # 准备配置记录
+        config = {
+            'timestamp': datetime.now().isoformat(),
+            'time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'account_id': account_id,
+            'strategy_type': strategy_type,
+            'enabled': enabled,
+            'rsi_threshold': rsi_threshold,
+            'max_order_usdt': max_order_usdt,
+            'position_percent': position_percent,
+            'leverage': leverage,
+            'description': f'见顶信号+{"涨幅前8" if strategy_type == "top8_short" else "涨幅后8"}做空策略'
+        }
+        
+        # 保存到JSONL文件
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        jsonl_dir = os.path.join(current_dir, 'data', 'okx_top_signal_strategies')
+        os.makedirs(jsonl_dir, exist_ok=True)
+        
+        jsonl_file = os.path.join(jsonl_dir, f'{account_id}_top_signal_{strategy_type}.jsonl')
+        
+        # 写入配置（覆盖模式，只保留最新配置）
+        with open(jsonl_file, 'w', encoding='utf-8') as f:
+            f.write(json.dumps(config, ensure_ascii=False) + '\n')
+        
+        print(f"✅ 已保存见顶信号策略配置: {account_id}/{strategy_type}")
+        print(f"   RSI阈值: {rsi_threshold}, 单币限额: {max_order_usdt} USDT, 杠杆: {leverage}x")
+        
+        return jsonify({
+            'success': True,
+            'message': f'顶部信号 {strategy_type} 配置已保存',
+            'config': config
+        })
+        
+    except Exception as e:
+        print(f"❌ 保存见顶信号策略配置失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        })
+
+@app.route('/api/okx-trading/get-top-signal-config/<account_id>/<strategy_type>', methods=['GET'])
+def get_top_signal_config(account_id, strategy_type):
+    """读取见顶信号做空策略配置
+    strategy_type: 'top8_short' 或 'bottom8_short'
+    """
+    try:
+        import json
+        import os
+        
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        jsonl_file = os.path.join(current_dir, 'data', 'okx_top_signal_strategies', f'{account_id}_top_signal_{strategy_type}.jsonl')
+        
+        if not os.path.exists(jsonl_file):
+            # 返回默认配置
+            return jsonify({
+                'success': True,
+                'config': {
+                    'enabled': False,
+                    'rsi_threshold': 1800,
+                    'max_order_usdt': 5.0,
+                    'position_percent': 1.5,
+                    'leverage': 10
+                },
+                'message': '使用默认配置（文件不存在）'
+            })
+        
+        # 读取最新配置（JSONL文件最后一行）
+        with open(jsonl_file, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+            if lines:
+                config = json.loads(lines[-1].strip())
+                return jsonify({
+                    'success': True,
+                    'config': config
+                })
+            else:
+                return jsonify({
+                    'success': True,
+                    'config': {
+                        'enabled': False,
+                        'rsi_threshold': 1800,
+                        'max_order_usdt': 5.0,
+                        'position_percent': 1.5,
+                        'leverage': 10
+                    },
+                    'message': '文件为空，使用默认配置'
+                })
+        
+    except Exception as e:
+        print(f"❌ 读取见顶信号策略配置失败: {str(e)}")
         return jsonify({
             'success': False,
             'error': str(e),
@@ -18016,6 +18546,36 @@ def close_okx_position():
         except Exception as e:
             print(f"[平仓-账户配置] 获取失败,默认双向持仓: {str(e)}")
         
+        # 🔥 在平仓前获取持仓信息（用于计算盈亏）
+        position_info = None
+        try:
+            positions_path = f'/api/v5/account/positions?instId={inst_id}'
+            if position_mode == 'long_short_mode':
+                positions_path += f'&posSide={pos_side}'
+            
+            pos_timestamp = datetime.now(timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
+            pos_message = pos_timestamp + 'GET' + positions_path
+            pos_mac = hmac.new(
+                bytes(secret_key, encoding='utf8'),
+                bytes(pos_message, encoding='utf-8'),
+                digestmod='sha256'
+            )
+            pos_signature = base64.b64encode(pos_mac.digest()).decode()
+            
+            pos_response = requests.get(base_url + positions_path, headers={
+                'OK-ACCESS-KEY': api_key,
+                'OK-ACCESS-SIGN': pos_signature,
+                'OK-ACCESS-TIMESTAMP': pos_timestamp,
+                'OK-ACCESS-PASSPHRASE': passphrase,
+            }, timeout=5)
+            pos_result = pos_response.json()
+            
+            if pos_result.get('code') == '0' and pos_result.get('data'):
+                position_info = pos_result['data'][0]
+                print(f"[平仓前查询] 获取持仓信息: {position_info.get('instId')} 开仓均价={position_info.get('avgPx')} 未实现盈亏={position_info.get('upl')}")
+        except Exception as e:
+            print(f"[平仓前查询] 获取持仓信息失败: {str(e)}")
+        
         # 判断是全部平仓还是部分平仓
         if close_size is None or close_size == 0:
             # 全部平仓:使用 close-position 接口
@@ -18039,12 +18599,16 @@ def close_okx_position():
             # 平多单 -> sell,平空单 -> buy
             side = 'sell' if pos_side == 'long' else 'buy'
             
+            # 🔧 修复：保留小数精度，OKX API支持小数数量
+            # 例如：0.7张、0.35张等小数持仓也能正确平仓
+            close_size_str = str(close_size) if isinstance(close_size, (int, float)) else str(float(close_size))
+            
             order_params = {
                 'instId': inst_id,
                 'tdMode': 'isolated',
                 'side': side,
                 'ordType': 'market',  # 市价单
-                'sz': str(int(close_size)),  # 平仓数量(张数)
+                'sz': close_size_str,  # 平仓数量(支持小数)
                 'reduceOnly': 'true'  # 只减仓,不开新仓
             }
             
@@ -18099,6 +18663,90 @@ def close_okx_position():
                     'status': 'success'
                 }
             )
+            
+            # 🔔 发送Telegram平仓通知
+            try:
+                # 计算实际盈亏
+                current_price = 0
+                pnl = 0
+                pnl_percent = 0
+                avg_price = 0
+                
+                # 从持仓信息中获取盈亏数据
+                if position_info:
+                    # 未实现盈亏（OKX返回的是USDT金额）
+                    upl = float(position_info.get('upl', 0))
+                    # 未实现盈亏率（百分比）
+                    upl_ratio = float(position_info.get('uplRatio', 0))
+                    # 开仓均价
+                    avg_price = float(position_info.get('avgPx', 0))
+                    # 持仓数量
+                    pos_size_abs = abs(float(position_info.get('pos', 0)))
+                    
+                    # 如果是全平，使用全部未实现盈亏
+                    if close_size is None or close_size == 0:
+                        pnl = upl
+                        pnl_percent = upl_ratio * 100
+                    else:
+                        # 如果是部分平仓，按比例计算盈亏
+                        close_ratio = close_size / pos_size_abs if pos_size_abs > 0 else 1
+                        pnl = upl * close_ratio
+                        pnl_percent = upl_ratio * 100
+                    
+                    print(f"[平仓盈亏] 开仓均价={avg_price:.4f} 未实现盈亏={upl:.4f} USDT ({upl_ratio*100:.2f}%) 平仓盈亏={pnl:.4f} USDT ({pnl_percent:.2f}%)")
+                
+                try:
+                    # 获取当前市价
+                    ticker_path = f'/api/v5/market/ticker?instId={inst_id}'
+                    ticker_response = requests.get(base_url + ticker_path, timeout=5)
+                    ticker_data = ticker_response.json()
+                    if ticker_data.get('code') == '0' and ticker_data.get('data'):
+                        current_price = float(ticker_data['data'][0].get('last', 0))
+                except:
+                    # 如果获取市价失败，使用开仓均价
+                    current_price = avg_price
+                
+                send_trading_telegram_notification('close_position', {
+                    'instId': inst_id,
+                    'side': 'sell' if pos_side == 'long' else 'buy',
+                    'posSide': pos_side,
+                    'size': close_size if close_size else 'All',
+                    'price': current_price,
+                    'avgPrice': avg_price,
+                    'pnl': pnl,
+                    'pnlPercent': pnl_percent
+                })
+                
+                # 📊 记录盈亏到统计文件
+                try:
+                    pnl_record = {
+                        'timestamp': datetime.now().isoformat(),
+                        'time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        'account_id': data.get('accountId', 'unknown'),
+                        'inst_id': inst_id,
+                        'pos_side': pos_side,
+                        'close_type': 'full' if close_size is None else 'partial',
+                        'close_size': close_size if close_size else 'All',
+                        'avg_price': avg_price,
+                        'current_price': current_price,
+                        'pnl': pnl,
+                        'pnl_percent': pnl_percent
+                    }
+                    
+                    import os
+                    pnl_dir = 'data/okx_pnl_statistics'
+                    os.makedirs(pnl_dir, exist_ok=True)
+                    
+                    pnl_file = f"{pnl_dir}/pnl_records.jsonl"
+                    with open(pnl_file, 'a', encoding='utf-8') as f:
+                        f.write(json.dumps(pnl_record, ensure_ascii=False) + '\n')
+                    
+                    print(f"[盈亏统计] 记录已保存: {pnl_file}")
+                except Exception as stat_error:
+                    print(f"[盈亏统计] 保存失败: {str(stat_error)}")
+                
+            except Exception as e:
+                print(f"[TG通知] 平仓通知发送失败: {str(e)}")
             
             return jsonify({
                 'success': True,
@@ -22240,6 +22888,94 @@ def get_wave_peaks_history():
             'traceback': traceback.format_exc()
         })
 
+@app.route('/api/coin-change-tracker/daily-prediction', methods=['GET'])
+def get_daily_prediction():
+    """获取当日行情预判数据
+    
+    逻辑：
+    1. 优先读取临时JSONL文件（0-2点之间的实时统计）
+    2. 如果没有临时文件或已过期，读取正式JSON文件（2点后的最终预判）
+    """
+    try:
+        from datetime import datetime, timedelta, timezone
+        # 使用北京时间（UTC+8）
+        now_utc = datetime.now(timezone.utc)
+        now_beijing = now_utc + timedelta(hours=8)
+        today = now_beijing.strftime('%Y-%m-%d')
+        
+        # 1. 优先尝试读取临时JSONL文件（最新的一条记录）
+        temp_file = Path('data/daily_predictions/prediction_temp_today.jsonl')
+        if temp_file.exists():
+            try:
+                with open(temp_file, 'r', encoding='utf-8') as f:
+                    lines = f.readlines()
+                    if lines:
+                        # 读取最后一条记录（最新的）
+                        last_line = lines[-1].strip()
+                        if last_line:
+                            temp_data = json.loads(last_line)
+                            data_date = temp_data.get('date', '')
+                            
+                            # 检查是否是今天的数据
+                            if data_date == today:
+                                response = make_response(jsonify({
+                                    'success': True,
+                                    'data': temp_data,
+                                    'source': 'temp'  # 标记数据来源
+                                }))
+                                response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate'
+                                response.headers['Pragma'] = 'no-cache'
+                                response.headers['Expires'] = '0'
+                                return response
+            except Exception as e:
+                print(f"⚠️ 读取临时文件失败: {e}")
+        
+        # 2. 读取正式JSON文件（按日期）
+        prediction_file = Path(f'data/daily_predictions/prediction_{today}.json')
+        
+        if not prediction_file.exists():
+            # 兼容旧格式
+            prediction_file = Path('data/daily_prediction.json')
+        
+        if not prediction_file.exists():
+            return jsonify({
+                'success': False,
+                'error': '暂无预判数据',
+                'message': '预判数据将在每天0-2点生成，2点后生成最终预判'
+            })
+        
+        with open(prediction_file, 'r', encoding='utf-8') as f:
+            prediction_data = json.load(f)
+        
+        # 检查数据是否是今天的
+        data_date = prediction_data.get('date', '')
+        
+        if data_date != today:
+            return jsonify({
+                'success': False,
+                'error': '预判数据已过期',
+                'message': f'数据日期: {data_date}，今日: {today}',
+                'old_data': prediction_data
+            })
+        
+        response = make_response(jsonify({
+            'success': True,
+            'data': prediction_data,
+            'source': 'final'  # 标记数据来源
+        }))
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        })
+
 
 # ==================== 数据采集健康监控 ====================
 @app.route('/data-health-monitor')
@@ -25011,12 +25747,280 @@ def api_market_sentiment_stats():
         }), 500
 
 
+@app.route('/api/okx-trading/check-top-signal-status/<account_id>/<strategy_type>', methods=['GET'])
+def check_top_signal_status(account_id, strategy_type):
+    """检查见顶信号策略的执行状态
+    strategy_type: 'top8_short' 或 'bottom8_short'
+    """
+    try:
+        import json
+        import os
+        from datetime import datetime, timedelta
+        
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        execution_file = os.path.join(current_dir, 'data', 'okx_auto_strategy', f'{account_id}_top_signal_{strategy_type}_execution.jsonl')
+        
+        if not os.path.exists(execution_file):
+            return jsonify({
+                'success': True,
+                'allowed': True,
+                'reason': '首次执行'
+            })
+        
+        # 读取文件头（第一行）
+        with open(execution_file, 'r', encoding='utf-8') as f:
+            first_line = f.readline().strip()
+            if first_line:
+                header = json.loads(first_line)
+                allowed = header.get('allowed', True)
+                timestamp_str = header.get('timestamp', '')
+                
+                # 检查是否超过1小时冷却期
+                if timestamp_str and not allowed:
+                    try:
+                        last_time = datetime.fromisoformat(timestamp_str)
+                        now = datetime.now()
+                        if (now - last_time).total_seconds() > 3600:  # 1小时 = 3600秒
+                            allowed = True
+                    except:
+                        pass
+                
+                return jsonify({
+                    'success': True,
+                    'allowed': allowed,
+                    'timestamp': timestamp_str,
+                    'reason': header.get('reason', '')
+                })
+        
+        return jsonify({
+            'success': True,
+            'allowed': True,
+            'reason': '文件为空'
+        })
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+
+@app.route('/api/okx-trading/check-bottom-signal-status/<account_id>/<strategy_type>', methods=['GET'])
+def check_bottom_signal_status(account_id, strategy_type):
+    """检查见底信号策略的执行状态
+    strategy_type: 'top8_long' 或 'bottom8_long'
+    """
+    try:
+        import json
+        import os
+        from datetime import datetime, timedelta
+        
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        execution_file = os.path.join(current_dir, 'data', 'okx_bottom_signal_execution', f'{account_id}_bottom_signal_{strategy_type}_execution.jsonl')
+        
+        if not os.path.exists(execution_file):
+            return jsonify({
+                'success': True,
+                'allowed': True,
+                'reason': '首次执行'
+            })
+        
+        # 读取文件头（第一行）
+        with open(execution_file, 'r', encoding='utf-8') as f:
+            first_line = f.readline().strip()
+            if first_line:
+                header = json.loads(first_line)
+                allowed = header.get('allowed', True)
+                timestamp_str = header.get('timestamp', '')
+                
+                # 检查是否超过1小时冷却期
+                if timestamp_str and not allowed:
+                    try:
+                        last_time = datetime.fromisoformat(timestamp_str)
+                        now = datetime.now()
+                        if (now - last_time).total_seconds() > 3600:  # 1小时 = 3600秒
+                            allowed = True
+                    except:
+                        pass
+                
+                return jsonify({
+                    'success': True,
+                    'allowed': allowed,
+                    'timestamp': timestamp_str,
+                    'reason': header.get('reason', '')
+                })
+        
+        return jsonify({
+            'success': True,
+            'allowed': True,
+            'reason': '文件为空'
+        })
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+
+@app.route('/api/okx-trading/set-allowed-bottom-signal/<account_id>/<strategy_type>', methods=['POST'])
+def set_bottom_signal_strategy_allowed(account_id, strategy_type):
+    """设置见底信号做多策略的执行允许状态（写入JSONL文件头）
+    strategy_type: 'top8_long' 或 'bottom8_long'
+    """
+    try:
+        import json
+        import os
+        from datetime import datetime
+        
+        data = request.get_json()
+        allowed = bool(data.get('allowed', False))
+        reason = data.get('reason', 'Manual update')
+        
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        jsonl_dir = os.path.join(current_dir, 'data', 'okx_bottom_signal_execution')
+        os.makedirs(jsonl_dir, exist_ok=True)
+        
+        jsonl_file = os.path.join(jsonl_dir, f'{account_id}_bottom_signal_{strategy_type}_execution.jsonl')
+        
+        # 读取现有记录（除了第一行）
+        existing_records = []
+        if os.path.exists(jsonl_file):
+            with open(jsonl_file, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+                if len(lines) > 1:
+                    existing_records = lines[1:]  # 跳过第一行
+        
+        # 创建新的文件头记录
+        header_record = {
+            'timestamp': datetime.now().isoformat(),
+            'time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'account_id': account_id,
+            'strategy_type': strategy_type,
+            'allowed': allowed,
+            'reason': reason
+        }
+        
+        # 写入新的文件头和原有记录
+        with open(jsonl_file, 'w', encoding='utf-8') as f:
+            f.write(json.dumps(header_record, ensure_ascii=False) + '\n')
+            # 写回其他记录
+            for line in existing_records:
+                f.write(line)
+        
+        print(f"✅ Set bottom signal {strategy_type} execution allowed={allowed} for {account_id}")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Bottom signal {strategy_type} execution allowed status set to {allowed}',
+            'record': header_record
+        })
+        
+    except Exception as e:
+        import traceback
+        print(f"❌ Error setting bottom signal allowed: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+
 # 数据管理页面路由
 @app.route('/data-management')
 def data_management_page():
     """数据管理和备份页面"""
     return render_template('data_management.html')
 
+@app.route('/api/okx-trading/pnl-statistics', methods=['GET'])
+def get_pnl_statistics():
+    """获取盈亏统计数据"""
+    try:
+        import os
+        import json
+        from datetime import datetime, timedelta
+        
+        pnl_file = 'data/okx_pnl_statistics/pnl_records.jsonl'
+        
+        if not os.path.exists(pnl_file):
+            return jsonify({
+                'success': True,
+                'data': {
+                    'total_trades': 0,
+                    'total_pnl': 0,
+                    'win_rate': 0,
+                    'records': []
+                }
+            })
+        
+        # 读取所有记录
+        records = []
+        with open(pnl_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                if line.strip():
+                    try:
+                        records.append(json.loads(line))
+                    except:
+                        pass
+        
+        # 获取查询参数
+        days = int(request.args.get('days', 7))  # 默认查询最近7天
+        account_id = request.args.get('accountId', None)
+        
+        # 过滤时间范围
+        if days > 0:
+            cutoff_time = datetime.now() - timedelta(days=days)
+            records = [r for r in records if datetime.fromisoformat(r['timestamp']) >= cutoff_time]
+        
+        # 过滤账户
+        if account_id:
+            records = [r for r in records if r.get('account_id') == account_id]
+        
+        # 统计数据
+        total_trades = len(records)
+        total_pnl = sum(r.get('pnl', 0) for r in records)
+        win_trades = sum(1 for r in records if r.get('pnl', 0) > 0)
+        win_rate = (win_trades / total_trades * 100) if total_trades > 0 else 0
+        
+        # 按交易对统计
+        coin_stats = {}
+        for r in records:
+            coin = r['inst_id']
+            if coin not in coin_stats:
+                coin_stats[coin] = {'trades': 0, 'pnl': 0, 'wins': 0}
+            coin_stats[coin]['trades'] += 1
+            coin_stats[coin]['pnl'] += r.get('pnl', 0)
+            if r.get('pnl', 0) > 0:
+                coin_stats[coin]['wins'] += 1
+        
+        # 计算每个币种的胜率
+        for coin, stats in coin_stats.items():
+            stats['win_rate'] = (stats['wins'] / stats['trades'] * 100) if stats['trades'] > 0 else 0
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'total_trades': total_trades,
+                'total_pnl': round(total_pnl, 2),
+                'win_rate': round(win_rate, 2),
+                'win_trades': win_trades,
+                'loss_trades': total_trades - win_trades,
+                'coin_stats': coin_stats,
+                'records': records[-50:]  # 最近50条记录
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        })
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=9002, debug=False)
-

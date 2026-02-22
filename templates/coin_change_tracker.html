@@ -6,33 +6,31 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>27币涨跌幅追踪系统 v3.1.0</title>
+    <title>27币涨跌幅追踪系统 v3.3.0</title>
     <!-- 
-    版本: 2026-02-20 v3.1.0
+    版本: 2026-02-22 v3.3.0
     
-    🔧 最新修复 (2026-02-20):
-    1. ✅ 市场情绪信号图标刷新后消失问题修复
-       - 修复日期参数解析，支持YYYYMMDD和YYYY-MM-DD两种格式
-       - 修复市场情绪API日期格式兼容性（自动移除横线）
-       - 页面刷新后信号图标正常显示
-       - 历史日期（如2月19日）数据能正确加载
+    🆕 新增功能 (2026-02-22):
+    1. ✅ 日常预判系统 - 8种市场信号与操作提示
+       - 基于每日0-2点的10分钟上涨占比数据自动分析
+       - 智能判断8种市场情况并提供明确操作建议
+       - 图表自动标注：趋势图00:00位置📊标记 + 柱状图顶部提示框
+       - Telegram自动推送（每日2点）
+       - 支持历史数据回看验证
     
-    2. ✅ 市场情绪信号显示增强
-       - 增强调试日志，便于问题排查
-       - 信号统计：见顶、顶部背离、见底、底部背离
-       - scatter系列独立显示各类信号
-       - 支持查看任意历史日期的市场情绪分析
-    
-    3. 📊 信号图标说明:
-       ⚠️ 红色倒三角 = 见顶信号
-       ⛔ 橙色圆点 = 顶部背离
-       🔥 绿色上箭头 = 见底信号
-       🚀 青色菱形 = 底部背离
+    2. 📊 8种预判信号：
+       - 情况1: 低吸（绿红无黄） → 低点做多
+       - 情况2: 等待新低（绿红黄） → 高点做空
+       - 情况3: 做空（纯红/红+少量空白） → 相对高点做空
+       - 情况4: 诱多不参与（纯绿） → 不参与
+       - 情况5: 诱空试盘抄底（红+空白>25%） → 低点做多
+       - 情况6: 空头强控盘（纯空白） → 不参与
+       - 情况7: 观望（红黄无绿） → 不参与
+       - 情况8: 等待新低（绿黄无红） → 高点做空
     
     历史版本:
-    - v3.0.9: 移除HTML默认值、修复加载逻辑
-    - v3.0.8: 波峰检测算法优化
-    - v3.0.7: RSI数据映射修复
+    - v3.2.1 (2026-02-21): 10分钟上涨占比柱状图
+    - v3.1.0 (2026-02-20): 市场情绪信号图标修复和增强
     -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
@@ -98,7 +96,7 @@
                         </h3>
                         <div class="space-y-3 text-sm text-gray-700">
                             <p><strong>系统名称：</strong>27币涨跌幅追踪系统 (Coin Change Tracker)</p>
-                            <p><strong>系统版本：</strong>V2.5 (2026-02-19 见底信号RSI<700限制 + 情绪完整显示 + 北京时间) ⚡ <span class="text-green-600 font-bold">性能优化V2.0：首屏加载提升89.8%（12.9s→1.3s）</span></p>
+                            <p><strong>系统版本：</strong>V3.3.0 (2026-02-22 日常预判系统 - 8种市场信号与操作提示) ⚡ <span class="text-green-600 font-bold">性能优化V2.0：首屏加载提升89.8%（12.9s→1.3s）</span></p>
                             <p><strong>核心功能：</strong>实时追踪27种主流加密货币的价格变化、累计涨跌幅、RSI指标及BTC市场状态</p>
                             <p><strong>数据源：</strong>OKX API (永续合约 + 现货)</p>
                             <p><strong>更新频率：</strong>每5分钟自动采集一次</p>
@@ -185,6 +183,158 @@
                                         <strong>📈 效果预测：</strong>减少假信号约30-40%，提高抄底准确率，避免在RSI高位被套
                                     </p>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 🆕 日常预判功能 (2026-02-22) -->
+                    <div class="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg p-6 shadow-md border-2 border-orange-400">
+                        <h3 class="text-lg font-bold text-orange-800 mb-4 border-b-2 border-orange-500 pb-2">
+                            <i class="fas fa-chart-pie text-orange-600 mr-2"></i>
+                            🎯 日常预判系统 - 8种市场信号与操作提示 (2026-02-22)
+                        </h3>
+                        <div class="space-y-4 text-sm text-gray-700">
+                            
+                            <!-- 功能简介 -->
+                            <div class="bg-white p-4 rounded-lg border-l-4 border-orange-500">
+                                <h4 class="font-bold text-orange-800 mb-2">
+                                    <i class="fas fa-info-circle mr-2"></i>
+                                    💡 功能简介
+                                </h4>
+                                <p class="mb-2">基于<strong>每日0-2点</strong>的10分钟上涨占比柱状图数据，自动分析市场状态并给出操作建议：</p>
+                                <ul class="list-disc list-inside space-y-1 ml-4">
+                                    <li>📊 自动分析12个10分钟区间的上涨占比（0:00-2:00）</li>
+                                    <li>🎨 根据平均涨幅分颜色：绿色(>55%)、红色(<45%)、黄色(45-55%)、空白(0%)</li>
+                                    <li>🤖 智能判断8种市场情况，提供明确操作提示</li>
+                                    <li>📱 Telegram自动推送预判结果（每日2点）</li>
+                                    <li>📈 图表标注：趋势图00:00位置显示📊标记，柱状图顶部显示彩色提示框</li>
+                                </ul>
+                            </div>
+
+                            <!-- 8种预判情况 -->
+                            <div class="bg-white p-4 rounded-lg border-l-4 border-blue-500">
+                                <h4 class="font-bold text-blue-800 mb-3">
+                                    <i class="fas fa-list-ol mr-2"></i>
+                                    📋 8种预判情况及操作提示
+                                </h4>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-xs border-collapse mt-2">
+                                        <thead>
+                                            <tr class="bg-gray-200">
+                                                <th class="border border-gray-400 px-3 py-2 text-left">情况</th>
+                                                <th class="border border-gray-400 px-3 py-2 text-left">条件</th>
+                                                <th class="border border-gray-400 px-3 py-2 text-left">信号</th>
+                                                <th class="border border-gray-400 px-3 py-2 text-left">操作提示</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr class="hover:bg-blue-50">
+                                                <td class="border border-gray-400 px-3 py-2">1️⃣</td>
+                                                <td class="border border-gray-400 px-3 py-2">有绿+有红+无黄</td>
+                                                <td class="border border-gray-400 px-3 py-2"><span class="inline-block px-2 py-1 bg-blue-100 text-blue-800 rounded font-semibold">低吸</span></td>
+                                                <td class="border border-gray-400 px-3 py-2"><strong class="text-green-600">📈 低点做多</strong></td>
+                                            </tr>
+                                            <tr class="hover:bg-blue-50">
+                                                <td class="border border-gray-400 px-3 py-2">2️⃣</td>
+                                                <td class="border border-gray-400 px-3 py-2">有绿+有红+有黄</td>
+                                                <td class="border border-gray-400 px-3 py-2"><span class="inline-block px-2 py-1 bg-orange-100 text-orange-800 rounded font-semibold">等待新低</span></td>
+                                                <td class="border border-gray-400 px-3 py-2"><strong class="text-red-600">📉 高点做空</strong></td>
+                                            </tr>
+                                            <tr class="hover:bg-blue-50">
+                                                <td class="border border-gray-400 px-3 py-2">3️⃣</td>
+                                                <td class="border border-gray-400 px-3 py-2">只有红色 / 红+空白<25%</td>
+                                                <td class="border border-gray-400 px-3 py-2"><span class="inline-block px-2 py-1 bg-red-100 text-red-800 rounded font-semibold">做空</span></td>
+                                                <td class="border border-gray-400 px-3 py-2"><strong class="text-red-600">📉 相对高点做空</strong></td>
+                                            </tr>
+                                            <tr class="hover:bg-blue-50">
+                                                <td class="border border-gray-400 px-3 py-2">4️⃣</td>
+                                                <td class="border border-gray-400 px-3 py-2">全部绿色</td>
+                                                <td class="border border-gray-400 px-3 py-2"><span class="inline-block px-2 py-1 bg-red-100 text-red-800 rounded font-semibold">诱多不参与</span></td>
+                                                <td class="border border-gray-400 px-3 py-2"><strong class="text-gray-600">⏸️ 不参与</strong></td>
+                                            </tr>
+                                            <tr class="hover:bg-blue-50">
+                                                <td class="border border-gray-400 px-3 py-2">5️⃣</td>
+                                                <td class="border border-gray-400 px-3 py-2">红色+空白>25%</td>
+                                                <td class="border border-gray-400 px-3 py-2"><span class="inline-block px-2 py-1 bg-green-100 text-green-800 rounded font-semibold">诱空试盘抄底</span></td>
+                                                <td class="border border-gray-400 px-3 py-2"><strong class="text-green-600">📈 低点做多</strong></td>
+                                            </tr>
+                                            <tr class="hover:bg-blue-50">
+                                                <td class="border border-gray-400 px-3 py-2">6️⃣</td>
+                                                <td class="border border-gray-400 px-3 py-2">全部空白</td>
+                                                <td class="border border-gray-400 px-3 py-2"><span class="inline-block px-2 py-1 bg-gray-100 text-gray-800 rounded font-semibold">空头强控盘</span></td>
+                                                <td class="border border-gray-400 px-3 py-2"><strong class="text-gray-600">⏸️ 不参与</strong></td>
+                                            </tr>
+                                            <tr class="hover:bg-blue-50">
+                                                <td class="border border-gray-400 px-3 py-2">7️⃣</td>
+                                                <td class="border border-gray-400 px-3 py-2">红色+黄色（无绿）</td>
+                                                <td class="border border-gray-400 px-3 py-2"><span class="inline-block px-2 py-1 bg-gray-100 text-gray-800 rounded font-semibold">观望</span></td>
+                                                <td class="border border-gray-400 px-3 py-2"><strong class="text-gray-600">⏸️ 不参与</strong></td>
+                                            </tr>
+                                            <tr class="hover:bg-blue-50">
+                                                <td class="border border-gray-400 px-3 py-2">8️⃣</td>
+                                                <td class="border border-gray-400 px-3 py-2">只有绿色+黄色（无红）</td>
+                                                <td class="border border-gray-400 px-3 py-2"><span class="inline-block px-2 py-1 bg-orange-100 text-orange-800 rounded font-semibold">等待新低</span></td>
+                                                <td class="border border-gray-400 px-3 py-2"><strong class="text-red-600">📉 高点做空</strong></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- 操作提示分类 -->
+                            <div class="bg-white p-4 rounded-lg border-l-4 border-green-500">
+                                <h4 class="font-bold text-green-800 mb-2">
+                                    <i class="fas fa-hand-point-right mr-2"></i>
+                                    🎯 操作提示分类
+                                </h4>
+                                <div class="grid grid-cols-3 gap-4">
+                                    <div class="bg-green-50 p-3 rounded-lg border border-green-300">
+                                        <h5 class="font-bold text-green-700 mb-2">📈 做多信号 (2种)</h5>
+                                        <ul class="text-xs space-y-1">
+                                            <li>• 情况1: 低吸 → <strong>低点做多</strong></li>
+                                            <li>• 情况5: 诱空试盘抄底 → <strong>低点做多</strong></li>
+                                        </ul>
+                                    </div>
+                                    <div class="bg-red-50 p-3 rounded-lg border border-red-300">
+                                        <h5 class="font-bold text-red-700 mb-2">📉 做空信号 (3种)</h5>
+                                        <ul class="text-xs space-y-1">
+                                            <li>• 情况2: 等待新低(绿红黄) → <strong>高点做空</strong></li>
+                                            <li>• 情况3: 做空 → <strong>相对高点做空</strong></li>
+                                            <li>• 情况8: 等待新低(绿黄无红) → <strong>高点做空</strong></li>
+                                        </ul>
+                                    </div>
+                                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-300">
+                                        <h5 class="font-bold text-gray-700 mb-2">⏸️ 不参与 (3种)</h5>
+                                        <ul class="text-xs space-y-1">
+                                            <li>• 情况4: 诱多不参与 → <strong>不参与</strong></li>
+                                            <li>• 情况6: 空头强控盘 → <strong>不参与</strong></li>
+                                            <li>• 情况7: 观望(红黄无绿) → <strong>不参与</strong></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 使用说明 -->
+                            <div class="bg-white p-4 rounded-lg border-l-4 border-purple-500">
+                                <h4 class="font-bold text-purple-800 mb-2">
+                                    <i class="fas fa-book-open mr-2"></i>
+                                    📖 使用说明
+                                </h4>
+                                <ol class="list-decimal list-inside space-y-1 ml-4">
+                                    <li><strong>查看图表标注：</strong>趋势图00:00位置的📊标记点击可查看预判详情</li>
+                                    <li><strong>柱状图提示：</strong>10分钟上涨占比图表顶部显示彩色预判提示框</li>
+                                    <li><strong>历史回看：</strong>切换日期可查看历史预判数据，验证准确率</li>
+                                    <li><strong>Telegram通知：</strong>每日2点自动推送预判结果和操作建议</li>
+                                    <li><strong>颜色判断规则：</strong>
+                                        <ul class="list-disc list-inside ml-6 mt-1 text-xs">
+                                            <li>🟢 绿色：10分钟平均涨幅 > 55%</li>
+                                            <li>🔴 红色：10分钟平均涨幅 < 45%</li>
+                                            <li>🟡 黄色：10分钟平均涨幅 45-55%（震荡区间）</li>
+                                            <li>⚪ 空白：10分钟平均涨幅 = 0%（无变化）</li>
+                                            <li>⚠️ 特殊：如果区间内任一数据点在45-55%，整个区间判定为黄色</li>
+                                        </ul>
+                                    </li>
+                                </ol>
                             </div>
                         </div>
                     </div>
@@ -2194,6 +2344,119 @@ pm2 status                                                # 查看所有进程�
             </div>
         </div>
         
+        <!-- 当日行情预判卡片 -->
+        <div class="bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 rounded-lg shadow-lg p-6 mb-6 border-2 border-indigo-200" id="dailyPredictionCard">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center space-x-3">
+                    <h2 class="text-xl font-bold flex items-center text-indigo-800">
+                        <i class="fas fa-crystal-ball text-indigo-600 mr-2"></i>
+                        🔮 行情预判 (0-2点分析)
+                    </h2>
+                    <span id="predictionDateBadge" class="px-3 py-1 bg-indigo-600 text-white text-sm font-semibold rounded-full">--</span>
+                </div>
+                <button onclick="refreshPrediction()" class="inline-flex items-center px-3 py-1.5 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg">
+                    <i class="fas fa-sync-alt mr-1"></i>
+                    刷新预判
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <!-- 绿色柱子统计 -->
+                <div class="bg-white rounded-lg p-4 shadow-md border-l-4 border-green-500">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-gray-600 font-medium">🟢 绿色</span>
+                        <i class="fas fa-arrow-up text-green-600"></i>
+                    </div>
+                    <div id="predictionGreenCount" class="text-2xl font-bold text-green-600">--</div>
+                    <div class="text-xs text-gray-500 mt-1">上涨占比 > 55%</div>
+                </div>
+                
+                <!-- 红色柱子统计 -->
+                <div class="bg-white rounded-lg p-4 shadow-md border-l-4 border-red-500">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-gray-600 font-medium">🔴 红色</span>
+                        <i class="fas fa-arrow-down text-red-600"></i>
+                    </div>
+                    <div id="predictionRedCount" class="text-2xl font-bold text-red-600">--</div>
+                    <div class="text-xs text-gray-500 mt-1">上涨占比 < 45%</div>
+                </div>
+                
+                <!-- 黄色柱子统计 -->
+                <div class="bg-white rounded-lg p-4 shadow-md border-l-4 border-yellow-500">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-gray-600 font-medium">🟡 黄色</span>
+                        <i class="fas fa-minus text-yellow-600"></i>
+                    </div>
+                    <div id="predictionYellowCount" class="text-2xl font-bold text-yellow-600">--</div>
+                    <div class="text-xs text-gray-500 mt-1">45% ≤ 占比 ≤ 55%</div>
+                </div>
+                
+                <!-- 预判信号 -->
+                <div class="bg-white rounded-lg p-4 shadow-md border-l-4 border-indigo-500">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-gray-600 font-medium">🎯 预判</span>
+                        <i class="fas fa-bullseye text-indigo-600"></i>
+                    </div>
+                    <div id="predictionSignal" class="text-xl font-bold text-indigo-600">--</div>
+                    <div id="predictionTime" class="text-xs text-gray-500 mt-1">--</div>
+                </div>
+            </div>
+            
+            <!-- 预判说明 -->
+            <div class="mt-4 bg-white rounded-lg p-4 shadow-md">
+                <div id="predictionDescription" class="text-sm text-gray-700">
+                    <i class="fas fa-info-circle text-blue-600 mr-1"></i>
+                    等待0-2点数据分析...
+                </div>
+                <div class="text-xs text-gray-500 mt-2">
+                    <strong>分析规则：</strong>
+                    情况1: 有绿+有红+无黄 → 低吸 |
+                    情况2: 有绿+有红+有黄 → 等待新低 |
+                    情况3: 只有红色 → 做空 |
+                    情况4: 全部绿色 → 诱多不参与
+                </div>
+            </div>
+        </div>
+        
+        <!-- 上涨占比统计卡片 (平均/最大/最小) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <!-- 平均上涨占比 -->
+            <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-blue-500">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-gray-600 font-medium">平均</span>
+                    <i class="fas fa-chart-line text-blue-600"></i>
+                </div>
+                <div id="upRatioAvgTop" class="text-3xl font-bold text-blue-600">--</div>
+                <div class="text-sm text-gray-500 mt-2">
+                    10分钟上涨占比平均值
+                </div>
+            </div>
+
+            <!-- 最大上涨占比 -->
+            <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-green-500">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-gray-600 font-medium">最大</span>
+                    <i class="fas fa-arrow-circle-up text-green-600"></i>
+                </div>
+                <div id="upRatioMaxTop" class="text-3xl font-bold text-green-600">--</div>
+                <div class="text-sm text-gray-500 mt-2">
+                    10分钟上涨占比最大值
+                </div>
+            </div>
+
+            <!-- 最小上涨占比 -->
+            <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-red-500">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-gray-600 font-medium">最小</span>
+                    <i class="fas fa-arrow-circle-down text-red-600"></i>
+                </div>
+                <div id="upRatioMinTop" class="text-3xl font-bold text-red-600">--</div>
+                <div class="text-sm text-gray-500 mt-2">
+                    10分钟上涨占比最小值
+                </div>
+            </div>
+        </div>
+        
         <!-- 市场情绪分析卡片 -->
         <div class="mb-6">
             <div class="bg-gradient-to-r from-purple-50 via-pink-50 to-blue-50 rounded-lg shadow-lg p-6 border-2 border-purple-200">
@@ -2368,7 +2631,17 @@ pm2 status                                                # 查看所有进程�
                     <div id="btcChangeCard" class="p-4 rounded-lg border-2 transition-all duration-300">
                         <div class="text-sm text-gray-600 mb-1">BTC 当前涨跌幅</div>
                         <div id="btcChange" class="text-3xl font-bold mb-2">--</div>
-                        <div id="btcStatus" class="text-lg font-semibold">--</div>
+                        <div id="btcStatus" class="text-lg font-semibold mb-3">--</div>
+                        <div class="border-t pt-3">
+                            <div class="mb-3">
+                                <div class="text-xs text-gray-500 mb-1">当前价格</div>
+                                <div id="btcCurrentPrice" class="text-2xl font-bold text-orange-600">--</div>
+                            </div>
+                            <div>
+                                <div class="text-xs text-gray-400 mb-1">基准价格（0点）</div>
+                                <div id="btcBasePrice" class="text-sm font-medium text-gray-500">--</div>
+                            </div>
+                        </div>
                     </div>
                     
                     <!-- 状态说明 -->
@@ -2451,6 +2724,31 @@ pm2 status                                                # 查看所有进程�
                     </span>
                 </div>
                 <div id="trendChart" style="height: 800px;"></div>
+                
+                <!-- 10分钟上涨占比柱状图 -->
+                <div class="mt-4 bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <h3 class="text-sm font-semibold text-gray-700 mb-2">
+                        <i class="fas fa-chart-bar mr-2 text-blue-600"></i>
+                        10分钟上涨占比平均值
+                    </h3>
+                    <div id="upRatioBarChart" style="height: 200px;"></div>
+                    
+                    <!-- 上涨占比统计数据 -->
+                    <div class="mt-3 grid grid-cols-3 gap-4 text-center">
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="text-xs text-gray-500 mb-1">平均</div>
+                            <div id="upRatioAvg" class="text-lg font-bold text-blue-600">--</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="text-xs text-gray-500 mb-1">最大</div>
+                            <div id="upRatioMax" class="text-lg font-bold text-green-600">--</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-lg p-3">
+                            <div class="text-xs text-gray-500 mb-1">最小</div>
+                            <div id="upRatioMin" class="text-lg font-bold text-red-600">--</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -2994,10 +3292,12 @@ pm2 status                                                # 查看所有进程�
         // 图表实例
         let trendChart = null;
         let rankChart = null;
+        let upRatioBarChart = null;  // 10分钟上涨占比柱状图
         
         // 历史数据（用于趋势图）
         let historyData = [];
         let rsiHistoryData = [];  // RSI历史数据
+        let upRatioHistory = [];  // 上涨占比历史数据
         
         // 最后的RSI数据缓存
         let lastRSIData = {
@@ -3039,22 +3339,26 @@ pm2 status                                                # 查看所有进程�
         function initCharts() {
             const trendChartDom = document.getElementById('trendChart');
             const rankChartDom = document.getElementById('rankChart');
+            const upRatioBarChartDom = document.getElementById('upRatioBarChart');
             
             console.log('📊 初始化图表...');
             console.log('趋势图容器:', trendChartDom, '宽度:', trendChartDom.offsetWidth, '高度:', trendChartDom.offsetHeight);
             console.log('排行榜容器:', rankChartDom, '宽度:', rankChartDom.offsetWidth, '高度:', rankChartDom.offsetHeight);
+            console.log('上涨占比柱状图容器:', upRatioBarChartDom, '宽度:', upRatioBarChartDom.offsetWidth, '高度:', upRatioBarChartDom.offsetHeight);
             
             trendChart = echarts.init(trendChartDom);
             rankChart = echarts.init(rankChartDom);
+            upRatioBarChart = echarts.init(upRatioBarChartDom);
             
             // 强制resize确保图表正确显示
             setTimeout(() => {
                 trendChart.resize();
                 rankChart.resize();
+                upRatioBarChart.resize();
                 console.log('📊 图表已resize');
             }, 100);
             
-            console.log('📊 ECharts实例已创建:', {trendChart, rankChart});
+            console.log('📊 ECharts实例已创建:', {trendChart, rankChart, upRatioBarChart});
             
             // 趋势图配置
             trendChart.setOption({
@@ -3276,6 +3580,386 @@ pm2 status                                                # 查看所有进程�
             }
         }
         
+        // 加载当日行情预判
+        async function loadDailyPrediction() {
+            try {
+                console.log('🔮 加载当日行情预判...');
+                
+                // 获取北京时间
+                const beijingTime = new Date(Date.now() + 8 * 3600000);
+                const hour = beijingTime.getUTCHours();
+                const minute = beijingTime.getUTCMinutes();
+                const beijingDate = beijingTime.toISOString().split('T')[0];
+                
+                console.log(`🕐 北京时间: ${hour}:${minute.toString().padStart(2, '0')}`);
+                
+                // 优先判断时间：如果是0-2点，显示实时统计
+                if (hour >= 0 && hour < 2) {
+                    console.log('⏰ 当前是0-2点，显示实时统计（等待2点后预判）');
+                    await loadRealtimePredictionStats(beijingDate);
+                    return;
+                }
+                
+                // 2点后，尝试加载已保存的预判数据
+                const url = `/api/coin-change-tracker/daily-prediction?_t=${Date.now()}`;
+                const response = await fetch(url, {
+                    cache: 'no-store',
+                    headers: {
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache'
+                    }
+                });
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    // 使用保存的预判数据（2点后）
+                    console.log('✅ 使用已保存的预判数据（2点后）');
+                    const predictionData = result.data;
+                    updatePredictionCardFromData(predictionData);
+                } else {
+                    console.warn('⚠️ 暂无预判数据:', result.message || result.error);
+                    updatePredictionCard(null);
+                }
+            } catch (error) {
+                console.error('❌ 加载预判数据异常:', error);
+                updatePredictionCard(null);
+            }
+        }
+        
+        // 计算上涨占比柱状图数据（与后端逻辑一致）
+        function calculateUpRatioBarData(times, changesArray) {
+            const interval = 10; // 10分钟
+            const grouped = {};
+            
+            // 按10分钟分组
+            for (let i = 0; i < times.length && i < changesArray.length; i++) {
+                const timeStr = times[i] || '';
+                const changes = changesArray[i] || {};
+                
+                if (!timeStr) continue;
+                
+                try {
+                    const [hours, minutes, seconds] = timeStr.split(':').map(Number);
+                    const totalMinutes = hours * 60 + minutes;
+                    const groupIndex = Math.floor(totalMinutes / interval);
+                    
+                    if (!grouped[groupIndex]) {
+                        grouped[groupIndex] = {
+                            ratios: [],
+                            startTime: `${String(Math.floor(groupIndex * interval / 60)).padStart(2, '0')}:${String(groupIndex * interval % 60).padStart(2, '0')}`
+                        };
+                    }
+                    
+                    // 计算这条记录的上涨占比
+                    const changesValues = Object.values(changes);
+                    if (changesValues.length > 0) {
+                        const upCoins = changesValues.filter(coin => coin.change_pct > 0).length;
+                        const upRatio = (upCoins / changesValues.length) * 100;
+                        grouped[groupIndex].ratios.push(upRatio);
+                    }
+                } catch (e) {
+                    continue;
+                }
+            }
+            
+            // 计算每个区间的颜色（与后端Python逻辑一致）
+            const barData = [];
+            const timeLabels = [];
+            
+            Object.keys(grouped).sort((a, b) => parseInt(a) - parseInt(b)).forEach(groupIdx => {
+                const group = grouped[groupIdx];
+                if (!group.ratios || group.ratios.length === 0) return;
+                
+                // 计算平均值
+                const avgUpRatio = group.ratios.reduce((a, b) => a + b, 0) / group.ratios.length;
+                let color;
+                
+                // 根据平均值判断颜色（与图表显示逻辑一致）
+                if (avgUpRatio === 0) {
+                    color = '#9ca3af'; // 空白/灰色 (0%)
+                } else if (avgUpRatio > 55) {
+                    color = '#22c55e'; // 绿色 (>55%)
+                } else if (avgUpRatio >= 45) {
+                    color = '#f59e0b'; // 黄色 (45%-55%)
+                } else {
+                    color = '#ef4444'; // 红色 (<45%)
+                }
+                
+                barData.push({
+                    value: avgUpRatio.toFixed(2),
+                    color: color
+                });
+                timeLabels.push(group.startTime);
+            });
+            
+            return { barData, timeLabels };
+        }
+        
+        // 加载0-2点实时统计（不做预判）
+        async function loadRealtimePredictionStats(date) {
+            try {
+                // 获取当日历史数据，只看0-2点的10分钟柱状图
+                const historyUrl = `/api/coin-change-tracker/history?limit=1440&date=${date}&_t=${Date.now()}`;
+                const historyResponse = await fetch(historyUrl, { cache: 'no-store' });
+                const historyResult = await historyResponse.json();
+                
+                if (!historyResult.success || !historyResult.data || historyResult.data.length === 0) {
+                    console.warn('⚠️ 暂无历史数据');
+                    updatePredictionCard(null);
+                    return;
+                }
+                
+                // 计算0-2点的柱状图颜色统计
+                const { barData, timeLabels } = calculateUpRatioBarData(
+                    historyResult.data.map(d => {
+                        // 兼容两种格式：beijing_time 和 time
+                        const timeStr = d.beijing_time || d.time || '';
+                        // 如果是完整时间戳，提取时间部分
+                        return timeStr.includes(' ') ? timeStr.split(' ')[1] : timeStr;
+                    }),
+                    historyResult.data.map(d => d.changes || {})
+                );
+                
+                // 只统计0-2点的数据（前12个10分钟区间）
+                let greenCount = 0;
+                let redCount = 0;
+                let yellowCount = 0;
+                let blankCount = 0;
+                
+                for (let i = 0; i < Math.min(12, barData.length); i++) {
+                    const color = barData[i].color;
+                    if (color === '#22c55e') greenCount++;       // 绿色
+                    else if (color === '#ef4444') redCount++;    // 红色
+                    else if (color === '#f59e0b') yellowCount++; // 黄色
+                    else blankCount++;                            // 空白/灰色
+                }
+                
+                // 更新实时统计（不做预判）
+                document.getElementById('predictionDateBadge').textContent = `今日 (${date}) - 数据收集中...`;
+                document.getElementById('predictionGreenCount').textContent = greenCount;
+                document.getElementById('predictionRedCount').textContent = redCount;
+                document.getElementById('predictionYellowCount').textContent = yellowCount;
+                document.getElementById('predictionSignal').textContent = '收集中';
+                document.getElementById('predictionTime').textContent = `0-2点数据收集中（已收集 ${greenCount + redCount + yellowCount + blankCount}/12）`;
+                document.getElementById('predictionDescription').innerHTML = 
+                    `<i class="fas fa-spinner fa-spin text-blue-600 mr-1"></i>` +
+                    `正在收集0-2点数据... 绿色${greenCount} 红色${redCount} 黄色${yellowCount} 空白${blankCount}。` +
+                    `<strong>2点后将生成预判信号。</strong>`;
+                
+                console.log(`📊 实时统计: 绿${greenCount} 红${redCount} 黄${yellowCount} 空白${blankCount}`);
+            } catch (error) {
+                console.error('❌ 加载实时统计异常:', error);
+                updatePredictionCard(null);
+            }
+        }
+        
+        // 从保存的预判数据更新卡片
+        function updatePredictionCardFromData(predictionData) {
+            if (!predictionData) {
+                updatePredictionCard(null);
+                // 清除全局预判数据
+                window.dailyPredictionData = null;
+                document.getElementById('predictionDateBadge').textContent = '--';
+                return;
+            }
+            
+            // 保存到全局变量供图表使用
+            window.dailyPredictionData = predictionData;
+            
+            const colorCounts = predictionData.color_counts || {};
+            const signal = predictionData.signal || '暂无';
+            const timestamp = predictionData.timestamp || '';
+            const date = predictionData.date || '';
+            
+            // 更新日期标签（使用北京时间判断）
+            if (date) {
+                // 获取北京时间的日期（UTC+8）
+                const beijingTime = new Date(Date.now() + 8 * 3600000);
+                const today = beijingTime.toISOString().split('T')[0];
+                const yesterday = new Date(beijingTime.getTime() - 86400000).toISOString().split('T')[0];
+                let dateLabel = date;
+                if (date === today) {
+                    dateLabel = `今日 (${date})`;
+                } else if (date === yesterday) {
+                    dateLabel = `昨日 (${date})`;
+                }
+                document.getElementById('predictionDateBadge').textContent = dateLabel;
+            }
+            
+            // 更新颜色统计
+            document.getElementById('predictionGreenCount').textContent = colorCounts.green || 0;
+            document.getElementById('predictionRedCount').textContent = colorCounts.red || 0;
+            document.getElementById('predictionYellowCount').textContent = colorCounts.yellow || 0;
+            
+            // 更新预判信号
+            document.getElementById('predictionSignal').textContent = signal;
+            document.getElementById('predictionTime').textContent = `分析时间: ${timestamp}`;
+            
+            console.log('✅ 预判数据更新完成:', signal, '已保存到window.dailyPredictionData');
+        }
+        
+        // 分析预判数据
+        function analyzePrediction(data) {
+            if (!data || !data.changes) {
+                updatePredictionCard(null);
+                return;
+            }
+            
+            const beijingTime = data.beijing_time || '';
+            
+            // 计算柱状图颜色（基于10分钟上涨占比）
+            // 注意：这里需要历史数据，暂时使用当前涨跌幅作为近似
+            const changesArray = Object.values(data.changes);
+            
+            let greenCount = 0;
+            let redCount = 0;
+            let yellowCount = 0;
+            
+            // 简化逻辑：使用当前涨跌幅判断
+            // 涨幅 > 1% → 绿色（假设上涨占比高）
+            // 涨幅 < -1% → 红色（假设上涨占比低）
+            // -1% ≤ 涨幅 ≤ 1% → 黄色（假设上涨占比中等）
+            changesArray.forEach(coin => {
+                if (coin.change_pct > 1) {
+                    greenCount++;
+                } else if (coin.change_pct < -1) {
+                    redCount++;
+                } else {
+                    yellowCount++;
+                }
+            });
+            
+            // 判断市场信号
+            let signal = '';
+            let description = '';
+            
+            if (greenCount > 0 && redCount == 0 && yellowCount == 0) {
+                // 情况4: 全部绿色
+                signal = '诱多不参与';
+                description = '🟢 全部绿色柱子，单边诱多行情，不参与操作';
+            } else if (redCount > 0 && greenCount == 0 && yellowCount == 0) {
+                // 情况3: 只有红色
+                signal = '做空';
+                description = '🔴 只有红色柱子，预判下跌行情，建议做空';
+            } else if (greenCount > 0 && redCount > 0 && yellowCount == 0) {
+                // 情况1: 有绿有红无黄
+                signal = '低吸';
+                description = '🟢🔴 有绿有红无黄，红色区间为低吸机会';
+            } else if (greenCount > 0 && redCount > 0 && yellowCount > 0) {
+                // 情况2: 有绿有红有黄
+                signal = '等待新低';
+                description = '🟢🔴🟡 有绿有红有黄，可能还有新低，建议等待';
+            } else {
+                // 其他情况
+                signal = '观望';
+                description = '⚪ 柱状图混合分布，建议观望';
+            }
+            
+            updatePredictionCard({
+                green: greenCount,
+                red: redCount,
+                yellow: yellowCount,
+                signal: signal,
+                description: description,
+                time: beijingTime
+            });
+        }
+        
+        // 更新预判卡片显示
+        function updatePredictionCard(prediction) {
+            if (!prediction) {
+                document.getElementById('predictionGreenCount').textContent = '--';
+                document.getElementById('predictionRedCount').textContent = '--';
+                document.getElementById('predictionYellowCount').textContent = '--';
+                document.getElementById('predictionSignal').textContent = '--';
+                document.getElementById('predictionDescription').innerHTML = '<i class="fas fa-info-circle text-blue-600 mr-1"></i>等待0-2点数据分析...';
+                document.getElementById('predictionTime').textContent = '--';
+                return;
+            }
+            
+            // 更新颜色统计
+            document.getElementById('predictionGreenCount').textContent = prediction.green;
+            document.getElementById('predictionRedCount').textContent = prediction.red;
+            document.getElementById('predictionYellowCount').textContent = prediction.yellow;
+            
+            // 更新预判信号
+            const signalEl = document.getElementById('predictionSignal');
+            signalEl.textContent = prediction.signal;
+            
+            // 根据信号设置颜色
+            let signalColor = 'text-indigo-600';
+            if (prediction.signal === '低吸') {
+                signalColor = 'text-green-600';
+            } else if (prediction.signal === '做空') {
+                signalColor = 'text-red-600';
+            } else if (prediction.signal === '等待新低') {
+                signalColor = 'text-orange-600';
+            } else if (prediction.signal === '诱多不参与') {
+                signalColor = 'text-purple-600';
+            }
+            signalEl.className = `text-xl font-bold ${signalColor}`;
+            
+            // 更新描述
+            document.getElementById('predictionDescription').textContent = prediction.description;
+            
+            // 更新时间
+            document.getElementById('predictionTime').textContent = `分析时间: ${prediction.time}`;
+        }
+        
+        // 刷新预判
+        async function refreshPrediction() {
+            console.log('🔄 手动刷新预判...');
+            await loadDailyPrediction();
+        }
+        
+        // 获取指定日期的预判数据
+        async function getPredictionForDate(date) {
+            try {
+                // 获取当前北京时间的日期
+                const beijingTime = new Date(Date.now() + 8 * 3600000);
+                const today = beijingTime.toISOString().split('T')[0];
+                
+                // 如果请求的是今天的数据，使用API（会自动处理临时/正式数据）
+                if (date === today) {
+                    const apiUrl = `/api/coin-change-tracker/daily-prediction?_t=${Date.now()}`;
+                    const response = await fetch(apiUrl, {
+                        cache: 'no-store',
+                        headers: {
+                            'Cache-Control': 'no-cache, no-store, must-revalidate',
+                            'Pragma': 'no-cache'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        if (result.success && result.data) {
+                            return result.data;
+                        }
+                    }
+                    return null;
+                }
+                
+                // 历史日期：尝试读取静态文件
+                const predictionFile = `/static/data/daily_predictions/prediction_${date}.json`;
+                const response = await fetch(predictionFile, {
+                    cache: 'no-store',
+                    headers: {
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    return data;
+                }
+                return null;
+            } catch (error) {
+                console.log(`⚠️ 日期 ${date} 无预判数据`, error);
+                return null;
+            }
+        }
+        
         // 更新实时数据
         async function updateLatestData() {
             console.log('🔄 开始更新最新数据...', new Date().toLocaleTimeString());
@@ -3429,6 +4113,17 @@ pm2 status                                                # 查看所有进程�
                 
                 if (result.success && result.data && result.data.length > 0) {
                     historyData = result.data;
+                    
+                    // 加载当天的预判数据
+                    const currentDate = date ? formatDate(date) : new Date().toISOString().split('T')[0];
+                    const predictionData = await getPredictionForDate(currentDate);
+                    if (predictionData) {
+                        window.dailyPredictionData = predictionData;
+                        console.log('📊 已加载日期预判数据:', currentDate, predictionData.signal);
+                    } else {
+                        window.dailyPredictionData = null;
+                        console.log('⚠️ 日期无预判数据:', currentDate);
+                    }
                     
                     // 提取时间和总涨跌幅（使用beijing_time字段，格式化为HH:MM:SS）
                     const times = historyData.map(d => {
@@ -3788,36 +4483,85 @@ pm2 status                                                # 查看所有进程�
                             },
                             markPoint: {
                                 data: (function() {
-                                    const points = [
-                                        {
-                                            name: '最高价',
-                                            value: maxChange.toFixed(2) + '%',
-                                            xAxis: maxIndex,
-                                            yAxis: maxChange,
-                                            itemStyle: {
-                                                color: '#EF4444'
-                                            },
-                                            label: {
-                                                formatter: '{b}\n{c}',
-                                                fontSize: 14,
-                                                fontWeight: 'bold'
-                                            }
+                                    const points = [];
+                                    
+                                    // 添加每日预判标记（在图表左侧显示）
+                                    if (window.dailyPredictionData && window.dailyPredictionData.signal) {
+                                        const signal = window.dailyPredictionData.signal;
+                                        const date = window.dailyPredictionData.date;
+                                        
+                                        // 获取信号颜色
+                                        let signalColor = '#6B7280';
+                                        if (signal === '诱空试盘抄底') signalColor = '#10B981';
+                                        else if (signal === '做空') signalColor = '#EF4444';
+                                        else if (signal === '低吸') signalColor = '#3B82F6';
+                                        else if (signal === '等待新低') signalColor = '#F59E0B';
+                                        else if (signal === '诱多不参与') signalColor = '#EF4444';
+                                        else if (signal === '空头强控盘') signalColor = '#6B7280';
+                                        
+                                        // 在00:00位置添加预判标记
+                                        const morning00Index = times.findIndex(t => t && t.startsWith('00:0'));
+                                        if (morning00Index >= 0) {
+                                            points.push({
+                                                name: `📊${signal}`,
+                                                value: signal,
+                                                xAxis: morning00Index,
+                                                yAxis: changes[morning00Index],
+                                                itemStyle: {
+                                                    color: signalColor,
+                                                    borderColor: '#fff',
+                                                    borderWidth: 2
+                                                },
+                                                label: {
+                                                    formatter: `📊{b}`,
+                                                    fontSize: 13,
+                                                    fontWeight: 'bold',
+                                                    color: signalColor,
+                                                    show: true,
+                                                    position: 'left',
+                                                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                                                    padding: [6, 10],
+                                                    borderRadius: 6,
+                                                    borderColor: signalColor,
+                                                    borderWidth: 2
+                                                },
+                                                symbol: 'rect',
+                                                symbolSize: [80, 30]
+                                            });
+                                        }
+                                    }
+                                    
+                                    // 添加最高价标记
+                                    points.push({
+                                        name: '最高价',
+                                        value: maxChange.toFixed(2) + '%',
+                                        xAxis: maxIndex,
+                                        yAxis: maxChange,
+                                        itemStyle: {
+                                            color: '#EF4444'
                                         },
-                                        {
-                                            name: '最低价',
-                                            value: minChange.toFixed(2) + '%',
-                                            xAxis: minIndex,
+                                        label: {
+                                            formatter: '{b}\n{c}',
+                                            fontSize: 14,
+                                            fontWeight: 'bold'
+                                        }
+                                    });
+                                    
+                                    // 添加最低价标记
+                                    points.push({
+                                        name: '最低价',
+                                        value: minChange.toFixed(2) + '%',
+                                        xAxis: minIndex,
                                             yAxis: minChange,
                                             itemStyle: {
                                                 color: '#10B981'
-                                            },
-                                            label: {
-                                                formatter: '{b}\n{c}',
-                                                fontSize: 14,
-                                                fontWeight: 'bold'
-                                            }
+                                        },
+                                        label: {
+                                            formatter: '{b}\n{c}',
+                                            fontSize: 14,
+                                            fontWeight: 'bold'
                                         }
-                                    ];
+                                    });
                                     
                                     // 添加波峰标记点 (B-A-C三点)
                                     if (wavePeaksData && wavePeaksData.length > 0) {
@@ -4582,6 +5326,9 @@ pm2 status                                                # 查看所有进程�
                     
                     // 更新B-A-C波峰详情框
                     updateWavePeakDetails(wavePeaksData, currentState);
+                    
+                    // 更新10分钟上涨占比柱状图
+                    update10MinUpRatioBarChart(historyData);
                 } else {
                     console.warn('历史数据为空或加载失败');
                     console.warn('Result:', result);
@@ -4590,10 +5337,342 @@ pm2 status                                                # 查看所有进程�
                         xAxis: { data: [] },
                         series: [{ data: [] }]
                     }, true, true); // notMerge=true, lazyUpdate=true
+                    
+                    // 清空柱状图
+                    if (upRatioBarChart) {
+                        upRatioBarChart.setOption({
+                            xAxis: { data: [] },
+                            series: [{ data: [] }]
+                        }, true);
+                    }
                 }
             } catch (error) {
                 console.error('更新历史数据异常:', error);
             }
+        }
+        
+        // 更新10分钟上涨占比柱状图
+        function update10MinUpRatioBarChart(data) {
+            if (!upRatioBarChart || !data || data.length === 0) {
+                console.warn('柱状图实例不存在或数据为空');
+                return;
+            }
+            
+            // 按10分钟分组计算平均上涨占比
+            const interval = 10; // 10分钟
+            const groupedData = [];
+            const labels = [];
+            
+            // 遍历数据，每10分钟取一个平均值
+            for (let i = 0; i < data.length; i++) {
+                const item = data[i];
+                const timeStr = item.beijing_time ? item.beijing_time.split(' ')[1] : (item.time || '');
+                
+                if (!timeStr) continue;
+                
+                // 解析时间 HH:MM:SS
+                const [hours, minutes, seconds] = timeStr.split(':').map(Number);
+                const totalMinutes = hours * 60 + minutes;
+                
+                // 计算属于哪个10分钟区间
+                const groupIndex = Math.floor(totalMinutes / interval);
+                
+                // 计算上涨占比
+                let upRatio = 0;
+                if (item.up_ratio !== undefined) {
+                    upRatio = item.up_ratio;
+                } else if (item.changes) {
+                    const changesArray = Object.values(item.changes);
+                    const upCoins = changesArray.filter(coin => coin.change_pct > 0).length;
+                    const totalCoins = changesArray.length;
+                    upRatio = totalCoins > 0 ? (upCoins / totalCoins * 100) : 0;
+                }
+                
+                // 初始化分组
+                if (!groupedData[groupIndex]) {
+                    groupedData[groupIndex] = {
+                        sum: 0,
+                        count: 0,
+                        startTime: `${String(Math.floor(groupIndex * interval / 60)).padStart(2, '0')}:${String(groupIndex * interval % 60).padStart(2, '0')}`
+                    };
+                }
+                
+                groupedData[groupIndex].sum += upRatio;
+                groupedData[groupIndex].count++;
+            }
+            
+            // 计算平均值并生成最终数据
+            const barData = [];
+            const timeLabels = [];
+            
+            groupedData.forEach((group, index) => {
+                if (group && group.count > 0) {
+                    const avgUpRatio = group.sum / group.count;
+                    barData.push(avgUpRatio.toFixed(2));
+                    timeLabels.push(group.startTime);
+                }
+            });
+            
+            // 找到0-2点区间的数据（前12个柱子）
+            const earlyMorningData = barData.slice(0, 12);
+            const earlyMorningLabels = timeLabels.slice(0, 12);
+            
+            // 找到0-2点区间的最高值和最低值的索引
+            let maxIndex = -1;
+            let minIndex = -1;
+            if (earlyMorningData.length > 0) {
+                const numericEarlyData = earlyMorningData.map(v => parseFloat(v));
+                const maxVal = Math.max(...numericEarlyData);
+                const minVal = Math.min(...numericEarlyData);
+                maxIndex = numericEarlyData.indexOf(maxVal);
+                minIndex = numericEarlyData.indexOf(minVal);
+            }
+            
+            // 计算统计数据
+            const numericData = barData.map(v => parseFloat(v));
+            const avgValue = numericData.length > 0 ? (numericData.reduce((a, b) => a + b, 0) / numericData.length) : 0;
+            const maxValue = numericData.length > 0 ? Math.max(...numericData) : 0;
+            const minValue = numericData.length > 0 ? Math.min(...numericData) : 0;
+            
+            // 更新统计数据显示（柱状图下方）
+            const upRatioAvgEl = document.getElementById('upRatioAvg');
+            const upRatioMaxEl = document.getElementById('upRatioMax');
+            const upRatioMinEl = document.getElementById('upRatioMin');
+            
+            if (upRatioAvgEl) upRatioAvgEl.textContent = avgValue.toFixed(2) + '%';
+            if (upRatioMaxEl) upRatioMaxEl.textContent = maxValue.toFixed(2) + '%';
+            if (upRatioMinEl) upRatioMinEl.textContent = minValue.toFixed(2) + '%';
+            
+            // 更新页面顶部统计卡片
+            const upRatioAvgTopEl = document.getElementById('upRatioAvgTop');
+            const upRatioMaxTopEl = document.getElementById('upRatioMaxTop');
+            const upRatioMinTopEl = document.getElementById('upRatioMinTop');
+            
+            if (upRatioAvgTopEl) upRatioAvgTopEl.textContent = avgValue.toFixed(2) + '%';
+            if (upRatioMaxTopEl) upRatioMaxTopEl.textContent = maxValue.toFixed(2) + '%';
+            if (upRatioMinTopEl) upRatioMinTopEl.textContent = minValue.toFixed(2) + '%';
+            
+            console.log('📊 更新顶部统计卡片:', {
+                avgEl: !!upRatioAvgTopEl,
+                maxEl: !!upRatioMaxTopEl,
+                minEl: !!upRatioMinTopEl,
+                values: {avg: avgValue, max: maxValue, min: minValue}
+            });
+            
+            console.log('📊 10分钟柱状图数据:', {barData, timeLabels, stats: {avg: avgValue, max: maxValue, min: minValue}});
+            
+            // 获取当前日期的预判数据（用于在图表上显示）
+            let predictionAnnotation = null;
+            if (window.dailyPredictionData) {
+                const signal = window.dailyPredictionData.signal || '';
+                const description = window.dailyPredictionData.description || '';
+                
+                // 根据信号设置颜色
+                let signalColor = '#6B7280';
+                if (signal === '诱空试盘抄底') signalColor = '#10B981';
+                else if (signal === '做空') signalColor = '#EF4444';
+                else if (signal === '低吸') signalColor = '#3B82F6';
+                else if (signal === '等待新低') signalColor = '#F59E0B';
+                else if (signal === '诱多不参与') signalColor = '#EF4444';
+                else if (signal === '空头强控盘') signalColor = '#6B7280';
+                else if (signal === '观望') signalColor = '#6B7280';
+                
+                predictionAnnotation = {
+                    type: 'group',
+                    left: 'center',
+                    top: 10,
+                    children: [
+                        {
+                            type: 'rect',
+                            z: 100,
+                            left: 'center',
+                            top: 0,
+                            shape: {
+                                width: 400,
+                                height: 60
+                            },
+                            style: {
+                                fill: 'rgba(255, 255, 255, 0.95)',
+                                stroke: signalColor,
+                                lineWidth: 2,
+                                shadowBlur: 8,
+                                shadowColor: 'rgba(0, 0, 0, 0.1)',
+                                shadowOffsetX: 0,
+                                shadowOffsetY: 2
+                            }
+                        },
+                        {
+                            type: 'text',
+                            z: 101,
+                            left: 'center',
+                            top: 12,
+                            style: {
+                                text: `预判信号: ${signal}`,
+                                font: 'bold 16px Arial',
+                                fill: signalColor,
+                                textAlign: 'center'
+                            }
+                        },
+                        {
+                            type: 'text',
+                            z: 101,
+                            left: 'center',
+                            top: 35,
+                            style: {
+                                text: description,
+                                font: '12px Arial',
+                                fill: '#6B7280',
+                                textAlign: 'center'
+                            }
+                        }
+                    ]
+                };
+            }
+            
+            // 更新柱状图
+            const chartOption = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    },
+                    formatter: function(params) {
+                        const p = params[0];
+                        const value = parseFloat(p.value);
+                        const time = p.axisValue;
+                        
+                        let color = '#6B7280';
+                        if (value > 55) color = '#10B981'; // 绿色 (>55%)
+                        else if (value >= 45) color = '#F59E0B'; // 黄色 (45%-55%)
+                        else color = '#EF4444'; // 红色 (<45%)
+                        
+                        return `
+                            <div style="padding: 10px; min-width: 180px;">
+                                <div style="font-weight: bold; margin-bottom: 10px; font-size: 14px; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px;">
+                                    <i class="far fa-clock" style="margin-right: 4px;"></i>${time}
+                                </div>
+                                <div style="margin-bottom: 4px;">
+                                    ${p.marker}<span style="font-weight: 600;">当前值</span>
+                                </div>
+                                <div style="font-size: 18px; font-weight: bold; color: ${color}; margin-bottom: 10px;">
+                                    ${value.toFixed(2)}%
+                                </div>
+                                <div style="border-top: 1px solid #e5e7eb; padding-top: 8px; font-size: 12px; color: #6b7280;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                        <span>平均:</span>
+                                        <span style="font-weight: 600; color: #3b82f6;">${avgValue.toFixed(2)}%</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                        <span>最大:</span>
+                                        <span style="font-weight: 600; color: #10b981;">${maxValue.toFixed(2)}%</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between;">
+                                        <span>最小:</span>
+                                        <span style="font-weight: 600; color: #ef4444;">${minValue.toFixed(2)}%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '10%',
+                    top: predictionAnnotation ? '20%' : '10%',  // 如果有预判标注，增加顶部空间
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    data: timeLabels,
+                    axisLabel: {
+                        rotate: 45,
+                        fontSize: 10,
+                        interval: Math.floor(timeLabels.length / 20) // 自动调整显示间隔
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '上涨占比(%)',
+                    nameTextStyle: {
+                        fontSize: 11
+                    },
+                    axisLabel: {
+                        formatter: '{value}%',
+                        fontSize: 10
+                    },
+                    min: 0,
+                    max: 100
+                },
+                series: [{
+                    name: '上涨占比',
+                    type: 'bar',
+                    data: barData,
+                    itemStyle: {
+                        color: function(params) {
+                            const value = parseFloat(params.value);
+                            if (value > 55) return '#10B981'; // 绿色 (>55%)
+                            if (value >= 45) return '#F59E0B'; // 黄色 (45%-55%)
+                            return '#EF4444'; // 红色 (<45%)
+                        }
+                    },
+                    barWidth: '60%',
+                    // 添加标记点
+                    markPoint: {
+                        symbol: 'triangle',
+                        symbolSize: 20,
+                        data: [
+                            // 0-2点最高点（绿色三角形在柱子上方）
+                            maxIndex >= 0 ? {
+                                name: '最高',
+                                coord: [maxIndex, parseFloat(barData[maxIndex])],
+                                value: parseFloat(barData[maxIndex]).toFixed(2) + '%',
+                                itemStyle: {
+                                    color: '#10B981'  // 绿色
+                                },
+                                label: {
+                                    show: true,
+                                    position: 'top',
+                                    color: '#10B981',
+                                    fontSize: 11,
+                                    fontWeight: 'bold',
+                                    formatter: function(params) {
+                                        return '▲ 最高 ' + params.value;
+                                    }
+                                }
+                            } : null,
+                            // 0-2点最低点（红色三角形在柱子下方）
+                            minIndex >= 0 ? {
+                                name: '最低',
+                                coord: [minIndex, parseFloat(barData[minIndex])],
+                                value: parseFloat(barData[minIndex]).toFixed(2) + '%',
+                                itemStyle: {
+                                    color: '#EF4444'  // 红色
+                                },
+                                symbol: 'triangle',  // 使用向下的三角形
+                                symbolRotate: 180,  // 旋转180度让三角形指向下方
+                                label: {
+                                    show: true,
+                                    position: 'bottom',
+                                    color: '#EF4444',
+                                    fontSize: 11,
+                                    fontWeight: 'bold',
+                                    formatter: function(params) {
+                                        return '▼ 最低 ' + params.value;
+                                    }
+                                }
+                            } : null
+                        ].filter(item => item !== null)  // 过滤掉null值
+                    }
+                }]
+            };
+            
+            // 添加预判标注
+            if (predictionAnnotation) {
+                chartOption.graphic = [predictionAnnotation];
+            }
+            
+            upRatioBarChart.setOption(chartOption, true);
         }
         
         // 强制刷新数据（用户手动触发）
@@ -4723,17 +5802,31 @@ pm2 status                                                # 查看所有进程�
         function updateBTCStatus(changes) {
             // 查找BTC数据
             let btcChange = null;
+            let btcData = null;
             for (const [symbol, data] of Object.entries(changes)) {
                 if (symbol.includes('BTC')) {
                     btcChange = data.change_pct || 0;
+                    btcData = data;
                     break;
                 }
             }
             
-            if (btcChange === null) {
+            if (btcChange === null || !btcData) {
                 document.getElementById('btcChange').textContent = '--';
                 document.getElementById('btcStatus').textContent = '暂无数据';
+                document.getElementById('btcCurrentPrice').textContent = '--';
+                document.getElementById('btcBasePrice').textContent = '--';
                 return;
+            }
+            
+            // 更新价格显示
+            if (btcData.current_price !== undefined) {
+                document.getElementById('btcCurrentPrice').textContent = 
+                    `$${btcData.current_price.toFixed(2)}`;
+            }
+            if (btcData.baseline_price !== undefined) {
+                document.getElementById('btcBasePrice').textContent = 
+                    `$${btcData.baseline_price.toFixed(2)}`;
             }
             
             // 更新涨跌幅显示
@@ -6266,6 +7359,10 @@ pm2 status                                                # 查看所有进程�
             console.log('🚀 页面初始化开始...');
             const startTime = performance.now();
             
+            // 清除旧的预判数据缓存（强制重新加载）
+            window.dailyPredictionData = null;
+            console.log('🗑️ 已清除旧的预判数据缓存');
+            
             // 第1步：立即初始化音频（无需等待）
             initAudio();
             const enableAudio = () => {
@@ -6312,6 +7409,13 @@ pm2 status                                                # 查看所有进程�
             
             // 第4步：更新日期选择器（无需等待）
             updateDateSelector();
+            
+            // 加载当日行情预判
+            loadDailyPrediction().then(() => {
+                console.log('✅ 当日行情预判加载完成');
+            }).catch(error => {
+                console.error('❌ 当日行情预判加载失败:', error);
+            });
             
             // 初始化市场情绪历史日期选择器
             const sentimentDatePicker = document.getElementById('sentimentDatePicker');

@@ -4579,8 +4579,25 @@ pm2 status                                                # 查看所有进程�
                         rankChart = echarts.init(rankChartDom);
                     }
                     
+                    // 先用一个简单的配置测试ECharts是否工作
+                    console.log('📊 测试：先渲染一个简单的图表...');
                     try {
                         trendChart.setOption({
+                            title: { text: '测试图表' },
+                            xAxis: { type: 'category', data: ['A', 'B', 'C'] },
+                            yAxis: { type: 'value' },
+                            series: [{ type: 'line', data: [10, 20, 15] }]
+                        });
+                        console.log('✅ 简单图表渲染成功');
+                    } catch (e) {
+                        console.error('❌ 简单图表渲染失败:', e);
+                    }
+                    
+                    // 延迟500ms后再渲染真实数据
+                    setTimeout(() => {
+                        console.log('📊 开始渲染真实数据...');
+                        try {
+                            trendChart.setOption({
                         tooltip: {
                             trigger: 'axis',
                             axisPointer: {
@@ -7928,8 +7945,11 @@ pm2 status                                                # 查看所有进程�
             console.log('🚀 页面初始化开始...');
             const startTime = performance.now();
             
-            // 不设置强制隐藏超时，让用户看到真实的加载过程
-            // LoadingManager.setForceHideTimeout();
+            // 设置30秒强制隐藏超时，防止页面永久被遮罩层覆盖
+            LoadingManager.forceHideTimeout = setTimeout(() => {
+                console.warn('⚠️ 加载超过30秒，强制隐藏遮罩层');
+                LoadingManager.hide();
+            }, 30000);
             
             try {
                 LoadingManager.updateProgress(5, '正在初始化音频系统...');
@@ -7998,25 +8018,28 @@ pm2 status                                                # 查看所有进程�
                 // 加载当日行情预判（带超时）
                 LoadingManager.updateProgress(70, '正在加载预判数据...');
                 try {
-                    await withTimeout(loadDailyPrediction(), 3000, '预判数据加载');
+                    await withTimeout(loadDailyPrediction(), 5000, '预判数据加载');
                     console.log('✅ 当日行情预判加载完成');
+                    LoadingManager.completeStep('prediction');
                 } catch (error) {
                     console.error('❌ 当日行情预判加载失败:', error);
-                } finally {
                     LoadingManager.completeStep('prediction');
                 }
                 
                 // 加载全时间段模式检测记录（带超时）
                 LoadingManager.updateProgress(80, '正在加载模式检测...');
                 try {
-                    await withTimeout(loadIntradayPatterns(), 3000, '模式检测加载');
+                    await withTimeout(loadIntradayPatterns(), 5000, '模式检测加载');
                     console.log('✅ 全时间段模式检测记录加载完成');
+                    LoadingManager.completeStep('patterns');
                 } catch (error) {
                     console.error('❌ 全时间段模式检测记录加载失败:', error);
-                } finally {
                     LoadingManager.completeStep('patterns');
-                    LoadingManager.hide();
                 }
+                
+                // 🔥 关键修复：确保加载遮罩层一定会被隐藏
+                console.log('🎉 所有加载步骤完成，准备隐藏遮罩层...');
+                LoadingManager.hide();
                 
                 // 初始化市场情绪历史日期选择器
                 const sentimentDatePicker = document.getElementById('sentimentDatePicker');

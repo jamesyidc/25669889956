@@ -3016,36 +3016,36 @@ data/
                     
                     <!-- 空单策略行 -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-                        <button type="button" class="batch-btn short" onclick="batchOrder('short', 3)" style="padding: 8px;">
-                            <div class="batch-btn-title" style="font-size: 13px;">📉 空单策略 A</div>
+                        <button type="button" class="batch-btn short" onclick="batchOrder('short', 3)" data-strategy-code="TOP6_SHORT_A" style="padding: 8px;">
+                            <div class="batch-btn-title" style="font-size: 13px;">📉 空单策略 A <span style="font-size: 9px; opacity: 0.7;">[TOP6_SHORT_A]</span></div>
                             <div class="batch-btn-desc" style="font-size: 11px;">涨幅前6 · 3% · 10x</div>
                         </button>
                         
-                        <button type="button" class="batch-btn short" onclick="batchOrder('short', 5)" style="padding: 8px;">
-                            <div class="batch-btn-title" style="font-size: 13px;">📉 空单策略 B</div>
+                        <button type="button" class="batch-btn short" onclick="batchOrder('short', 5)" data-strategy-code="TOP6_SHORT_B" style="padding: 8px;">
+                            <div class="batch-btn-title" style="font-size: 13px;">📉 空单策略 B <span style="font-size: 9px; opacity: 0.7;">[TOP6_SHORT_B]</span></div>
                             <div class="batch-btn-desc" style="font-size: 11px;">涨幅前6 · 5% · 10x</div>
                         </button>
                         
-                        <button type="button" class="batch-btn short" onclick="batchOrder('short', 8)" style="padding: 8px;">
-                            <div class="batch-btn-title" style="font-size: 13px;">📉 空单策略 C</div>
+                        <button type="button" class="batch-btn short" onclick="batchOrder('short', 8)" data-strategy-code="TOP6_SHORT_C" style="padding: 8px;">
+                            <div class="batch-btn-title" style="font-size: 13px;">📉 空单策略 C <span style="font-size: 9px; opacity: 0.7;">[TOP6_SHORT_C]</span></div>
                             <div class="batch-btn-desc" style="font-size: 11px;">涨幅前6 · 8% · 10x</div>
                         </button>
                     </div>
                     
                     <!-- 多单策略行 -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
-                        <button type="button" class="batch-btn long" onclick="batchOrder('long', 3)" style="padding: 8px;">
-                            <div class="batch-btn-title" style="font-size: 13px;">📈 多单策略 A</div>
+                        <button type="button" class="batch-btn long" onclick="batchOrder('long', 3)" data-strategy-code="TOP6_LONG_A" style="padding: 8px;">
+                            <div class="batch-btn-title" style="font-size: 13px;">📈 多单策略 A <span style="font-size: 9px; opacity: 0.7;">[TOP6_LONG_A]</span></div>
                             <div class="batch-btn-desc" style="font-size: 11px;">涨幅前6 · 3% · 10x</div>
                         </button>
                         
-                        <button type="button" class="batch-btn long" onclick="batchOrder('long', 5)" style="padding: 8px;">
-                            <div class="batch-btn-title" style="font-size: 13px;">📈 多单策略 B</div>
+                        <button type="button" class="batch-btn long" onclick="batchOrder('long', 5)" data-strategy-code="TOP6_LONG_B" style="padding: 8px;">
+                            <div class="batch-btn-title" style="font-size: 13px;">📈 多单策略 B <span style="font-size: 9px; opacity: 0.7;">[TOP6_LONG_B]</span></div>
                             <div class="batch-btn-desc" style="font-size: 11px;">涨幅前6 · 5% · 10x</div>
                         </button>
                         
-                        <button type="button" class="batch-btn long" onclick="batchOrder('long', 8)" style="padding: 8px;">
-                            <div class="batch-btn-title" style="font-size: 13px;">📈 多单策略 C</div>
+                        <button type="button" class="batch-btn long" onclick="batchOrder('long', 8)" data-strategy-code="TOP6_LONG_C" style="padding: 8px;">
+                            <div class="batch-btn-title" style="font-size: 13px;">📈 多单策略 C <span style="font-size: 9px; opacity: 0.7;">[TOP6_LONG_C]</span></div>
                             <div class="batch-btn-desc" style="font-size: 11px;">涨幅前6 · 8% · 10x</div>
                         </button>
                     </div>
@@ -3079,36 +3079,36 @@ data/
                     
                     <!-- 多单策略行 (预期反弹) -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-                        <button type="button" class="batch-btn long" onclick="batchOrder('long', 3, 'bottom')" style="padding: 8px; background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);">
-                            <div class="batch-btn-title" style="font-size: 13px;">📈 多单策略 D</div>
+                        <button type="button" class="batch-btn long" onclick="batchOrder('long', 3, 'bottom')" data-strategy-code="BOTTOM6_LONG_D" style="padding: 8px; background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);">
+                            <div class="batch-btn-title" style="font-size: 13px;">📈 多单策略 D <span style="font-size: 9px; opacity: 0.7;">[BOTTOM6_LONG_D]</span></div>
                             <div class="batch-btn-desc" style="font-size: 11px;">涨幅后6 · 3% · 10x</div>
                         </button>
                         
-                        <button type="button" class="batch-btn long" onclick="batchOrder('long', 5, 'bottom')" style="padding: 8px; background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);">
-                            <div class="batch-btn-title" style="font-size: 13px;">📈 多单策略 E</div>
+                        <button type="button" class="batch-btn long" onclick="batchOrder('long', 5, 'bottom')" data-strategy-code="BOTTOM6_LONG_E" style="padding: 8px; background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);">
+                            <div class="batch-btn-title" style="font-size: 13px;">📈 多单策略 E <span style="font-size: 9px; opacity: 0.7;">[BOTTOM6_LONG_E]</span></div>
                             <div class="batch-btn-desc" style="font-size: 11px;">涨幅后6 · 5% · 10x</div>
                         </button>
                         
-                        <button type="button" class="batch-btn long" onclick="batchOrder('long', 8, 'bottom')" style="padding: 8px; background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);">
-                            <div class="batch-btn-title" style="font-size: 13px;">📈 多单策略 F</div>
+                        <button type="button" class="batch-btn long" onclick="batchOrder('long', 8, 'bottom')" data-strategy-code="BOTTOM6_LONG_F" style="padding: 8px; background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);">
+                            <div class="batch-btn-title" style="font-size: 13px;">📈 多单策略 F <span style="font-size: 9px; opacity: 0.7;">[BOTTOM6_LONG_F]</span></div>
                             <div class="batch-btn-desc" style="font-size: 11px;">涨幅后6 · 8% · 10x</div>
                         </button>
                     </div>
                     
                     <!-- 空单策略行 (趋势延续) -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
-                        <button type="button" class="batch-btn short" onclick="batchOrder('short', 3, 'bottom')" style="padding: 8px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
-                            <div class="batch-btn-title" style="font-size: 13px;">📉 空单策略 D</div>
+                        <button type="button" class="batch-btn short" onclick="batchOrder('short', 3, 'bottom')" data-strategy-code="BOTTOM6_SHORT_D" style="padding: 8px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                            <div class="batch-btn-title" style="font-size: 13px;">📉 空单策略 D <span style="font-size: 9px; opacity: 0.7;">[BOTTOM6_SHORT_D]</span></div>
                             <div class="batch-btn-desc" style="font-size: 11px;">涨幅后6 · 3% · 10x</div>
                         </button>
                         
-                        <button type="button" class="batch-btn short" onclick="batchOrder('short', 5, 'bottom')" style="padding: 8px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
-                            <div class="batch-btn-title" style="font-size: 13px;">📉 空单策略 E</div>
+                        <button type="button" class="batch-btn short" onclick="batchOrder('short', 5, 'bottom')" data-strategy-code="BOTTOM6_SHORT_E" style="padding: 8px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                            <div class="batch-btn-title" style="font-size: 13px;">📉 空单策略 E <span style="font-size: 9px; opacity: 0.7;">[BOTTOM6_SHORT_E]</span></div>
                             <div class="batch-btn-desc" style="font-size: 11px;">涨幅后6 · 5% · 10x</div>
                         </button>
                         
-                        <button type="button" class="batch-btn short" onclick="batchOrder('short', 8, 'bottom')" style="padding: 8px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
-                            <div class="batch-btn-title" style="font-size: 13px;">📉 空单策略 F</div>
+                        <button type="button" class="batch-btn short" onclick="batchOrder('short', 8, 'bottom')" data-strategy-code="BOTTOM6_SHORT_F" style="padding: 8px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                            <div class="batch-btn-title" style="font-size: 13px;">📉 空单策略 F <span style="font-size: 9px; opacity: 0.7;">[BOTTOM6_SHORT_F]</span></div>
                             <div class="batch-btn-desc" style="font-size: 11px;">涨幅后6 · 8% · 10x</div>
                         </button>
                     </div>
@@ -3142,56 +3142,56 @@ data/
                         
                         <!-- 多单策略行 -->
                         <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 8px;">
-                            <button type="button" class="batch-btn long" onclick="batchOrderTop8('long', 1.5)" style="padding: 6px;">
-                                <div class="batch-btn-title" style="font-size: 12px;">📈 多单</div>
+                            <button type="button" class="batch-btn long" onclick="batchOrderTop8('long', 1.5)" data-strategy-code="TOP8_LONG_1.5PCT" style="padding: 6px;">
+                                <div class="batch-btn-title" style="font-size: 12px;">📈 多单 <span style="font-size: 9px; opacity: 0.7;">[TOP8_LONG_1.5PCT]</span></div>
                                 <div class="batch-btn-desc" style="font-size: 10px;">前8·1.5%·10x</div>
                             </button>
                             
-                            <button type="button" class="batch-btn long" onclick="batchOrderTop8('long', 3)" style="padding: 6px;">
-                                <div class="batch-btn-title" style="font-size: 12px;">📈 多单</div>
+                            <button type="button" class="batch-btn long" onclick="batchOrderTop8('long', 3)" data-strategy-code="TOP8_LONG_3PCT" style="padding: 6px;">
+                                <div class="batch-btn-title" style="font-size: 12px;">📈 多单 <span style="font-size: 9px; opacity: 0.7;">[TOP8_LONG_3PCT]</span></div>
                                 <div class="batch-btn-desc" style="font-size: 10px;">前8·3%·10x</div>
                             </button>
                             
-                            <button type="button" class="batch-btn long" onclick="batchOrderTop8('long', 5)" style="padding: 6px;">
-                                <div class="batch-btn-title" style="font-size: 12px;">📈 多单</div>
+                            <button type="button" class="batch-btn long" onclick="batchOrderTop8('long', 5)" data-strategy-code="TOP8_LONG_5PCT" style="padding: 6px;">
+                                <div class="batch-btn-title" style="font-size: 12px;">📈 多单 <span style="font-size: 9px; opacity: 0.7;">[TOP8_LONG_5PCT]</span></div>
                                 <div class="batch-btn-desc" style="font-size: 10px;">前8·5%·10x</div>
                             </button>
                             
-                            <button type="button" class="batch-btn long" onclick="batchOrderTop8('long', 8)" style="padding: 6px;">
-                                <div class="batch-btn-title" style="font-size: 12px;">📈 多单</div>
+                            <button type="button" class="batch-btn long" onclick="batchOrderTop8('long', 8)" data-strategy-code="TOP8_LONG_8PCT" style="padding: 6px;">
+                                <div class="batch-btn-title" style="font-size: 12px;">📈 多单 <span style="font-size: 9px; opacity: 0.7;">[TOP8_LONG_8PCT]</span></div>
                                 <div class="batch-btn-desc" style="font-size: 10px;">前8·8%·10x</div>
                             </button>
                             
-                            <button type="button" class="batch-btn long" onclick="executeBalStrategy('top8', 'long')" style="padding: 6px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
-                                <div class="batch-btn-title" style="font-size: 12px;">💰 多单</div>
+                            <button type="button" class="batch-btn long" onclick="executeBalStrategy('top8', 'long')" data-strategy-code="TOP8_LONG_BAL1PCT" style="padding: 6px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">
+                                <div class="batch-btn-title" style="font-size: 12px;">💰 多单 <span style="font-size: 9px; opacity: 0.7;">[TOP8_LONG_BAL1PCT]</span></div>
                                 <div class="batch-btn-desc" style="font-size: 10px;">前8·余额1%</div>
                             </button>
                         </div>
                         
                         <!-- 空单策略行 -->
                         <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;">
-                            <button type="button" class="batch-btn short" onclick="batchOrderTop8('short', 1.5)" style="padding: 6px;">
-                                <div class="batch-btn-title" style="font-size: 12px;">📉 空单</div>
+                            <button type="button" class="batch-btn short" onclick="batchOrderTop8('short', 1.5)" data-strategy-code="TOP8_SHORT_1.5PCT" style="padding: 6px;">
+                                <div class="batch-btn-title" style="font-size: 12px;">📉 空单 <span style="font-size: 9px; opacity: 0.7;">[TOP8_SHORT_1.5PCT]</span></div>
                                 <div class="batch-btn-desc" style="font-size: 10px;">前8·1.5%·10x</div>
                             </button>
                             
-                            <button type="button" class="batch-btn short" onclick="batchOrderTop8('short', 3)" style="padding: 6px;">
-                                <div class="batch-btn-title" style="font-size: 12px;">📉 空单</div>
+                            <button type="button" class="batch-btn short" onclick="batchOrderTop8('short', 3)" data-strategy-code="TOP8_SHORT_3PCT" style="padding: 6px;">
+                                <div class="batch-btn-title" style="font-size: 12px;">📉 空单 <span style="font-size: 9px; opacity: 0.7;">[TOP8_SHORT_3PCT]</span></div>
                                 <div class="batch-btn-desc" style="font-size: 10px;">前8·3%·10x</div>
                             </button>
                             
-                            <button type="button" class="batch-btn short" onclick="batchOrderTop8('short', 5)" style="padding: 6px;">
-                                <div class="batch-btn-title" style="font-size: 12px;">📉 空单</div>
+                            <button type="button" class="batch-btn short" onclick="batchOrderTop8('short', 5)" data-strategy-code="TOP8_SHORT_5PCT" style="padding: 6px;">
+                                <div class="batch-btn-title" style="font-size: 12px;">📉 空单 <span style="font-size: 9px; opacity: 0.7;">[TOP8_SHORT_5PCT]</span></div>
                                 <div class="batch-btn-desc" style="font-size: 10px;">前8·5%·10x</div>
                             </button>
                             
-                            <button type="button" class="batch-btn short" onclick="batchOrderTop8('short', 8)" style="padding: 6px;">
-                                <div class="batch-btn-title" style="font-size: 12px;">📉 空单</div>
+                            <button type="button" class="batch-btn short" onclick="batchOrderTop8('short', 8)" data-strategy-code="TOP8_SHORT_8PCT" style="padding: 6px;">
+                                <div class="batch-btn-title" style="font-size: 12px;">📉 空单 <span style="font-size: 9px; opacity: 0.7;">[TOP8_SHORT_8PCT]</span></div>
                                 <div class="batch-btn-desc" style="font-size: 10px;">前8·8%·10x</div>
                             </button>
                             
-                            <button type="button" class="batch-btn short" onclick="executeBalStrategy('top8', 'short')" style="padding: 6px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
-                                <div class="batch-btn-title" style="font-size: 12px;">💰 空单</div>
+                            <button type="button" class="batch-btn short" onclick="executeBalStrategy('top8', 'short')" data-strategy-code="TOP8_SHORT_BAL1PCT" style="padding: 6px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                                <div class="batch-btn-title" style="font-size: 12px;">💰 空单 <span style="font-size: 9px; opacity: 0.7;">[TOP8_SHORT_BAL1PCT]</span></div>
                                 <div class="batch-btn-desc" style="font-size: 10px;">前8·余额1%</div>
                             </button>
                         </div>
@@ -3205,56 +3205,56 @@ data/
                         
                         <!-- 多单策略行 -->
                         <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 8px;">
-                            <button type="button" class="batch-btn long" onclick="batchOrderBottom8('long', 1.5)" style="padding: 6px; background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);">
-                                <div class="batch-btn-title" style="font-size: 12px;">📈 多单</div>
+                            <button type="button" class="batch-btn long" onclick="batchOrderBottom8('long', 1.5)" data-strategy-code="BOTTOM8_LONG_1.5PCT" style="padding: 6px; background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);">
+                                <div class="batch-btn-title" style="font-size: 12px;">📈 多单 <span style="font-size: 9px; opacity: 0.7;">[BOTTOM8_LONG_1.5PCT]</span></div>
                                 <div class="batch-btn-desc" style="font-size: 10px;">后8·1.5%·10x</div>
                             </button>
                             
-                            <button type="button" class="batch-btn long" onclick="batchOrderBottom8('long', 3)" style="padding: 6px; background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);">
-                                <div class="batch-btn-title" style="font-size: 12px;">📈 多单</div>
+                            <button type="button" class="batch-btn long" onclick="batchOrderBottom8('long', 3)" data-strategy-code="BOTTOM8_LONG_3PCT" style="padding: 6px; background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);">
+                                <div class="batch-btn-title" style="font-size: 12px;">📈 多单 <span style="font-size: 9px; opacity: 0.7;">[BOTTOM8_LONG_3PCT]</span></div>
                                 <div class="batch-btn-desc" style="font-size: 10px;">后8·3%·10x</div>
                             </button>
                             
-                            <button type="button" class="batch-btn long" onclick="batchOrderBottom8('long', 5)" style="padding: 6px; background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);">
-                                <div class="batch-btn-title" style="font-size: 12px;">📈 多单</div>
+                            <button type="button" class="batch-btn long" onclick="batchOrderBottom8('long', 5)" data-strategy-code="BOTTOM8_LONG_5PCT" style="padding: 6px; background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);">
+                                <div class="batch-btn-title" style="font-size: 12px;">📈 多单 <span style="font-size: 9px; opacity: 0.7;">[BOTTOM8_LONG_5PCT]</span></div>
                                 <div class="batch-btn-desc" style="font-size: 10px;">后8·5%·10x</div>
                             </button>
                             
-                            <button type="button" class="batch-btn long" onclick="batchOrderBottom8('long', 8)" style="padding: 6px; background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);">
-                                <div class="batch-btn-title" style="font-size: 12px;">📈 多单</div>
+                            <button type="button" class="batch-btn long" onclick="batchOrderBottom8('long', 8)" data-strategy-code="BOTTOM8_LONG_8PCT" style="padding: 6px; background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);">
+                                <div class="batch-btn-title" style="font-size: 12px;">📈 多单 <span style="font-size: 9px; opacity: 0.7;">[BOTTOM8_LONG_8PCT]</span></div>
                                 <div class="batch-btn-desc" style="font-size: 10px;">后8·8%·10x</div>
                             </button>
                             
-                            <button type="button" class="batch-btn long" onclick="executeBalStrategy('bottom8', 'long')" style="padding: 6px; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
-                                <div class="batch-btn-title" style="font-size: 12px;">💰 多单</div>
+                            <button type="button" class="batch-btn long" onclick="executeBalStrategy('bottom8', 'long')" data-strategy-code="BOTTOM8_LONG_BAL1PCT" style="padding: 6px; background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+                                <div class="batch-btn-title" style="font-size: 12px;">💰 多单 <span style="font-size: 9px; opacity: 0.7;">[BOTTOM8_LONG_BAL1PCT]</span></div>
                                 <div class="batch-btn-desc" style="font-size: 10px;">后8·余额1%</div>
                             </button>
                         </div>
                         
                         <!-- 空单策略行 -->
                         <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px;">
-                            <button type="button" class="batch-btn short" onclick="batchOrderBottom8('short', 1.5)" style="padding: 6px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
-                                <div class="batch-btn-title" style="font-size: 12px;">📉 空单</div>
+                            <button type="button" class="batch-btn short" onclick="batchOrderBottom8('short', 1.5)" data-strategy-code="BOTTOM8_SHORT_1.5PCT" style="padding: 6px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                                <div class="batch-btn-title" style="font-size: 12px;">📉 空单 <span style="font-size: 9px; opacity: 0.7;">[BOTTOM8_SHORT_1.5PCT]</span></div>
                                 <div class="batch-btn-desc" style="font-size: 10px;">后8·1.5%·10x</div>
                             </button>
                             
-                            <button type="button" class="batch-btn short" onclick="batchOrderBottom8('short', 3)" style="padding: 6px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
-                                <div class="batch-btn-title" style="font-size: 12px;">📉 空单</div>
+                            <button type="button" class="batch-btn short" onclick="batchOrderBottom8('short', 3)" data-strategy-code="BOTTOM8_SHORT_3PCT" style="padding: 6px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                                <div class="batch-btn-title" style="font-size: 12px;">📉 空单 <span style="font-size: 9px; opacity: 0.7;">[BOTTOM8_SHORT_3PCT]</span></div>
                                 <div class="batch-btn-desc" style="font-size: 10px;">后8·3%·10x</div>
                             </button>
                             
-                            <button type="button" class="batch-btn short" onclick="batchOrderBottom8('short', 5)" style="padding: 6px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
-                                <div class="batch-btn-title" style="font-size: 12px;">📉 空单</div>
+                            <button type="button" class="batch-btn short" onclick="batchOrderBottom8('short', 5)" data-strategy-code="BOTTOM8_SHORT_5PCT" style="padding: 6px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                                <div class="batch-btn-title" style="font-size: 12px;">📉 空单 <span style="font-size: 9px; opacity: 0.7;">[BOTTOM8_SHORT_5PCT]</span></div>
                                 <div class="batch-btn-desc" style="font-size: 10px;">后8·5%·10x</div>
                             </button>
                             
-                            <button type="button" class="batch-btn short" onclick="batchOrderBottom8('short', 8)" style="padding: 6px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
-                                <div class="batch-btn-title" style="font-size: 12px;">📉 空单</div>
+                            <button type="button" class="batch-btn short" onclick="batchOrderBottom8('short', 8)" data-strategy-code="BOTTOM8_SHORT_8PCT" style="padding: 6px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                                <div class="batch-btn-title" style="font-size: 12px;">📉 空单 <span style="font-size: 9px; opacity: 0.7;">[BOTTOM8_SHORT_8PCT]</span></div>
                                 <div class="batch-btn-desc" style="font-size: 10px;">后8·8%·10x</div>
                             </button>
                             
-                            <button type="button" class="batch-btn short" onclick="executeBalStrategy('bottom8', 'short')" style="padding: 6px; background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);">
-                                <div class="batch-btn-title" style="font-size: 12px;">💰 空单</div>
+                            <button type="button" class="batch-btn short" onclick="executeBalStrategy('bottom8', 'short')" data-strategy-code="BOTTOM8_SHORT_BAL1PCT" style="padding: 6px; background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);">
+                                <div class="batch-btn-title" style="font-size: 12px;">💰 空单 <span style="font-size: 9px; opacity: 0.7;">[BOTTOM8_SHORT_BAL1PCT]</span></div>
                                 <div class="batch-btn-desc" style="font-size: 10px;">后8·余额1%</div>
                             </button>
                         </div>
@@ -3282,14 +3282,14 @@ data/
                     
                     <div class="batch-strategies" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                         <!-- 空单配多单 -->
-                        <button type="button" class="batch-btn" style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #78350f;" onclick="hedgePositions('short')">
-                            <div class="batch-btn-title">⚖️ 空单配多单</div>
+                        <button type="button" class="batch-btn" style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #78350f;" onclick="hedgePositions('short')" data-strategy-code="HEDGE_SHORT_TO_LONG">
+                            <div class="batch-btn-title">⚖️ 空单配多单 <span style="font-size: 9px; opacity: 0.7;">[HEDGE_SHORT_TO_LONG]</span></div>
                             <div class="batch-btn-desc">持仓空单 1:1 配对多单</div>
                         </button>
                         
                         <!-- 多单配空单 -->
-                        <button type="button" class="batch-btn" style="background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%); color: #7c2d12;" onclick="hedgePositions('long')">
-                            <div class="batch-btn-title">⚖️ 多单配空单</div>
+                        <button type="button" class="batch-btn" style="background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%); color: #7c2d12;" onclick="hedgePositions('long')" data-strategy-code="HEDGE_LONG_TO_SHORT">
+                            <div class="batch-btn-title">⚖️ 多单配空单 <span style="font-size: 9px; opacity: 0.7;">[HEDGE_LONG_TO_SHORT]</span></div>
                             <div class="batch-btn-desc">持仓多单 1:1 配对空单</div>
                         </button>
                     </div>
@@ -4311,17 +4311,17 @@ data/
                     
                     <!-- 批量平仓按钮组 -->
                     <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 16px;">
-                        <button onclick="batchClosePositions('long', 0.5)" class="batch-close-btn batch-close-long-half">
-                            📉 平一半多单
+                        <button onclick="batchClosePositions('long', 0.5)" class="batch-close-btn batch-close-long-half" data-strategy-code="CLOSE_LONG_HALF">
+                            📉 平一半多单 <span style="font-size: 9px; opacity: 0.7;">[CLOSE_LONG_HALF]</span>
                         </button>
-                        <button onclick="batchClosePositions('short', 0.5)" class="batch-close-btn batch-close-short-half">
-                            📈 平一半空单
+                        <button onclick="batchClosePositions('short', 0.5)" class="batch-close-btn batch-close-short-half" data-strategy-code="CLOSE_SHORT_HALF">
+                            📈 平一半空单 <span style="font-size: 9px; opacity: 0.7;">[CLOSE_SHORT_HALF]</span>
                         </button>
-                        <button onclick="batchClosePositions('long', 1)" class="batch-close-btn batch-close-long-all">
-                            🚫 平全部多单
+                        <button onclick="batchClosePositions('long', 1)" class="batch-close-btn batch-close-long-all" data-strategy-code="CLOSE_LONG_ALL">
+                            🚫 平全部多单 <span style="font-size: 9px; opacity: 0.7;">[CLOSE_LONG_ALL]</span>
                         </button>
-                        <button onclick="batchClosePositions('short', 1)" class="batch-close-btn batch-close-short-all">
-                            ⛔ 平全部空单
+                        <button onclick="batchClosePositions('short', 1)" class="batch-close-btn batch-close-short-all" data-strategy-code="CLOSE_SHORT_ALL">
+                            ⛔ 平全部空单 <span style="font-size: 9px; opacity: 0.7;">[CLOSE_SHORT_ALL]</span>
                         </button>
                     </div>
                     

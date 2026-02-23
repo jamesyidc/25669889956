@@ -14,8 +14,8 @@
   "SOL": {
     "highest_price": 87.58,
     "highest_time": "2026-02-17 10:57:19",
-    "lowest_price": 77.61,
-    "lowest_time": "2026-02-23 09:53:37"
+    "lowest_price": 77.38,
+    "lowest_time": "2026-02-23 11:29:23"
   },
   "BNB": {
     "highest_price": 631.2,
@@ -26,8 +26,8 @@
   "XRP": {
     "highest_price": 1.503,
     "highest_time": "2026-02-16 22:49:58",
-    "lowest_price": 1.3331,
-    "lowest_time": "2026-02-23 09:22:49"
+    "lowest_price": 1.3328,
+    "lowest_time": "2026-02-23 10:24:29"
   },
   "ADA": {
     "highest_price": 0.2894,
@@ -62,14 +62,14 @@
   "BCH": {
     "highest_price": 583.6,
     "highest_time": "2026-02-22 15:31:52",
-    "lowest_price": 539.6,
-    "lowest_time": "2026-02-23 09:46:47"
+    "lowest_price": 539.3,
+    "lowest_time": "2026-02-23 11:25:57"
   },
   "LINK": {
     "highest_price": 8.985,
     "highest_time": "2026-02-17 10:47:05",
-    "lowest_price": 8.198,
-    "lowest_time": "2026-02-23 10:00:28"
+    "lowest_price": 8.195,
+    "lowest_time": "2026-02-23 10:24:29"
   },
   "UNI": {
     "highest_price": 3.667,
@@ -92,8 +92,8 @@
   "AAVE": {
     "highest_price": 128.84,
     "highest_time": "2026-02-17 22:34:31",
-    "lowest_price": 111.77,
-    "lowest_time": "2026-02-23 10:00:28"
+    "lowest_price": 111.3,
+    "lowest_time": "2026-02-23 11:29:23"
   },
   "CRV": {
     "highest_price": 0.2567,

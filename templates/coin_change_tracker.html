@@ -4663,6 +4663,11 @@ pm2 status                                                # 查看所有进程�
                     }
                     
                     try {
+                        // 🔧 关键修复：在setOption之前清空图表，防止series累积
+                        // 这样可以确保每次刷新都是干净的状态，不会丢失线条
+                        console.log('🧹 清空图表以准备重新渲染...');
+                        trendChart.clear();
+                        
                         trendChart.setOption({
                         tooltip: {
                             trigger: 'axis',
@@ -5850,8 +5855,8 @@ pm2 status                                                # 查看所有进程�
                             zlevel: 15,  // 在市场情绪信号之上显示
                             silent: false
                         }]
-                    }, true, true); // notMerge=true, lazyUpdate=true
-                        console.log('✅ trendChart.setOption 执行成功');
+                    }, true); // notMerge=true (完全替换配置，因为已经clear了)
+                        console.log('✅ trendChart.setOption 执行成功（完全重新渲染模式）');
                     } catch (error) {
                         console.error('❌ trendChart.setOption 执行失败:', error);
                         console.error('错误堆栈:', error.stack);

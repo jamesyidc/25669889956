@@ -291,6 +291,60 @@ def is_signal_allowed(pattern_signal_type, daily_prediction):
     
     return True, f"大周期信号({daily_signal})允许"
 
+def deduplicate_detections(detections, time_window_minutes=30):
+    """去重检测结果：30分钟内同类型信号只保留第一个
+    
+    Args:
+        detections: 检测结果列表
+        time_window_minutes: 时间窗口（分钟）
+    
+    Returns:
+        去重后的检测结果列表
+    """
+    from datetime import datetime, timedelta
+    
+    if not detections:
+        return []
+    
+    # 按时间排序
+    sorted_detections = sorted(detections, key=lambda x: x['time_range'].split(' - ')[0])
+    
+    filtered = []
+    last_signal_time = {}  # {signal_type: last_time_str}
+    
+    for detection in sorted_detections:
+        signal_type = detection['signal_type']
+        time_str = detection['time_range'].split(' - ')[0]  # 取开始时间 "06:30"
+        
+        # 解析时间
+        try:
+            hour, minute = map(int, time_str.split(':'))
+            current_time = timedelta(hours=hour, minutes=minute)
+            
+            # 检查是否与上次同类型信号间隔超过30分钟
+            if signal_type in last_signal_time:
+                last_time_str = last_signal_time[signal_type]
+                last_hour, last_minute = map(int, last_time_str.split(':'))
+                last_time = timedelta(hours=last_hour, minutes=last_minute)
+                
+                time_diff = (current_time.total_seconds() - last_time.total_seconds()) / 60
+                
+                if time_diff < time_window_minutes:
+                    print(f"   🔄 跳过重复信号: {detection['pattern_name']} @ {detection['time_range']} "
+                          f"(距离上次 {signal_type} 信号仅 {time_diff:.0f} 分钟)")
+                    continue
+            
+            # 添加到结果并更新时间
+            filtered.append(detection)
+            last_signal_time[signal_type] = time_str
+            
+        except Exception as e:
+            print(f"   ⚠️ 解析时间失败: {time_str}, {e}")
+            # 解析失败时保留该检测
+            filtered.append(detection)
+    
+    return filtered
+
 def analyze_single_day(date_str):
     """分析单日数据"""
     print(f"\n{'='*60}")
@@ -374,6 +428,15 @@ def analyze_single_day(date_str):
     blocked_count = len(all_detections) - allowed_count
     print(f"   ✅ 允许: {allowed_count} 个")
     print(f"   ❌ 被阻止: {blocked_count} 个")
+    
+    # 去重：30分钟内同类型信号只保留第一个
+    print(f"\n🔄 开始去重（30分钟窗口）...")
+    all_detections = deduplicate_detections(all_detections, time_window_minutes=30)
+    print(f"✅ 去重后剩余: {len(all_detections)} 个")
+    
+    # 重新统计
+    allowed_count = sum(1 for d in all_detections if d['allowed'])
+    blocked_count = len(all_detections) - allowed_count
     
     # 显示详细信息
     if all_detections:

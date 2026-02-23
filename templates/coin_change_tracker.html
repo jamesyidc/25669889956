@@ -5785,6 +5785,142 @@ pm2 status                                                # 查看所有进程�
                     
                     console.log('📊 setOption后立即resize完成');
                     
+                    // 🔥 添加交易开仓标记到图表
+                    try {
+                        const tradingLogs = await loadTradingLogs(date);
+                        if (tradingLogs && tradingLogs.length > 0) {
+                            console.log(`📍 准备添加 ${tradingLogs.length} 个交易标记...`);
+                            
+                            const tradingMarkers = [];
+                            tradingLogs.forEach((log, idx) => {
+                                // 解析时间戳
+                                const timestamp = log.timestamp;  // 格式: "2026-02-23T10:04:46.737579+08:00"
+                                const timeStr = timestamp.split('T')[1].substring(0, 8);  // "10:04:46"
+                                
+                                // 在times数组中查找匹配的时间索引
+                                let timeIndex = -1;
+                                const targetHHMM = timeStr.substring(0, 5);  // "10:04"
+                                for (let i = 0; i < times.length; i++) {
+                                    const chartTimeHHMM = times[i].substring(0, 5);
+                                    if (chartTimeHHMM === targetHHMM) {
+                                        timeIndex = i;
+                                        break;
+                                    }
+                                }
+                                
+                                if (timeIndex >= 0 && changes[timeIndex] !== undefined) {
+                                    const isLong = log.details.posSide === 'long';
+                                    const instId = log.details.instId || '';
+                                    const symbol = instId.replace('-USDT-SWAP', '');
+                                    
+                                    tradingMarkers.push({
+                                        name: `${isLong ? '开多' : '开空'}: ${symbol}`,
+                                        value: [timeIndex, changes[timeIndex]],
+                                        positionType: log.details.posSide,
+                                        timestamp: timeStr,
+                                        symbol: symbol,
+                                        instId: instId
+                                    });
+                                    
+                                    if (idx < 3) {
+                                        console.log(`✅ 添加交易标记 ${idx+1}: ${isLong ? '开多' : '开空'} ${symbol} @ ${timeStr}, 索引=${timeIndex}`);
+                                    }
+                                }
+                            });
+                            
+                            // 使用 appendData 添加scatter系列（避免覆盖现有系列）
+                            if (tradingMarkers.length > 0) {
+                                trendChart.setOption({
+                                    series: [{
+                                        name: '交易开仓标记',
+                                        type: 'scatter',
+                                        coordinateSystem: 'cartesian2d',
+                                        data: tradingMarkers.map(m => m.value),
+                                        symbolSize: function(data, params) {
+                                            return 30;  // 大尺寸，显眼
+                                        },
+                                        symbol: function(data, params) {
+                                            const marker = tradingMarkers[params.dataIndex];
+                                            return marker.positionType === 'long' ? 'arrow' : 'triangle';
+                                        },
+                                        symbolRotate: function(data, params) {
+                                            const marker = tradingMarkers[params.dataIndex];
+                                            return marker.positionType === 'long' ? 0 : 180;  // 空单倒置
+                                        },
+                                        itemStyle: {
+                                            color: function(params) {
+                                                const marker = tradingMarkers[params.dataIndex];
+                                                return marker.positionType === 'long' ? '#10B981' : '#EF4444';
+                                            },
+                                            borderColor: '#fff',
+                                            borderWidth: 2,
+                                            shadowBlur: 10,
+                                            shadowColor: function(params) {
+                                                const marker = tradingMarkers[params.dataIndex];
+                                                return marker.positionType === 'long' ? 'rgba(16, 185, 129, 0.5)' : 'rgba(239, 68, 68, 0.5)';
+                                            },
+                                            shadowOffsetY: 2
+                                        },
+                                        label: {
+                                            show: true,
+                                            formatter: function(params) {
+                                                const marker = tradingMarkers[params.dataIndex];
+                                                return `${marker.positionType === 'long' ? '📈' : '📉'}${marker.symbol}`;
+                                            },
+                                            fontSize: 11,
+                                            fontWeight: 'bold',
+                                            color: function(params) {
+                                                const marker = tradingMarkers[params.dataIndex];
+                                                return marker.positionType === 'long' ? '#065F46' : '#7F1D1D';
+                                            },
+                                            position: 'top',
+                                            backgroundColor: function(params) {
+                                                const marker = tradingMarkers[params.dataIndex];
+                                                return marker.positionType === 'long' ? '#D1FAE5' : '#FEE2E2';
+                                            },
+                                            padding: [4, 8],
+                                            borderRadius: 4,
+                                            borderWidth: 1,
+                                            borderColor: function(params) {
+                                                const marker = tradingMarkers[params.dataIndex];
+                                                return marker.positionType === 'long' ? '#10B981' : '#EF4444';
+                                            }
+                                        },
+                                        tooltip: {
+                                            formatter: function(params) {
+                                                const marker = tradingMarkers[params.dataIndex];
+                                                const typeText = marker.positionType === 'long' ? '开多单' : '开空单';
+                                                const bgColor = marker.positionType === 'long' ? '#ECFDF5' : '#FEF2F2';
+                                                const textColor = marker.positionType === 'long' ? '#059669' : '#DC2626';
+                                                
+                                                return `<div style="padding: 10px; min-width: 200px; background: ${bgColor};">
+                                                    <div style="font-weight: bold; font-size: 15px; margin-bottom: 6px; color: ${textColor};">
+                                                        ${marker.positionType === 'long' ? '📈' : '📉'} ${typeText}
+                                                    </div>
+                                                    <div style="margin: 4px 0; font-size: 13px;">
+                                                        <strong>币种:</strong> ${marker.symbol}
+                                                    </div>
+                                                    <div style="margin: 4px 0; font-size: 13px;">
+                                                        <strong>时间:</strong> ${marker.timestamp}
+                                                    </div>
+                                                    <div style="margin: 4px 0; font-size: 13px;">
+                                                        <strong>涨跌幅:</strong> <span style="color: ${params.value[1] > 0 ? '#059669' : '#DC2626'};">${params.value[1] > 0 ? '+' : ''}${params.value[1].toFixed(2)}%</span>
+                                                    </div>
+                                                </div>`;
+                                            }
+                                        },
+                                        zlevel: 20,  // 在所有其他系列之上显示
+                                        silent: false
+                                    }]
+                                }, {notMerge: false});  // merge mode to add series
+                                
+                                console.log(`✅ 成功添加 ${tradingMarkers.length} 个交易开仓标记到图表`);
+                            }
+                        }
+                    } catch (error) {
+                        console.error('❌ 添加交易标记失败:', error);
+                    }
+                    
                     // 强制resize图表确保正确显示
                     // 多次resize确保图表正确显示
                     setTimeout(() => {
@@ -9502,6 +9638,40 @@ pm2 status                                                # 查看所有进程�
                         </button>
                     </div>
                 `;
+            }
+        }
+        
+        // 加载交易日志（用于在图表上显示开仓标记）
+        async function loadTradingLogs(date) {
+            try {
+                console.log('📊 加载交易日志...', date);
+                
+                // 将日期从 YYYY-MM-DD 转为 YYYYMMDD
+                const dateStr = date.replace(/-/g, '');
+                
+                const response = await fetch(`/api/okx-trading/logs?date=${dateStr}&limit=1000`, {
+                    cache: 'no-cache'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load trading logs');
+                }
+                
+                const data = await response.json();
+                
+                if (!data.success || !data.logs) {
+                    console.warn('⚠️ 交易日志加载失败或为空');
+                    return [];
+                }
+                
+                // 只保留开仓记录
+                const openPositions = data.logs.filter(log => log.action === 'open_position');
+                console.log(`✅ 加载到 ${openPositions.length} 条开仓记录`);
+                
+                return openPositions;
+            } catch (error) {
+                console.error('❌ 加载交易日志失败:', error);
+                return [];
             }
         }
         

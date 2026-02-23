@@ -1,11 +1,11 @@
 {
-  "analysis_time": "2026-02-23T16:11:56.523523",
+  "analysis_time": "2026-02-23T16:29:58.611442",
   "start_date": "2026-02-01",
   "end_date": "2026-02-23",
   "total_days": 23,
   "total_detections": 23,
-  "allowed_detections": 6,
-  "blocked_detections": 17,
+  "allowed_detections": 3,
+  "blocked_detections": 20,
   "daily_results": [
     {
       "date": "2026-02-01",
@@ -248,8 +248,8 @@
       "date": "2026-02-07",
       "total_bars": 128,
       "total_detections": 1,
-      "allowed_detections": 1,
-      "blocked_detections": 0,
+      "allowed_detections": 0,
+      "blocked_detections": 1,
       "detections": [
         {
           "pattern_id": "pattern_1",
@@ -286,8 +286,8 @@
           ],
           "threshold": 50,
           "trigger_ratio": 61.85,
-          "allowed": true,
-          "block_reason": null
+          "allowed": false,
+          "block_reason": "大周期为不参与信号(诱多不参与)，禁止所有操作"
         }
       ]
     },
@@ -969,10 +969,10 @@
     },
     {
       "date": "2026-02-23",
-      "total_bars": 86,
+      "total_bars": 87,
       "total_detections": 2,
-      "allowed_detections": 2,
-      "blocked_detections": 0,
+      "allowed_detections": 0,
+      "blocked_detections": 2,
       "detections": [
         {
           "pattern_id": "pattern_1",
@@ -1003,8 +1003,8 @@
           ],
           "threshold": 50,
           "trigger_ratio": 59.26,
-          "allowed": true,
-          "block_reason": null
+          "allowed": false,
+          "block_reason": "观望但涨跌幅-74.47% ≤ -15，禁止做空"
         },
         {
           "pattern_id": "pattern_2",
@@ -1040,8 +1040,8 @@
               "color": "空白"
             }
           ],
-          "allowed": true,
-          "block_reason": null
+          "allowed": false,
+          "block_reason": "观望但涨跌幅-74.47% ≥ -90，禁止做多"
         }
       ]
     }

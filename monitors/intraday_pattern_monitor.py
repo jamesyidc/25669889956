@@ -114,12 +114,13 @@ def get_daily_prediction():
         return None
 
 
-def is_signal_allowed(pattern_signal, daily_prediction):
+def is_signal_allowed(pattern_signal, daily_prediction, total_change=None):
     """检查信号是否允许执行（小周期服从大周期）
     
     Args:
         pattern_signal: 模式信号类型 ('long' 做多 或 'short' 做空)
         daily_prediction: 今日预判数据
+        total_change: 当前27币总涨跌幅
         
     Returns:
         tuple: (allowed, reason)
@@ -149,9 +150,26 @@ def is_signal_allowed(pattern_signal, daily_prediction):
     if is_no_trade:
         return False, f"大周期为不参与信号({signal})，禁止所有操作"
     
-    # 如果是中性信号（观望），允许所有操作
+    # 如果是中性信号（观望），需要根据总涨跌幅判断
     if is_daily_neutral:
-        return True, f"大周期为中性信号({signal})，允许多空操作"
+        if total_change is None:
+            # 没有涨跌幅数据，允许操作
+            return True, f"大周期为中性信号({signal})，允许多空操作"
+        
+        # 观望信号的涨跌幅条件判断
+        if pattern_signal == 'short':
+            # 做空信号：总涨跌幅 > -15 (在-15以上)
+            if total_change > -15:
+                return True, f"观望且涨跌幅{total_change:.2f}% > -15，允许做空"
+            else:
+                return False, f"观望但涨跌幅{total_change:.2f}% ≤ -15，禁止做空"
+        
+        elif pattern_signal == 'long':
+            # 做多信号：总涨跌幅 < -90 (在-90以下)
+            if total_change < -90:
+                return True, f"观望且涨跌幅{total_change:.2f}% < -90，允许做多"
+            else:
+                return False, f"观望但涨跌幅{total_change:.2f}% ≥ -90，禁止做多"
     
     if pattern_signal == 'short':
         # 小周期做空信号
@@ -760,7 +778,7 @@ def monitor_loop():
                 # 检查是否符合大周期方向（小周期服从大周期）
                 signal_type = pattern_info.get('signal_type')
                 if signal_type:
-                    allowed, reason = is_signal_allowed(signal_type, daily_prediction)
+                    allowed, reason = is_signal_allowed(signal_type, daily_prediction, total_change)
                     if not allowed:
                         log(f"🚫 信号被大周期过滤: {reason}")
                         continue

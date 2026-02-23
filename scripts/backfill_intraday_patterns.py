@@ -362,8 +362,14 @@ def check_pattern_4(bars):
     
     return detections
 
-def is_signal_allowed(pattern_signal_type, daily_prediction):
-    """判断信号是否被大周期允许"""
+def is_signal_allowed(pattern_signal_type, daily_prediction, total_change=None):
+    """判断信号是否被大周期允许
+    
+    Args:
+        pattern_signal_type: 信号类型 ('long' 或 'short')
+        daily_prediction: 日预测数据
+        total_change: 当前27币总涨跌幅
+    """
     if not daily_prediction:
         return True, "无预判数据，允许所有信号"
     
@@ -388,9 +394,26 @@ def is_signal_allowed(pattern_signal_type, daily_prediction):
     if is_no_trade:
         return False, f"大周期为不参与信号({daily_signal})，禁止所有操作"
     
-    # 如果是中性信号（观望），允许所有操作
+    # 如果是中性信号（观望），需要根据总涨跌幅判断
     if is_daily_neutral:
-        return True, f"大周期为中性信号({daily_signal})，允许多空操作"
+        if total_change is None:
+            # 没有涨跌幅数据，允许操作
+            return True, f"大周期为中性信号({daily_signal})，允许多空操作"
+        
+        # 观望信号的涨跌幅条件判断
+        if pattern_signal_type == 'short':
+            # 做空信号：总涨跌幅 > -15 (在-15以上)
+            if total_change > -15:
+                return True, f"观望且涨跌幅{total_change:.2f}% > -15，允许做空"
+            else:
+                return False, f"观望但涨跌幅{total_change:.2f}% ≤ -15，禁止做空"
+        
+        elif pattern_signal_type == 'long':
+            # 做多信号：总涨跌幅 < -90 (在-90以下)
+            if total_change < -90:
+                return True, f"观望且涨跌幅{total_change:.2f}% < -90，允许做多"
+            else:
+                return False, f"观望但涨跌幅{total_change:.2f}% ≥ -90，禁止做多"
     
     # 如果大周期是做空系列，禁止做多
     if is_daily_short:
@@ -494,13 +517,20 @@ def analyze_single_day(date_str):
     else:
         print(f"⚠️ 无大周期预判数据")
     
+    # 获取当前总涨跌幅（用于观望信号判断）
+    total_change = None
+    if records:
+        # 使用最新的记录
+        total_change = records[-1].get('total_change', 0)
+        print(f"📊 当前涨跌幅总和: {total_change:.2f}%")
+    
     # 检测所有模式
     all_detections = []
     
     # 模式1
     pattern1_detections = check_pattern_1(bars, daily_prediction)
     for detection in pattern1_detections:
-        allowed, reason = is_signal_allowed(detection['signal_type'], daily_prediction)
+        allowed, reason = is_signal_allowed(detection['signal_type'], daily_prediction, total_change)
         detection['allowed'] = allowed
         detection['block_reason'] = reason if not allowed else None
         all_detections.append(detection)
@@ -508,7 +538,7 @@ def analyze_single_day(date_str):
     # 模式2
     pattern2_detections = check_pattern_2(bars)
     for detection in pattern2_detections:
-        allowed, reason = is_signal_allowed(detection['signal_type'], daily_prediction)
+        allowed, reason = is_signal_allowed(detection['signal_type'], daily_prediction, total_change)
         detection['allowed'] = allowed
         detection['block_reason'] = reason if not allowed else None
         all_detections.append(detection)
@@ -516,7 +546,7 @@ def analyze_single_day(date_str):
     # 模式3（需要传入records来检查总涨跌幅）
     pattern3_detections = check_pattern_3(bars, records)
     for detection in pattern3_detections:
-        allowed, reason = is_signal_allowed(detection['signal_type'], daily_prediction)
+        allowed, reason = is_signal_allowed(detection['signal_type'], daily_prediction, total_change)
         detection['allowed'] = allowed
         detection['block_reason'] = reason if not allowed else None
         all_detections.append(detection)
@@ -524,7 +554,7 @@ def analyze_single_day(date_str):
     # 模式4
     pattern4_detections = check_pattern_4(bars)
     for detection in pattern4_detections:
-        allowed, reason = is_signal_allowed(detection['signal_type'], daily_prediction)
+        allowed, reason = is_signal_allowed(detection['signal_type'], daily_prediction, total_change)
         detection['allowed'] = allowed
         detection['block_reason'] = reason if not allowed else None
         all_detections.append(detection)

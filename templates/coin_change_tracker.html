@@ -4579,25 +4579,8 @@ pm2 status                                                # 查看所有进程�
                         rankChart = echarts.init(rankChartDom);
                     }
                     
-                    // 先用一个简单的配置测试ECharts是否工作
-                    console.log('📊 测试：先渲染一个简单的图表...');
                     try {
                         trendChart.setOption({
-                            title: { text: '测试图表' },
-                            xAxis: { type: 'category', data: ['A', 'B', 'C'] },
-                            yAxis: { type: 'value' },
-                            series: [{ type: 'line', data: [10, 20, 15] }]
-                        });
-                        console.log('✅ 简单图表渲染成功');
-                    } catch (e) {
-                        console.error('❌ 简单图表渲染失败:', e);
-                    }
-                    
-                    // 延迟500ms后再渲染真实数据
-                    setTimeout(() => {
-                        console.log('📊 开始渲染真实数据...');
-                        try {
-                            trendChart.setOption({
                         tooltip: {
                             trigger: 'axis',
                             axisPointer: {

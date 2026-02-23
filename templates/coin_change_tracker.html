@@ -5565,11 +5565,10 @@ pm2 status                                                # 查看所有进程�
                                 if (intradayPatternsData && intradayPatternsData.length > 0) {
                                     console.log('✅ intradayPatternsData有数据，开始处理...');
                                     
-                                    // 过滤：只显示允许执行的信号 (allowed: true)
-                                    const allowedPatterns = intradayPatternsData.filter(p => p.allowed !== false);
-                                    console.log(`🔍 过滤后剩余 ${allowedPatterns.length} 个允许的信号 (原始 ${intradayPatternsData.length} 个)`);
+                                    // 🔥 显示所有模式（包括被禁止的），用不同样式区分
+                                    console.log(`🔍 准备显示所有 ${intradayPatternsData.length} 个模式检测信号`);
                                     
-                                    allowedPatterns.forEach((pattern, idx) => {
+                                    intradayPatternsData.forEach((pattern, idx) => {
                                         // 解析时间范围（例如："06:30-06:50"）
                                         const timeRange = pattern.time_range || '';
                                         const timeParts = timeRange.split('-');

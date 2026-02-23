@@ -17376,8 +17376,29 @@ def save_bottom_signal_config(account_id, strategy_type):
         with open(jsonl_file, 'w', encoding='utf-8') as f:
             f.write(json.dumps(config, ensure_ascii=False) + '\n')
         
+        # 🔧 修复：同时更新执行状态文件，防止1小时后自动恢复
+        execution_dir = os.path.join(current_dir, 'data', 'okx_bottom_signal_execution')
+        os.makedirs(execution_dir, exist_ok=True)
+        execution_file = os.path.join(execution_dir, f'{account_id}_bottom_signal_{strategy_type}_execution.jsonl')
+        
+        execution_record = {
+            'timestamp': datetime.now().isoformat(),
+            'time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'account_id': account_id,
+            'strategy_type': strategy_type,
+            'allowed': enabled,  # 与enabled保持一致
+            'user_disabled': not enabled,  # 新增字段：标记用户手动禁用
+            'reason': '用户手动禁用策略' if not enabled else '用户手动启用策略',
+            'rsi_value': None,
+            'sentiment': None
+        }
+        
+        with open(execution_file, 'w', encoding='utf-8') as f:
+            f.write(json.dumps(execution_record, ensure_ascii=False) + '\n')
+        
         print(f"✅ 已保存见底信号策略配置: {account_id}/{strategy_type}")
         print(f"   RSI阈值: {rsi_threshold}, 单币限额: {max_order_usdt} USDT, 杠杆: {leverage}x")
+        print(f"   🔧 执行状态: {'启用' if enabled else '禁用'}")
         
         return jsonify({
             'success': True,
@@ -17500,8 +17521,29 @@ def save_top_signal_config(account_id, strategy_type):
         with open(jsonl_file, 'w', encoding='utf-8') as f:
             f.write(json.dumps(config, ensure_ascii=False) + '\n')
         
+        # 🔧 修复：同时更新执行状态文件，防止1小时后自动恢复
+        execution_dir = os.path.join(current_dir, 'data', 'okx_auto_strategy')
+        os.makedirs(execution_dir, exist_ok=True)
+        execution_file = os.path.join(execution_dir, f'{account_id}_top_signal_{strategy_type}_execution.jsonl')
+        
+        execution_record = {
+            'timestamp': datetime.now().isoformat(),
+            'time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'account_id': account_id,
+            'strategy_type': strategy_type,
+            'allowed': enabled,  # 与enabled保持一致
+            'user_disabled': not enabled,  # 新增字段：标记用户手动禁用
+            'reason': '用户手动禁用策略' if not enabled else '用户手动启用策略',
+            'rsi_value': None,
+            'sentiment': None
+        }
+        
+        with open(execution_file, 'w', encoding='utf-8') as f:
+            f.write(json.dumps(execution_record, ensure_ascii=False) + '\n')
+        
         print(f"✅ 已保存见顶信号策略配置: {account_id}/{strategy_type}")
         print(f"   RSI阈值: {rsi_threshold}, 单币限额: {max_order_usdt} USDT, 杠杆: {leverage}x")
+        print(f"   🔧 执行状态: {'启用' if enabled else '禁用'}")
         
         return jsonify({
             'success': True,
@@ -25854,21 +25896,26 @@ def check_top_signal_status(account_id, strategy_type):
             if first_line:
                 header = json.loads(first_line)
                 allowed = header.get('allowed', True)
+                user_disabled = header.get('user_disabled', False)  # 读取用户手动禁用标记
                 timestamp_str = header.get('timestamp', '')
                 
-                # 检查是否超过1小时冷却期
-                if timestamp_str and not allowed:
-                    try:
-                        last_time = datetime.fromisoformat(timestamp_str)
-                        now = datetime.now()
-                        if (now - last_time).total_seconds() > 3600:  # 1小时 = 3600秒
-                            allowed = True
-                    except:
-                        pass
+                # 🔧 修复：区分"用户手动禁用"和"执行后冷却"
+                # 如果是用户手动禁用，则不自动恢复
+                if not user_disabled:
+                    # 检查是否超过1小时冷却期（仅对非手动禁用的情况）
+                    if timestamp_str and not allowed:
+                        try:
+                            last_time = datetime.fromisoformat(timestamp_str)
+                            now = datetime.now()
+                            if (now - last_time).total_seconds() > 3600:  # 1小时 = 3600秒
+                                allowed = True
+                        except:
+                            pass
                 
                 return jsonify({
                     'success': True,
                     'allowed': allowed,
+                    'user_disabled': user_disabled,
                     'timestamp': timestamp_str,
                     'reason': header.get('reason', '')
                 })
@@ -25914,21 +25961,26 @@ def check_bottom_signal_status(account_id, strategy_type):
             if first_line:
                 header = json.loads(first_line)
                 allowed = header.get('allowed', True)
+                user_disabled = header.get('user_disabled', False)  # 读取用户手动禁用标记
                 timestamp_str = header.get('timestamp', '')
                 
-                # 检查是否超过1小时冷却期
-                if timestamp_str and not allowed:
-                    try:
-                        last_time = datetime.fromisoformat(timestamp_str)
-                        now = datetime.now()
-                        if (now - last_time).total_seconds() > 3600:  # 1小时 = 3600秒
-                            allowed = True
-                    except:
-                        pass
+                # 🔧 修复：区分"用户手动禁用"和"执行后冷却"
+                # 如果是用户手动禁用，则不自动恢复
+                if not user_disabled:
+                    # 检查是否超过1小时冷却期（仅对非手动禁用的情况）
+                    if timestamp_str and not allowed:
+                        try:
+                            last_time = datetime.fromisoformat(timestamp_str)
+                            now = datetime.now()
+                            if (now - last_time).total_seconds() > 3600:  # 1小时 = 3600秒
+                                allowed = True
+                        except:
+                            pass
                 
                 return jsonify({
                     'success': True,
                     'allowed': allowed,
+                    'user_disabled': user_disabled,
                     'timestamp': timestamp_str,
                     'reason': header.get('reason', '')
                 })

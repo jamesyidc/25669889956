@@ -14,8 +14,8 @@
   "SOL": {
     "highest_price": 87.58,
     "highest_time": "2026-02-17 10:57:19",
-    "lowest_price": 77.38,
-    "lowest_time": "2026-02-23 11:29:23"
+    "lowest_price": 77.26,
+    "lowest_time": "2026-02-23 12:07:09"
   },
   "BNB": {
     "highest_price": 631.2,
@@ -62,8 +62,8 @@
   "BCH": {
     "highest_price": 583.6,
     "highest_time": "2026-02-22 15:31:52",
-    "lowest_price": 539.1,
-    "lowest_time": "2026-02-23 12:00:12"
+    "lowest_price": 538.8,
+    "lowest_time": "2026-02-23 12:17:22"
   },
   "LINK": {
     "highest_price": 8.985,

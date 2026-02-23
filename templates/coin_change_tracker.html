@@ -7815,6 +7815,7 @@ pm2 status                                                # 查看所有进程�
             steps: ['audio', 'charts', 'realtime', 'sentiment', 'history', 'prediction', 'patterns'],
             currentStep: 0,
             totalSteps: 7,
+            forceHideTimeout: null,
             
             updateProgress(percent, message) {
                 const progressBar = document.getElementById('progressBar');
@@ -7837,6 +7838,9 @@ pm2 status                                                # 查看所有进程�
             },
             
             hide() {
+                if (this.forceHideTimeout) {
+                    clearTimeout(this.forceHideTimeout);
+                }
                 const overlay = document.getElementById('loadingOverlay');
                 if (overlay) {
                     this.updateProgress(100, '加载完成！');
@@ -7848,121 +7852,150 @@ pm2 status                                                # 查看所有进程�
                         }, 500);
                     }, 300);
                 }
+            },
+            
+            // 强制隐藏（10秒后自动隐藏，防止卡住）
+            setForceHideTimeout() {
+                this.forceHideTimeout = setTimeout(() => {
+                    console.warn('⚠️ 加载超时，强制隐藏加载界面');
+                    this.hide();
+                }, 10000);
             }
         };
         
-        // 初始化 - 高度优化版本（并行加载 + 缓存机制 + 进度跟踪）
+        // 带超时的Promise包装器
+        function withTimeout(promise, timeoutMs = 5000, name = 'Operation') {
+            return Promise.race([
+                promise,
+                new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error(`${name} timeout after ${timeoutMs}ms`)), timeoutMs)
+                )
+            ]);
+        }
+        
+        // 初始化 - 高度优化版本（并行加载 + 缓存机制 + 进度跟踪 + 超时保护）
         window.onload = async function() {
             console.log('🚀 页面初始化开始...');
             const startTime = performance.now();
             
-            LoadingManager.updateProgress(5, '正在初始化音频系统...');
+            // 设置10秒强制隐藏超时
+            LoadingManager.setForceHideTimeout();
             
-            // 清除旧的预判数据缓存（强制重新加载）
-            window.dailyPredictionData = null;
-            console.log('🗑️ 已清除旧的预判数据缓存');
-            
-            // 第1步：立即初始化音频（无需等待）
-            initAudio();
-            const enableAudio = () => {
+            try {
+                LoadingManager.updateProgress(5, '正在初始化音频系统...');
+                
+                // 清除旧的预判数据缓存（强制重新加载）
+                window.dailyPredictionData = null;
+                console.log('🗑️ 已清除旧的预判数据缓存');
+                
+                // 第1步：立即初始化音频（无需等待）
                 initAudio();
-                console.log('🎵 音频已启用（用户交互）');
-            };
-            document.addEventListener('click', enableAudio, { once: true });
-            document.addEventListener('touchstart', enableAudio, { once: true });
-            LoadingManager.completeStep('audio');
-            
-            // 第2步：初始化图表骨架（无需等待数据）
-            LoadingManager.updateProgress(15, '正在初始化图表...');
-            initCharts();
-            console.log('✅ 图表初始化完成');
-            LoadingManager.completeStep('charts');
-            
-            // 第3步：并行加载关键数据（最重要的优化：3个请求同时发出）
-            LoadingManager.updateProgress(25, '正在并行加载数据...');
-            console.log('🔄 开始并行加载实时数据、市场情绪、历史数据...');
-            
-            const isToday = formatDate(currentDate) === formatDate(new Date());
-            
-            // 并行执行3个独立的数据加载任务
-            const [latestResult, sentimentResult, historyResult] = await Promise.allSettled([
-                updateLatestData(),
-                loadMarketSentiment(),
-                isToday ? updateHistoryData() : updateHistoryData(currentDate)
-            ]);
-            
-            // 检查各个加载结果
-            if (latestResult.status === 'fulfilled') {
-                console.log('✅ 实时数据加载完成');
-                LoadingManager.completeStep('realtime');
-            } else {
-                console.error('❌ 实时数据加载失败:', latestResult.reason);
-                LoadingManager.completeStep('realtime');
-            }
-            
-            if (sentimentResult.status === 'fulfilled') {
-                console.log('✅ 市场情绪加载完成');
-                LoadingManager.completeStep('sentiment');
-            } else {
-                console.error('❌ 市场情绪加载失败:', sentimentResult.reason);
-                LoadingManager.completeStep('sentiment');
-            }
-            
-            if (historyResult.status === 'fulfilled') {
-                console.log('✅ 历史数据加载完成');
-                LoadingManager.completeStep('history');
-            } else {
-                console.error('❌ 历史数据加载失败:', historyResult.reason);
-                LoadingManager.completeStep('history');
-            }
-            
-            // 第4步：更新日期选择器（无需等待）
-            updateDateSelector();
-            
-            // 加载当日行情预判
-            LoadingManager.updateProgress(70, '正在加载预判数据...');
-            loadDailyPrediction().then(() => {
-                console.log('✅ 当日行情预判加载完成');
-                LoadingManager.completeStep('prediction');
-            }).catch(error => {
-                console.error('❌ 当日行情预判加载失败:', error);
-                LoadingManager.completeStep('prediction');
-            });
-            
-            // 加载全时间段模式检测记录
-            LoadingManager.updateProgress(80, '正在加载模式检测...');
-            loadIntradayPatterns().then(() => {
-                console.log('✅ 全时间段模式检测记录加载完成');
-                LoadingManager.completeStep('patterns');
+                const enableAudio = () => {
+                    initAudio();
+                    console.log('🎵 音频已启用（用户交互）');
+                };
+                document.addEventListener('click', enableAudio, { once: true });
+                document.addEventListener('touchstart', enableAudio, { once: true });
+                LoadingManager.completeStep('audio');
+                
+                // 第2步：初始化图表骨架（无需等待数据）
+                LoadingManager.updateProgress(15, '正在初始化图表...');
+                initCharts();
+                console.log('✅ 图表初始化完成');
+                LoadingManager.completeStep('charts');
+                
+                // 第3步：并行加载关键数据（最重要的优化：3个请求同时发出）
+                LoadingManager.updateProgress(25, '正在并行加载数据...');
+                console.log('🔄 开始并行加载实时数据、市场情绪、历史数据...');
+                
+                const isToday = formatDate(currentDate) === formatDate(new Date());
+                
+                // 并行执行3个独立的数据加载任务（带5秒超时）
+                const [latestResult, sentimentResult, historyResult] = await Promise.allSettled([
+                    withTimeout(updateLatestData(), 5000, '实时数据加载'),
+                    withTimeout(loadMarketSentiment(), 5000, '市场情绪加载'),
+                    withTimeout(isToday ? updateHistoryData() : updateHistoryData(currentDate), 8000, '历史数据加载')
+                ]);
+                
+                // 检查各个加载结果
+                if (latestResult.status === 'fulfilled') {
+                    console.log('✅ 实时数据加载完成');
+                    LoadingManager.completeStep('realtime');
+                } else {
+                    console.error('❌ 实时数据加载失败:', latestResult.reason);
+                    LoadingManager.completeStep('realtime');
+                }
+                
+                if (sentimentResult.status === 'fulfilled') {
+                    console.log('✅ 市场情绪加载完成');
+                    LoadingManager.completeStep('sentiment');
+                } else {
+                    console.error('❌ 市场情绪加载失败:', sentimentResult.reason);
+                    LoadingManager.completeStep('sentiment');
+                }
+                
+                if (historyResult.status === 'fulfilled') {
+                    console.log('✅ 历史数据加载完成');
+                    LoadingManager.completeStep('history');
+                } else {
+                    console.error('❌ 历史数据加载失败:', historyResult.reason);
+                    LoadingManager.completeStep('history');
+                }
+                
+                // 第4步：更新日期选择器（无需等待）
+                updateDateSelector();
+                
+                // 加载当日行情预判（带超时）
+                LoadingManager.updateProgress(70, '正在加载预判数据...');
+                try {
+                    await withTimeout(loadDailyPrediction(), 3000, '预判数据加载');
+                    console.log('✅ 当日行情预判加载完成');
+                } catch (error) {
+                    console.error('❌ 当日行情预判加载失败:', error);
+                } finally {
+                    LoadingManager.completeStep('prediction');
+                }
+                
+                // 加载全时间段模式检测记录（带超时）
+                LoadingManager.updateProgress(80, '正在加载模式检测...');
+                try {
+                    await withTimeout(loadIntradayPatterns(), 3000, '模式检测加载');
+                    console.log('✅ 全时间段模式检测记录加载完成');
+                } catch (error) {
+                    console.error('❌ 全时间段模式检测记录加载失败:', error);
+                } finally {
+                    LoadingManager.completeStep('patterns');
+                    LoadingManager.hide();
+                }
+                
+                // 初始化市场情绪历史日期选择器
+                const sentimentDatePicker = document.getElementById('sentimentDatePicker');
+                if (sentimentDatePicker) {
+                    const today = new Date();
+                    const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
+                    sentimentDatePicker.value = todayStr;
+                    sentimentDatePicker.max = todayStr; // 限制最大日期为今天
+                    console.log('✅ 市场情绪日期选择器已初始化:', todayStr);
+                }
+                
+                // 第5步：后台懒加载账户余额信息（不阻塞页面显示）
+                setTimeout(() => {
+                    loadAccountsBalance().then(() => {
+                        console.log('✅ 账户余额信息已加载，可以使用策略功能');
+                    }).catch(error => {
+                        console.error('❌ 账户余额加载失败:', error);
+                    });
+                }, 100);
+                
+                const endTime = performance.now();
+                console.log(`✅ 页面初始化完成，总耗时: ${((endTime - startTime) / 1000).toFixed(2)}秒`);
+                console.log(`⚡ 性能提升: 采用并行加载 + 缓存机制 + 超时保护，预计减少60%以上加载时间`);
+                
+            } catch (error) {
+                console.error('❌ 页面初始化失败:', error);
+                LoadingManager.updateProgress(100, '加载出错，但页面可用');
                 LoadingManager.hide();
-            }).catch(error => {
-                console.error('❌ 全时间段模式检测记录加载失败:', error);
-                LoadingManager.completeStep('patterns');
-                LoadingManager.hide();
-            });
-            
-            // 初始化市场情绪历史日期选择器
-            const sentimentDatePicker = document.getElementById('sentimentDatePicker');
-            if (sentimentDatePicker) {
-                const today = new Date();
-                const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
-                sentimentDatePicker.value = todayStr;
-                sentimentDatePicker.max = todayStr; // 限制最大日期为今天
-                console.log('✅ 市场情绪日期选择器已初始化:', todayStr);
             }
-            
-            // 第5步：后台懒加载账户余额信息（不阻塞页面显示）
-            setTimeout(() => {
-                loadAccountsBalance().then(() => {
-                    console.log('✅ 账户余额信息已加载，可以使用策略功能');
-                }).catch(error => {
-                    console.error('❌ 账户余额加载失败:', error);
-                });
-            }, 100);
-            
-            const endTime = performance.now();
-            console.log(`✅ 页面初始化完成，总耗时: ${((endTime - startTime) / 1000).toFixed(2)}秒`);
-            console.log(`⚡ 性能提升: 采用并行加载 + 缓存机制，预计减少60%以上加载时间`);
             
             // 绑定日期选择器事件
             document.getElementById('prevDay').addEventListener('click', goToPrevDay);

@@ -8848,10 +8848,10 @@ pm2 status                                                # 查看所有进程�
                 }).join('');
                 
                 container.innerHTML = `
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div class="space-y-2">
                         ${html}
                     </div>
-                    <div class="mt-3 text-xs text-gray-500 text-center bg-gray-50 py-2 rounded">
+                    <div class="mt-3 text-xs text-gray-500 text-center bg-gray-50 py-1.5 rounded">
                         <i class="fas fa-info-circle mr-1"></i>
                         共检测到 <span class="font-bold text-indigo-600">${data.detections.length}</span> 个模式 | 大周期预判: <span class="font-bold text-purple-600">${data.daily_prediction || '未知'}</span>
                     </div>
@@ -8896,52 +8896,53 @@ pm2 status                                                # 查看所有进程�
             const borderColor = patternColors[detection.pattern] || 'blue';
             const signalColor = signalColors[detection.signal_type] || 'gray';
             
+            // 将柱子详情格式化为横向显示
+            const barsHtml = detection.bars ? 
+                detection.bars.map(bar => `<span class="text-xs text-gray-600">${bar}</span>`).join(' | ') : '';
+            
             return `
-                <div class="bg-white rounded-lg border-l-4 border-${borderColor}-500 shadow-md hover:shadow-lg transition-shadow p-3">
-                    <div class="flex items-start justify-between mb-2">
-                        <div class="flex-1">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="text-xl">${icon}</span>
-                                <h3 class="text-base font-bold text-gray-800">${detection.pattern_name}</h3>
-                            </div>
-                            <div class="flex items-center gap-3 text-xs">
-                                <div class="bg-blue-50 px-2 py-1 rounded">
-                                    <i class="far fa-clock mr-1 text-blue-600"></i>
-                                    <span class="font-bold text-blue-700">${detection.time_range}</span>
-                                </div>
-                                ${detection.pattern_type ? `
-                                    <div class="text-gray-600">
-                                        ${detection.pattern_type}
-                                    </div>
-                                ` : ''}
-                            </div>
+                <div class="bg-white rounded-lg border-l-4 border-${borderColor}-500 shadow-sm hover:shadow-md transition-shadow p-2.5">
+                    <div class="flex items-center gap-3">
+                        <!-- 左侧：图标和名称 -->
+                        <div class="flex items-center gap-2 min-w-[140px]">
+                            <span class="text-lg">${icon}</span>
+                            <h3 class="text-sm font-bold text-gray-800 whitespace-nowrap">${detection.pattern_name}</h3>
                         </div>
-                        <div class="ml-2">
-                            <span class="px-3 py-1.5 bg-${signalColor}-100 text-${signalColor}-800 rounded-lg text-sm font-bold shadow-sm border border-${signalColor}-200">
+                        
+                        <!-- 中间：时间范围 -->
+                        <div class="bg-blue-50 px-2 py-1 rounded flex items-center gap-1 min-w-[120px]">
+                            <i class="far fa-clock text-blue-600 text-xs"></i>
+                            <span class="font-bold text-blue-700 text-xs">${detection.time_range}</span>
+                        </div>
+                        
+                        <!-- 模式类型 -->
+                        ${detection.pattern_type ? `
+                            <div class="text-gray-600 text-xs whitespace-nowrap">
+                                ${detection.pattern_type}
+                            </div>
+                        ` : ''}
+                        
+                        <!-- 柱子详情（横向显示） -->
+                        ${barsHtml ? `
+                            <div class="flex-1 bg-gray-50 px-2 py-1 rounded text-xs">
+                                ${barsHtml}
+                            </div>
+                        ` : '<div class="flex-1"></div>'}
+                        
+                        <!-- 空白占比 -->
+                        ${detection.blank_ratio ? `
+                            <div class="bg-yellow-50 px-2 py-1 rounded whitespace-nowrap">
+                                <i class="fas fa-chart-bar text-yellow-600 text-xs mr-1"></i>
+                                <span class="font-bold text-yellow-700 text-xs">${detection.blank_ratio}</span>
+                            </div>
+                        ` : ''}
+                        
+                        <!-- 右侧：操作信号 -->
+                        <div>
+                            <span class="px-3 py-1 bg-${signalColor}-100 text-${signalColor}-800 rounded-lg text-xs font-bold shadow-sm border border-${signalColor}-200 whitespace-nowrap">
                                 ${detection.signal}
                             </span>
                         </div>
-                    </div>
-                    
-                    ${detection.bars ? `
-                        <div class="bg-gray-50 rounded p-2 mb-2">
-                            <div class="text-xs text-gray-600 mb-1 font-medium">柱子详情</div>
-                            <div class="text-xs font-mono space-y-0.5 text-gray-700">
-                                ${detection.bars.map(bar => `<div>${bar}</div>`).join('')}
-                            </div>
-                        </div>
-                    ` : ''}
-                    
-                    ${detection.blank_ratio ? `
-                        <div class="text-xs text-gray-600 mb-2 bg-yellow-50 px-2 py-1 rounded inline-block">
-                            <i class="fas fa-chart-bar mr-1 text-yellow-600"></i>
-                            空白占比: <span class="font-bold text-yellow-700">${detection.blank_ratio}</span>
-                        </div>
-                    ` : ''}
-                    
-                    <div class="text-xs text-gray-400 mt-2 pt-2 border-t">
-                        <i class="fas fa-clock mr-1"></i>
-                        检测时间: ${detection.time}
                     </div>
                 </div>
             `;

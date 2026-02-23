@@ -334,11 +334,14 @@ class WavePeakDetector:
         """
         检测暴跌前兆信号
         
-        支持两种模式：
-        1. 顶部递减模式（A1 > A2 > A3）：反弹高点逐渐降低，上攻力量减弱
-        2. 底部递增模式（A1 < A2 < A3）：反弹高点升高但处于下跌趋势
+        支持四种模式：
+        1. 情况8：暴跌幅度递增（最高优先级）
+           - 连续3波：a1→b1 < a2→b2 < a3→b3
+           - 连续4波（后3波）：a2→b2 < a3→b3 < a4→b4
+        2. 顶部递减模式（A1 > A2 > A3）：反弹高点逐渐降低，上攻力量减弱
+        3. 底部递增模式（A1 < A2 < A3）：反弹高点升高但处于下跌趋势
         
-        扫描所有连续3个波峰的组合（不仅仅是最后3个）
+        扫描所有连续波峰的组合（不仅仅是最后几个）
         
         Args:
             wave_peaks: 波峰列表
@@ -348,6 +351,73 @@ class WavePeakDetector:
         """
         if len(wave_peaks) < 3:
             return None
+        
+        # 优先检测情况8：4个波峰的后3波递增（如果有至少4个波峰）
+        if len(wave_peaks) >= 4:
+            for i in range(len(wave_peaks) - 4, -1, -1):
+                peak1 = wave_peaks[i]
+                peak2 = wave_peaks[i + 1]
+                peak3 = wave_peaks[i + 2]
+                peak4 = wave_peaks[i + 3]
+                
+                a2 = peak2['a_point']['value']
+                a3 = peak3['a_point']['value']
+                a4 = peak4['a_point']['value']
+                b2 = peak2['b_point']['value']
+                b3 = peak3['b_point']['value']
+                b4 = peak4['b_point']['value']
+                
+                # 计算后3波的暴跌幅度
+                crash_amplitude_2 = abs(a2 - b2)
+                crash_amplitude_3 = abs(a3 - b3)
+                crash_amplitude_4 = abs(a4 - b4)
+                
+                # 情况8b：后3波暴跌幅度递增
+                if (crash_amplitude_2 < crash_amplitude_3) and (crash_amplitude_3 < crash_amplitude_4):
+                    peak_indices = f"{i+2}-{i+3}-{i+4}"
+                    warning_msg = f'🚨🚨🚨 【情况8】极度危险！波峰{peak_indices}暴跌幅度递增，每次下跌力度在增强，即将暴跌！'
+                    
+                    return {
+                        'signal_type': 'crash_warning_amplifying',
+                        'pattern_name': '情况8：暴跌幅度递增（后3波）',
+                        'consecutive_peaks': 3,
+                        'peak_indices': peak_indices,
+                        'warning_level': 'critical',
+                        'warning': warning_msg,
+                        'operation_tip': '逢高做空',
+                        'peaks': [peak2, peak3, peak4],
+                        'pattern': {
+                            'crash_amplifying': True,
+                            'description': '暴跌幅度递增：第2波跌幅 < 第3波跌幅 < 第4波跌幅'
+                        },
+                        'comparisons': {
+                            'crash_amplitudes': {
+                                'amplitude_2': crash_amplitude_2,
+                                'amplitude_3': crash_amplitude_3,
+                                'amplitude_4': crash_amplitude_4,
+                                'amp3_vs_amp2': {
+                                    'increase': crash_amplitude_3 > crash_amplitude_2,
+                                    'diff': crash_amplitude_3 - crash_amplitude_2,
+                                    'diff_pct': ((crash_amplitude_3 - crash_amplitude_2) / abs(crash_amplitude_2) * 100) if crash_amplitude_2 != 0 else 0
+                                },
+                                'amp4_vs_amp3': {
+                                    'increase': crash_amplitude_4 > crash_amplitude_3,
+                                    'diff': crash_amplitude_4 - crash_amplitude_3,
+                                    'diff_pct': ((crash_amplitude_4 - crash_amplitude_3) / abs(crash_amplitude_3) * 100) if crash_amplitude_3 != 0 else 0
+                                }
+                            },
+                            'a_values': {
+                                'a2': a2,
+                                'a3': a3,
+                                'a4': a4
+                            },
+                            'b_values': {
+                                'b2': b2,
+                                'b3': b3,
+                                'b4': b4
+                            }
+                        }
+                    }
         
         # 扫描所有可能的连续3波组合，从最新到最旧
         # 如果有10个波峰，i的范围应该是7到0（即波峰8-10, 7-9, ..., 1-3）
@@ -374,15 +444,70 @@ class WavePeakDetector:
             # 判断B点是否递减：B1 > B2 > B3（谷底越来越低）
             b_descending = (b1 > b2) and (b2 > b3)
             
-            # 找到符合条件的组合
-            recent_peaks = [peak1, peak2, peak3]
-            peak_indices = f"{i+1}-{i+2}-{i+3}"  # 波峰编号（从1开始）
-        
+            # 计算每个波峰的暴跌幅度（A点到B点的跌幅，取绝对值）
+            # amplitude是B到A的涨幅，暴跌幅度就是A到下一个B的跌幅
+            crash_amplitude_1 = abs(a1 - peak1['b_point']['value'])  # 第1波的暴跌幅度
+            crash_amplitude_2 = abs(a2 - peak2['b_point']['value'])  # 第2波的暴跌幅度
+            crash_amplitude_3 = abs(a3 - peak3['b_point']['value'])  # 第3波的暴跌幅度
+            
+            # 情况8：暴跌幅度递增 - 每次下跌力度在增强
+            # 检测两种情况：
+            # 1. a1→b1 < a2→b2 < a3→b3 (连续三波递增)
+            # 2. a2→b2 < a3→b3 < a4→b4 (后三波递增)
+            crash_amplifying = (crash_amplitude_1 < crash_amplitude_2) and (crash_amplitude_2 < crash_amplitude_3)
+            
             # 找到符合条件的组合
             recent_peaks = [peak1, peak2, peak3]
             peak_indices = f"{i+1}-{i+2}-{i+3}"  # 波峰编号（从1开始）
             
-            # 优先检测顶部递减模式（更常见的暴跌信号）
+            # 最优先检测：情况8 - 暴跌幅度递增（最危险的信号）
+            if crash_amplifying:
+                warning_level = 'critical'  # 最高级别预警
+                warning_msg = f'🚨🚨🚨 【情况8】极度危险！波峰{peak_indices}暴跌幅度递增，每次下跌力度在增强，即将暴跌！'
+                
+                return {
+                    'signal_type': 'crash_warning_amplifying',
+                    'pattern_name': '情况8：暴跌幅度递增',
+                    'consecutive_peaks': 3,
+                    'peak_indices': peak_indices,
+                    'warning_level': warning_level,
+                    'warning': warning_msg,
+                    'operation_tip': '逢高做空',
+                    'peaks': recent_peaks,
+                    'pattern': {
+                        'crash_amplifying': crash_amplifying,
+                        'description': '暴跌幅度递增：第1波跌幅 < 第2波跌幅 < 第3波跌幅'
+                    },
+                    'comparisons': {
+                        'crash_amplitudes': {
+                            'amplitude_1': crash_amplitude_1,
+                            'amplitude_2': crash_amplitude_2,
+                            'amplitude_3': crash_amplitude_3,
+                            'amp2_vs_amp1': {
+                                'increase': crash_amplitude_2 > crash_amplitude_1,
+                                'diff': crash_amplitude_2 - crash_amplitude_1,
+                                'diff_pct': ((crash_amplitude_2 - crash_amplitude_1) / abs(crash_amplitude_1) * 100) if crash_amplitude_1 != 0 else 0
+                            },
+                            'amp3_vs_amp2': {
+                                'increase': crash_amplitude_3 > crash_amplitude_2,
+                                'diff': crash_amplitude_3 - crash_amplitude_2,
+                                'diff_pct': ((crash_amplitude_3 - crash_amplitude_2) / abs(crash_amplitude_2) * 100) if crash_amplitude_2 != 0 else 0
+                            }
+                        },
+                        'a_values': {
+                            'a1': a1,
+                            'a2': a2,
+                            'a3': a3
+                        },
+                        'b_values': {
+                            'b1': b1,
+                            'b2': b2,
+                            'b3': b3
+                        }
+                    }
+                }
+            
+            # 次优先检测顶部递减模式（更常见的暴跌信号）
             if a_descending:
                 # 顶部递减：A1 > A2 > A3，反弹高点逐渐降低
                 warning_level = 'high' if b_descending else 'medium'

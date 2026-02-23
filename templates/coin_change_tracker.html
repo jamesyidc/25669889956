@@ -8326,14 +8326,15 @@ pm2 status                                                # 查看所有进程�
                         
                         try {
                             // 每30秒全量刷新所有数据
-                            console.log('📊 刷新实时数据...');
-                            await updateLatestData();
+                            // 🔧 关键修复：先更新历史数据（更新historyData变量），再渲染图表（使用最新的historyData）
+                            console.log('📊 刷新历史数据...');
+                            await updateHistoryData(currentDate);
                             
                             console.log('📊 刷新市场情绪数据...');
                             await loadMarketSentiment();
                             
-                            console.log('📊 刷新历史数据...');
-                            await updateHistoryData(currentDate);
+                            console.log('📊 刷新实时数据和图表...');
+                            await updateLatestData();
                             
                             console.log(`✅ 自动刷新 #${refreshCounter} 完成 (${timeStr})`);
                             

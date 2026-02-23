@@ -5455,21 +5455,37 @@ pm2 status                                                # 查看所有进程�
                                     if (type === 'wait') return '⏸️ 观望';
                                     return data.patternName;
                                 },
-                                fontSize: 14,
+                                fontSize: 15,  // 增大字号
                                 fontWeight: 'bold',
                                 color: '#FFFFFF',
                                 backgroundColor: function(params) {
                                     const type = params.data.patternType;
-                                    if (type === 'short') return '#DC2626';   // 深红色背景
-                                    if (type === 'long') return '#059669';    // 深绿色背景
-                                    if (type === 'wait') return '#D97706';    // 深橙色背景
-                                    return '#4B5563';
+                                    if (type === 'short') return '#B91C1C';   // 更深的红色背景
+                                    if (type === 'long') return '#047857';    // 更深的绿色背景
+                                    if (type === 'wait') return '#B45309';    // 更深的橙色背景
+                                    return '#374151';
                                 },
-                                padding: [6, 12],
+                                padding: [8, 14],  // 增加内边距
                                 borderRadius: 6,
-                                shadowBlur: 8,
-                                shadowColor: 'rgba(0, 0, 0, 0.3)',
-                                shadowOffsetY: 2
+                                borderWidth: 2,  // 添加边框
+                                borderColor: function(params) {
+                                    const type = params.data.patternType;
+                                    if (type === 'short') return '#FFFFFF';   // 白色边框
+                                    if (type === 'long') return '#FFFFFF';    // 白色边框
+                                    if (type === 'wait') return '#FFFFFF';    // 白色边框
+                                    return '#9CA3AF';
+                                },
+                                shadowBlur: 12,  // 增强阴影
+                                shadowColor: 'rgba(0, 0, 0, 0.5)',  // 更深的阴影
+                                shadowOffsetY: 3,
+                                textBorderColor: function(params) {
+                                    const type = params.data.patternType;
+                                    if (type === 'short') return '#7F1D1D';   // 文字描边
+                                    if (type === 'long') return '#064E3B';    
+                                    if (type === 'wait') return '#78350F';    
+                                    return '#1F2937';
+                                },
+                                textBorderWidth: 1
                             },
                             tooltip: {
                                 formatter: function(params) {

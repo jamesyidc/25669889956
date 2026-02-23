@@ -5600,11 +5600,18 @@ pm2 status                                                # 查看所有进程�
                                                 const signalText = pattern.signal || '';
                                                 let patternType = 'unknown';
                                                 
+                                                // 优先判断做空信号
                                                 if (signalText.includes('做空') || signalText.includes('新低')) {
                                                     patternType = 'short';  // 做空信号
-                                                } else if (signalText.includes('做多') || signalText.includes('低吸') || signalText.includes('抄底')) {
+                                                } 
+                                                // 判断做多信号（包括：做多、开多单、低吸、抄底、试仓）
+                                                else if (signalText.includes('做多') || signalText.includes('开多') || 
+                                                         signalText.includes('低吸') || signalText.includes('抄底') || 
+                                                         signalText.includes('试仓')) {
                                                     patternType = 'long';   // 做多信号
-                                                } else if (signalText.includes('观望') || signalText.includes('等待')) {
+                                                } 
+                                                // 判断观望信号
+                                                else if (signalText.includes('观望') || signalText.includes('等待')) {
                                                     patternType = 'wait';   // 观望信号
                                                 }
                                                 

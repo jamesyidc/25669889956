@@ -435,6 +435,54 @@ class WavePeakDetector:
             b2 = peak2['b_point']['value']
             b3 = peak3['b_point']['value']
             
+            # 如果有第4个波峰，也检测 A2 > A3 > A4 的模式
+            if i + 3 < len(wave_peaks):
+                peak4 = wave_peaks[i + 3]
+                a4 = peak4['a_point']['value']
+                b4 = peak4['b_point']['value']
+                
+                # 情况8b：A2 > A3 > A4（使用后3个波峰）
+                if (a2 > a3) and (a3 > a4):
+                    peak_indices_234 = f"{i+2}-{i+3}-{i+4}"
+                    warning_msg = f'🚨 【情况8】暴跌预警！波峰{peak_indices_234} A点递减（A2 > A3 > A4），即将暴跌'
+                    
+                    return {
+                        'signal_type': 'crash_warning_case8_a234',
+                        'pattern_name': '情况8：暴跌预警（A2 > A3 > A4）',
+                        'consecutive_peaks': 3,
+                        'peak_indices': peak_indices_234,
+                        'warning_level': 'critical',
+                        'warning': warning_msg,
+                        'operation_tip': '逢高做空',
+                        'peaks': [peak2, peak3, peak4],
+                        'pattern': {
+                            'a_descending': True,
+                            'description': '情况8：A点递减（A2 > A3 > A4），反弹高点逐渐降低，即将暴跌'
+                        },
+                        'comparisons': {
+                            'a_values': {
+                                'a2': a2,
+                                'a3': a3,
+                                'a4': a4,
+                                'a3_vs_a2': {
+                                    'decrease': a3 < a2,
+                                    'diff': a3 - a2,
+                                    'diff_pct': ((a3 - a2) / abs(a2) * 100) if a2 != 0 else 0
+                                },
+                                'a4_vs_a3': {
+                                    'decrease': a4 < a3,
+                                    'diff': a4 - a3,
+                                    'diff_pct': ((a4 - a3) / abs(a3) * 100) if a3 != 0 else 0
+                                }
+                            },
+                            'b_values': {
+                                'b2': b2,
+                                'b3': b3,
+                                'b4': b4
+                            }
+                        }
+                    }
+            
             # 模式1：顶部递减（A1 > A2 > A3）- 反弹高点降低
             a_descending = (a1 > a2) and (a2 > a3)
             
@@ -507,27 +555,25 @@ class WavePeakDetector:
                     }
                 }
             
-            # 次优先检测顶部递减模式（更常见的暴跌信号）
+            # 情况8优先检测：A点递减模式（A1 > A2 > A3）
             if a_descending:
-                # 顶部递减：A1 > A2 > A3，反弹高点逐渐降低
-                warning_level = 'high' if b_descending else 'medium'
-                warning_msg = f'🚨 暴跌预警！波峰{peak_indices}连续反弹高点降低（A1 > A2 > A3），上攻力量减弱'
-                
-                if b_descending:
-                    warning_msg = f'🚨🚨 强烈暴跌预警！波峰{peak_indices}顶部递减 + 底部下移，市场加速下跌'
+                # 情况8：A1 > A2 > A3，反弹高点逐渐降低，即将暴跌
+                warning_level = 'critical'
+                warning_msg = f'🚨 【情况8】暴跌预警！波峰{peak_indices} A点递减（A1 > A2 > A3），即将暴跌'
                 
                 return {
-                    'signal_type': 'crash_warning_descending',
-                    'pattern_name': '顶部递减模式',
+                    'signal_type': 'crash_warning_case8_a123',
+                    'pattern_name': '情况8：暴跌预警（A1 > A2 > A3）',
                     'consecutive_peaks': 3,
                     'peak_indices': peak_indices,
                     'warning_level': warning_level,
                     'warning': warning_msg,
+                    'operation_tip': '逢高做空',
                     'peaks': recent_peaks,
                     'pattern': {
                         'a_descending': a_descending,
                         'b_descending': b_descending,
-                        'description': 'A点递减（反弹高点降低）' + (' + B点递减（谷底下降）' if b_descending else '')
+                        'description': '情况8：A点递减（A1 > A2 > A3），反弹高点逐渐降低，即将暴跌'
                     },
                     'comparisons': {
                         'a_values': {

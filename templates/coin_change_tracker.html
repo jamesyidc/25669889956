@@ -4560,7 +4560,24 @@ pm2 status                                                # 查看所有进程�
                     // 更新趋势图，添加最高价和最低价标记
                     // 使用 notMerge: true 强制重新渲染整个图表
                     console.log('📊 调用 trendChart.setOption，trendChart是否存在:', !!trendChart);
+                    console.log('📊 trendChart实例详情:', trendChart ? {
+                        disposed: trendChart.isDisposed ? trendChart.isDisposed() : 'N/A',
+                        width: trendChart.getWidth ? trendChart.getWidth() : 'N/A',
+                        height: trendChart.getHeight ? trendChart.getHeight() : 'N/A'
+                    } : 'null');
                     console.log('📊 数据准备: times长度=', times.length, 'changes长度=', changes.length);
+                    
+                    // 检查实例是否被销毁，如果是则重新初始化
+                    if (!trendChart || (trendChart.isDisposed && trendChart.isDisposed())) {
+                        console.warn('⚠️ trendChart实例已销毁，重新初始化...');
+                        const trendChartDom = document.getElementById('trendChart');
+                        trendChart = echarts.init(trendChartDom);
+                    }
+                    if (!rankChart || (rankChart.isDisposed && rankChart.isDisposed())) {
+                        console.warn('⚠️ rankChart实例已销毁，重新初始化...');
+                        const rankChartDom = document.getElementById('rankChart');
+                        rankChart = echarts.init(rankChartDom);
+                    }
                     
                     try {
                         trendChart.setOption({

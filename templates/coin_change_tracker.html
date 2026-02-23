@@ -37,6 +37,46 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-100">
+    <!-- 加载进度覆盖层 -->
+    <div id="loadingOverlay" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+        <div style="text-align: center; color: white;">
+            <div style="font-size: 64px; margin-bottom: 20px; animation: pulse 1.5s ease-in-out infinite;">
+                📊
+            </div>
+            <div style="font-size: 28px; font-weight: bold; margin-bottom: 30px;">
+                27币涨跌幅追踪系统
+            </div>
+            <div style="width: 400px; max-width: 90vw; background: rgba(255,255,255,0.2); border-radius: 20px; padding: 8px; margin-bottom: 20px;">
+                <div id="progressBar" style="width: 0%; height: 30px; background: linear-gradient(90deg, #10b981 0%, #3b82f6 100%); border-radius: 15px; transition: width 0.3s ease-out; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">
+                    <span id="progressText">0%</span>
+                </div>
+            </div>
+            <div id="loadingStep" style="font-size: 16px; color: rgba(255,255,255,0.9); min-height: 24px;">
+                正在初始化...
+            </div>
+            <div style="margin-top: 25px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+                <span id="step-audio" class="loading-substep" style="padding: 6px 12px; background: rgba(255,255,255,0.15); border-radius: 12px; font-size: 12px; opacity: 0.5;">🎵 音频</span>
+                <span id="step-charts" class="loading-substep" style="padding: 6px 12px; background: rgba(255,255,255,0.15); border-radius: 12px; font-size: 12px; opacity: 0.5;">📈 图表</span>
+                <span id="step-realtime" class="loading-substep" style="padding: 6px 12px; background: rgba(255,255,255,0.15); border-radius: 12px; font-size: 12px; opacity: 0.5;">⚡ 实时数据</span>
+                <span id="step-sentiment" class="loading-substep" style="padding: 6px 12px; background: rgba(255,255,255,0.15); border-radius: 12px; font-size: 12px; opacity: 0.5;">😊 市场情绪</span>
+                <span id="step-history" class="loading-substep" style="padding: 6px 12px; background: rgba(255,255,255,0.15); border-radius: 12px; font-size: 12px; opacity: 0.5;">📜 历史数据</span>
+                <span id="step-prediction" class="loading-substep" style="padding: 6px 12px; background: rgba(255,255,255,0.15); border-radius: 12px; font-size: 12px; opacity: 0.5;">🔮 预判</span>
+                <span id="step-patterns" class="loading-substep" style="padding: 6px 12px; background: rgba(255,255,255,0.15); border-radius: 12px; font-size: 12px; opacity: 0.5;">🎯 模式</span>
+            </div>
+        </div>
+    </div>
+    <style>
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        .loading-substep-completed {
+            background: rgba(16, 185, 129, 0.3) !important;
+            opacity: 1 !important;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
+    </style>
+    
     <!-- 导航栏 -->
     <nav class="bg-white shadow-lg mb-6">
         <div class="container mx-auto px-4 py-4">
@@ -7770,10 +7810,53 @@ pm2 status                                                # 查看所有进程�
             }
         }
         
-        // 初始化 - 高度优化版本（并行加载 + 缓存机制）
+        // 加载进度管理器
+        const LoadingManager = {
+            steps: ['audio', 'charts', 'realtime', 'sentiment', 'history', 'prediction', 'patterns'],
+            currentStep: 0,
+            totalSteps: 7,
+            
+            updateProgress(percent, message) {
+                const progressBar = document.getElementById('progressBar');
+                const progressText = document.getElementById('progressText');
+                const loadingStep = document.getElementById('loadingStep');
+                
+                if (progressBar) progressBar.style.width = percent + '%';
+                if (progressText) progressText.textContent = Math.round(percent) + '%';
+                if (loadingStep) loadingStep.textContent = message;
+            },
+            
+            completeStep(stepName) {
+                const stepElement = document.getElementById(`step-${stepName}`);
+                if (stepElement) {
+                    stepElement.classList.add('loading-substep-completed');
+                }
+                this.currentStep++;
+                const percent = (this.currentStep / this.totalSteps) * 100;
+                this.updateProgress(percent, `正在加载 (${this.currentStep}/${this.totalSteps})...`);
+            },
+            
+            hide() {
+                const overlay = document.getElementById('loadingOverlay');
+                if (overlay) {
+                    this.updateProgress(100, '加载完成！');
+                    setTimeout(() => {
+                        overlay.style.opacity = '0';
+                        overlay.style.transition = 'opacity 0.5s ease-out';
+                        setTimeout(() => {
+                            overlay.style.display = 'none';
+                        }, 500);
+                    }, 300);
+                }
+            }
+        };
+        
+        // 初始化 - 高度优化版本（并行加载 + 缓存机制 + 进度跟踪）
         window.onload = async function() {
             console.log('🚀 页面初始化开始...');
             const startTime = performance.now();
+            
+            LoadingManager.updateProgress(5, '正在初始化音频系统...');
             
             // 清除旧的预判数据缓存（强制重新加载）
             window.dailyPredictionData = null;
@@ -7787,12 +7870,16 @@ pm2 status                                                # 查看所有进程�
             };
             document.addEventListener('click', enableAudio, { once: true });
             document.addEventListener('touchstart', enableAudio, { once: true });
+            LoadingManager.completeStep('audio');
             
             // 第2步：初始化图表骨架（无需等待数据）
+            LoadingManager.updateProgress(15, '正在初始化图表...');
             initCharts();
             console.log('✅ 图表初始化完成');
+            LoadingManager.completeStep('charts');
             
             // 第3步：并行加载关键数据（最重要的优化：3个请求同时发出）
+            LoadingManager.updateProgress(25, '正在并行加载数据...');
             console.log('🔄 开始并行加载实时数据、市场情绪、历史数据...');
             
             const isToday = formatDate(currentDate) === formatDate(new Date());
@@ -7807,37 +7894,51 @@ pm2 status                                                # 查看所有进程�
             // 检查各个加载结果
             if (latestResult.status === 'fulfilled') {
                 console.log('✅ 实时数据加载完成');
+                LoadingManager.completeStep('realtime');
             } else {
                 console.error('❌ 实时数据加载失败:', latestResult.reason);
+                LoadingManager.completeStep('realtime');
             }
             
             if (sentimentResult.status === 'fulfilled') {
                 console.log('✅ 市场情绪加载完成');
+                LoadingManager.completeStep('sentiment');
             } else {
                 console.error('❌ 市场情绪加载失败:', sentimentResult.reason);
+                LoadingManager.completeStep('sentiment');
             }
             
             if (historyResult.status === 'fulfilled') {
                 console.log('✅ 历史数据加载完成');
+                LoadingManager.completeStep('history');
             } else {
                 console.error('❌ 历史数据加载失败:', historyResult.reason);
+                LoadingManager.completeStep('history');
             }
             
             // 第4步：更新日期选择器（无需等待）
             updateDateSelector();
             
             // 加载当日行情预判
+            LoadingManager.updateProgress(70, '正在加载预判数据...');
             loadDailyPrediction().then(() => {
                 console.log('✅ 当日行情预判加载完成');
+                LoadingManager.completeStep('prediction');
             }).catch(error => {
                 console.error('❌ 当日行情预判加载失败:', error);
+                LoadingManager.completeStep('prediction');
             });
             
             // 加载全时间段模式检测记录
+            LoadingManager.updateProgress(80, '正在加载模式检测...');
             loadIntradayPatterns().then(() => {
                 console.log('✅ 全时间段模式检测记录加载完成');
+                LoadingManager.completeStep('patterns');
+                LoadingManager.hide();
             }).catch(error => {
                 console.error('❌ 全时间段模式检测记录加载失败:', error);
+                LoadingManager.completeStep('patterns');
+                LoadingManager.hide();
             });
             
             // 初始化市场情绪历史日期选择器

@@ -5743,6 +5743,11 @@ pm2 status                                                # 查看所有进程�
                         }]
                     }, true, true); // notMerge=true, lazyUpdate=true
                     
+                    // 立即resize一次
+                    trendChart.resize();
+                    rankChart.resize();
+                    console.log('📊 setOption后立即resize');
+                    
                     // 强制resize图表确保正确显示
                     // 多次resize确保图表正确显示
                     setTimeout(() => {
@@ -7990,6 +7995,22 @@ pm2 status                                                # 查看所有进程�
                 const endTime = performance.now();
                 console.log(`✅ 页面初始化完成，总耗时: ${((endTime - startTime) / 1000).toFixed(2)}秒`);
                 console.log(`⚡ 性能提升: 采用并行加载 + 缓存机制 + 超时保护，预计减少60%以上加载时间`);
+                
+                // 加载完成后再次强制resize所有图表
+                setTimeout(() => {
+                    if (trendChart) {
+                        trendChart.resize();
+                        console.log('🔄 trendChart 最终resize完成');
+                    }
+                    if (rankChart) {
+                        rankChart.resize();
+                        console.log('🔄 rankChart 最终resize完成');
+                    }
+                    if (upRatioBarChart) {
+                        upRatioBarChart.resize();
+                        console.log('🔄 upRatioBarChart 最终resize完成');
+                    }
+                }, 1000);
                 
             } catch (error) {
                 console.error('❌ 页面初始化失败:', error);

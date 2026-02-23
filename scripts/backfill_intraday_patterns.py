@@ -369,17 +369,29 @@ def is_signal_allowed(pattern_signal_type, daily_prediction):
     
     daily_signal = daily_prediction.get('signal', '')
     
-    # 定义做空信号组和做多信号组
-    short_signals = ["做空", "等待新低", "诱多不参与", "观望"]
+    # 定义明确的做空信号（不包括"观望"）
+    short_signals = ["做空", "等待新低", "诱多不参与"]
+    # 定义明确的做多信号
     long_signals = ["低吸", "诱空试仓抄底"]
+    # 中性信号（多空对决未分胜负）
+    neutral_signals = ["观望"]
+    
+    # 判断大周期方向
+    is_daily_short = any(s in daily_signal for s in short_signals)
+    is_daily_long = any(s in daily_signal for s in long_signals)
+    is_daily_neutral = any(s in daily_signal for s in neutral_signals)
+    
+    # 如果是中性信号（观望），允许所有操作
+    if is_daily_neutral:
+        return True, f"大周期为中性信号({daily_signal})，允许多空操作"
     
     # 如果大周期是做空系列，禁止做多
-    if any(s in daily_signal for s in short_signals):
+    if is_daily_short:
         if pattern_signal_type == 'long':
             return False, f"大周期为做空信号({daily_signal})，禁止做多"
     
     # 如果大周期是做多系列，禁止做空
-    if any(s in daily_signal for s in long_signals):
+    if is_daily_long:
         if pattern_signal_type == 'short':
             return False, f"大周期为做多信号({daily_signal})，禁止做空"
     

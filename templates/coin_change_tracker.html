@@ -9650,13 +9650,13 @@ pm2 status                                                # 查看所有进程�
         // 加载交易日志（用于在图表上显示开仓标记）
         async function loadTradingLogs(date) {
             try {
-                console.log('📊 加载交易日志...', date);
+                console.log('📊 加载交易日志...', date, 'type:', typeof date);
                 
-                // 如果date为空，使用今天的日期
-                if (!date) {
+                // 如果date为空或不是字符串，使用今天的日期
+                if (!date || typeof date !== 'string') {
                     const today = new Date();
                     date = today.toISOString().split('T')[0];  // YYYY-MM-DD
-                    console.log('📅 date为空，使用今天:', date);
+                    console.log('📅 date无效或为空，使用今天:', date);
                 }
                 
                 // 将日期从 YYYY-MM-DD 转为 YYYYMMDD

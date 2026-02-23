@@ -1,11 +1,11 @@
 {
-  "analysis_time": "2026-02-23T15:02:02.708007",
+  "analysis_time": "2026-02-23T15:15:26.954171",
   "start_date": "2026-02-01",
   "end_date": "2026-02-23",
   "total_days": 23,
-  "total_detections": 52,
-  "allowed_detections": 23,
-  "blocked_detections": 29,
+  "total_detections": 40,
+  "allowed_detections": 21,
+  "blocked_detections": 19,
   "daily_results": [
     {
       "date": "2026-02-01",
@@ -18,9 +18,9 @@
     {
       "date": "2026-02-02",
       "total_bars": 61,
-      "total_detections": 9,
-      "allowed_detections": 5,
-      "blocked_detections": 4,
+      "total_detections": 5,
+      "allowed_detections": 4,
+      "blocked_detections": 1,
       "detections": [
         {
           "pattern_id": "pattern_1",
@@ -77,36 +77,6 @@
               "hour": 6,
               "up_ratio": 55.56,
               "color": "绿色"
-            }
-          ],
-          "allowed": true,
-          "block_reason": null
-        },
-        {
-          "pattern_id": "pattern_1",
-          "pattern_name": "诱多等待新低",
-          "pattern_type": "绿→黄→红",
-          "signal": "逢高做空",
-          "signal_type": "short",
-          "time_range": "06:40 - 07:00",
-          "bars": [
-            {
-              "time": "06:40",
-              "hour": 6,
-              "up_ratio": 55.56,
-              "color": "绿色"
-            },
-            {
-              "time": "06:50",
-              "hour": 6,
-              "up_ratio": 51.85,
-              "color": "黄色"
-            },
-            {
-              "time": "07:00",
-              "hour": 7,
-              "up_ratio": 21.85,
-              "color": "红色"
             }
           ],
           "allowed": true,
@@ -204,96 +174,6 @@
               "hour": 11,
               "up_ratio": 0.0,
               "color": "空白"
-            }
-          ],
-          "allowed": false,
-          "block_reason": "大周期为做空信号(等待新低)，禁止做多"
-        },
-        {
-          "pattern_id": "pattern_3",
-          "pattern_name": "筑底信号",
-          "pattern_type": "黄→绿→黄",
-          "signal": "逢低做多",
-          "signal_type": "long",
-          "time_range": "06:30 - 06:50",
-          "bars": [
-            {
-              "time": "06:30",
-              "hour": 6,
-              "up_ratio": 54.81,
-              "color": "黄色"
-            },
-            {
-              "time": "06:40",
-              "hour": 6,
-              "up_ratio": 55.56,
-              "color": "绿色"
-            },
-            {
-              "time": "06:50",
-              "hour": 6,
-              "up_ratio": 51.85,
-              "color": "黄色"
-            }
-          ],
-          "allowed": false,
-          "block_reason": "大周期为做空信号(等待新低)，禁止做多"
-        },
-        {
-          "pattern_id": "pattern_3",
-          "pattern_name": "筑底信号",
-          "pattern_type": "黄→绿→黄",
-          "signal": "逢低做多",
-          "signal_type": "long",
-          "time_range": "09:20 - 09:40",
-          "bars": [
-            {
-              "time": "09:20",
-              "hour": 9,
-              "up_ratio": 53.7,
-              "color": "黄色"
-            },
-            {
-              "time": "09:30",
-              "hour": 9,
-              "up_ratio": 56.3,
-              "color": "绿色"
-            },
-            {
-              "time": "09:40",
-              "hour": 9,
-              "up_ratio": 54.81,
-              "color": "黄色"
-            }
-          ],
-          "allowed": false,
-          "block_reason": "大周期为做空信号(等待新低)，禁止做多"
-        },
-        {
-          "pattern_id": "pattern_3",
-          "pattern_name": "筑底信号",
-          "pattern_type": "黄→绿→黄",
-          "signal": "逢低做多",
-          "signal_type": "long",
-          "time_range": "09:40 - 10:00",
-          "bars": [
-            {
-              "time": "09:40",
-              "hour": 9,
-              "up_ratio": 54.81,
-              "color": "黄色"
-            },
-            {
-              "time": "09:50",
-              "hour": 9,
-              "up_ratio": 55.19,
-              "color": "绿色"
-            },
-            {
-              "time": "10:00",
-              "hour": 10,
-              "up_ratio": 50.74,
-              "color": "黄色"
             }
           ],
           "allowed": false,
@@ -462,36 +342,6 @@
       "blocked_detections": 2,
       "detections": [
         {
-          "pattern_id": "pattern_1",
-          "pattern_name": "诱多等待新低",
-          "pattern_type": "红→黄→绿",
-          "signal": "逢高做空",
-          "signal_type": "short",
-          "time_range": "22:20 - 22:40",
-          "bars": [
-            {
-              "time": "22:20",
-              "hour": 22,
-              "up_ratio": 19.63,
-              "color": "红色"
-            },
-            {
-              "time": "22:30",
-              "hour": 22,
-              "up_ratio": 45.19,
-              "color": "黄色"
-            },
-            {
-              "time": "22:40",
-              "hour": 22,
-              "up_ratio": 60.37,
-              "color": "绿色"
-            }
-          ],
-          "allowed": true,
-          "block_reason": null
-        },
-        {
           "pattern_id": "pattern_2",
           "pattern_name": "诱空试仓抄底",
           "pattern_type": "红+3空白",
@@ -564,47 +414,46 @@
           ],
           "allowed": false,
           "block_reason": "大周期为做空信号(等待新低)，禁止做多"
+        },
+        {
+          "pattern_id": "pattern_1",
+          "pattern_name": "诱多等待新低",
+          "pattern_type": "红→黄→绿",
+          "signal": "逢高做空",
+          "signal_type": "short",
+          "time_range": "22:20 - 22:40",
+          "bars": [
+            {
+              "time": "22:20",
+              "hour": 22,
+              "up_ratio": 19.63,
+              "color": "红色"
+            },
+            {
+              "time": "22:30",
+              "hour": 22,
+              "up_ratio": 45.19,
+              "color": "黄色"
+            },
+            {
+              "time": "22:40",
+              "hour": 22,
+              "up_ratio": 60.37,
+              "color": "绿色"
+            }
+          ],
+          "allowed": true,
+          "block_reason": null
         }
       ]
     },
     {
       "date": "2026-02-07",
       "total_bars": 128,
-      "total_detections": 1,
+      "total_detections": 0,
       "allowed_detections": 0,
-      "blocked_detections": 1,
-      "detections": [
-        {
-          "pattern_id": "pattern_3",
-          "pattern_name": "筑底信号",
-          "pattern_type": "黄→绿→黄",
-          "signal": "逢低做多",
-          "signal_type": "long",
-          "time_range": "22:10 - 22:30",
-          "bars": [
-            {
-              "time": "22:10",
-              "hour": 22,
-              "up_ratio": 54.81,
-              "color": "黄色"
-            },
-            {
-              "time": "22:20",
-              "hour": 22,
-              "up_ratio": 55.56,
-              "color": "绿色"
-            },
-            {
-              "time": "22:30",
-              "hour": 22,
-              "up_ratio": 51.48,
-              "color": "黄色"
-            }
-          ],
-          "allowed": false,
-          "block_reason": "大周期为做空信号(诱多不参与)，禁止做多"
-        }
-      ]
+      "blocked_detections": 0,
+      "detections": []
     },
     {
       "date": "2026-02-08",
@@ -1163,9 +1012,9 @@
     {
       "date": "2026-02-18",
       "total_bars": 132,
-      "total_detections": 4,
+      "total_detections": 3,
       "allowed_detections": 2,
-      "blocked_detections": 2,
+      "blocked_detections": 1,
       "detections": [
         {
           "pattern_id": "pattern_1",
@@ -1226,36 +1075,6 @@
           ],
           "allowed": true,
           "block_reason": null
-        },
-        {
-          "pattern_id": "pattern_3",
-          "pattern_name": "筑底信号",
-          "pattern_type": "黄→绿→黄",
-          "signal": "逢低做多",
-          "signal_type": "long",
-          "time_range": "10:00 - 10:20",
-          "bars": [
-            {
-              "time": "10:00",
-              "hour": 10,
-              "up_ratio": 45.37,
-              "color": "黄色"
-            },
-            {
-              "time": "10:10",
-              "hour": 10,
-              "up_ratio": 56.79,
-              "color": "绿色"
-            },
-            {
-              "time": "10:20",
-              "hour": 10,
-              "up_ratio": 51.44,
-              "color": "黄色"
-            }
-          ],
-          "allowed": false,
-          "block_reason": "大周期为做空信号(等待新低)，禁止做多"
         },
         {
           "pattern_id": "pattern_4",
@@ -1531,9 +1350,9 @@
     {
       "date": "2026-02-21",
       "total_bars": 127,
-      "total_detections": 7,
+      "total_detections": 3,
       "allowed_detections": 3,
-      "blocked_detections": 4,
+      "blocked_detections": 0,
       "detections": [
         {
           "pattern_id": "pattern_1",
@@ -1624,126 +1443,6 @@
           ],
           "allowed": true,
           "block_reason": null
-        },
-        {
-          "pattern_id": "pattern_3",
-          "pattern_name": "筑底信号",
-          "pattern_type": "黄→绿→黄",
-          "signal": "逢低做多",
-          "signal_type": "long",
-          "time_range": "02:30 - 02:50",
-          "bars": [
-            {
-              "time": "02:30",
-              "hour": 2,
-              "up_ratio": 51.85,
-              "color": "黄色"
-            },
-            {
-              "time": "02:40",
-              "hour": 2,
-              "up_ratio": 55.03,
-              "color": "绿色"
-            },
-            {
-              "time": "02:50",
-              "hour": 2,
-              "up_ratio": 51.32,
-              "color": "黄色"
-            }
-          ],
-          "allowed": false,
-          "block_reason": "大周期为做空信号(等待新低)，禁止做多"
-        },
-        {
-          "pattern_id": "pattern_3",
-          "pattern_name": "筑底信号",
-          "pattern_type": "黄→绿→黄",
-          "signal": "逢低做多",
-          "signal_type": "long",
-          "time_range": "06:50 - 07:10",
-          "bars": [
-            {
-              "time": "06:50",
-              "hour": 6,
-              "up_ratio": 50.26,
-              "color": "黄色"
-            },
-            {
-              "time": "07:00",
-              "hour": 7,
-              "up_ratio": 56.48,
-              "color": "绿色"
-            },
-            {
-              "time": "07:10",
-              "hour": 7,
-              "up_ratio": 47.09,
-              "color": "黄色"
-            }
-          ],
-          "allowed": false,
-          "block_reason": "大周期为做空信号(等待新低)，禁止做多"
-        },
-        {
-          "pattern_id": "pattern_3",
-          "pattern_name": "筑底信号",
-          "pattern_type": "黄→绿→黄",
-          "signal": "逢低做多",
-          "signal_type": "long",
-          "time_range": "10:20 - 10:40",
-          "bars": [
-            {
-              "time": "10:20",
-              "hour": 10,
-              "up_ratio": 50.0,
-              "color": "黄色"
-            },
-            {
-              "time": "10:30",
-              "hour": 10,
-              "up_ratio": 55.56,
-              "color": "绿色"
-            },
-            {
-              "time": "10:40",
-              "hour": 10,
-              "up_ratio": 53.24,
-              "color": "黄色"
-            }
-          ],
-          "allowed": false,
-          "block_reason": "大周期为做空信号(等待新低)，禁止做多"
-        },
-        {
-          "pattern_id": "pattern_3",
-          "pattern_name": "筑底信号",
-          "pattern_type": "黄→绿→黄",
-          "signal": "逢低做多",
-          "signal_type": "long",
-          "time_range": "15:40 - 16:00",
-          "bars": [
-            {
-              "time": "15:40",
-              "hour": 15,
-              "up_ratio": 54.63,
-              "color": "黄色"
-            },
-            {
-              "time": "15:50",
-              "hour": 15,
-              "up_ratio": 55.56,
-              "color": "绿色"
-            },
-            {
-              "time": "16:00",
-              "hour": 16,
-              "up_ratio": 53.44,
-              "color": "黄色"
-            }
-          ],
-          "allowed": false,
-          "block_reason": "大周期为做空信号(等待新低)，禁止做多"
         }
       ]
     },
@@ -1757,10 +1456,10 @@
     },
     {
       "date": "2026-02-23",
-      "total_bars": 79,
-      "total_detections": 4,
-      "allowed_detections": 2,
-      "blocked_detections": 2,
+      "total_bars": 80,
+      "total_detections": 2,
+      "allowed_detections": 1,
+      "blocked_detections": 1,
       "detections": [
         {
           "pattern_id": "pattern_1",
@@ -1787,36 +1486,6 @@
               "hour": 6,
               "up_ratio": 59.26,
               "color": "绿色"
-            }
-          ],
-          "allowed": true,
-          "block_reason": null
-        },
-        {
-          "pattern_id": "pattern_1",
-          "pattern_name": "诱多等待新低",
-          "pattern_type": "绿→黄→红",
-          "signal": "逢高做空",
-          "signal_type": "short",
-          "time_range": "06:50 - 07:10",
-          "bars": [
-            {
-              "time": "06:50",
-              "hour": 6,
-              "up_ratio": 59.26,
-              "color": "绿色"
-            },
-            {
-              "time": "07:00",
-              "hour": 7,
-              "up_ratio": 54.63,
-              "color": "黄色"
-            },
-            {
-              "time": "07:10",
-              "hour": 7,
-              "up_ratio": 43.98,
-              "color": "红色"
             }
           ],
           "allowed": true,
@@ -1854,36 +1523,6 @@
               "hour": 9,
               "up_ratio": 0.0,
               "color": "空白"
-            }
-          ],
-          "allowed": false,
-          "block_reason": "大周期为做空信号(观望)，禁止做多"
-        },
-        {
-          "pattern_id": "pattern_3",
-          "pattern_name": "筑底信号",
-          "pattern_type": "黄→绿→黄",
-          "signal": "逢低做多",
-          "signal_type": "long",
-          "time_range": "06:40 - 07:00",
-          "bars": [
-            {
-              "time": "06:40",
-              "hour": 6,
-              "up_ratio": 51.39,
-              "color": "黄色"
-            },
-            {
-              "time": "06:50",
-              "hour": 6,
-              "up_ratio": 59.26,
-              "color": "绿色"
-            },
-            {
-              "time": "07:00",
-              "hour": 7,
-              "up_ratio": 54.63,
-              "color": "黄色"
             }
           ],
           "allowed": false,

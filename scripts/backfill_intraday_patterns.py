@@ -212,22 +212,44 @@ def check_pattern_2(bars):
     
     return detections
 
-def check_pattern_3(bars):
-    """检测模式3: 筑底信号 (黄→绿→黄)"""
+def check_pattern_3(bars, records):
+    """检测模式3: 筑底信号 (黄→绿→黄)
+    
+    条件：
+    1. 颜色模式：黄→绿→黄
+    2. 总涨跌幅 < -50
+    
+    Args:
+        bars: 10分钟柱子数据
+        records: 历史记录（用于获取总涨跌幅）
+    """
     detections = []
     for i in range(len(bars) - 2):
         b1, b2, b3 = bars[i], bars[i+1], bars[i+2]
         
         if (b1['color'] == '黄色' and b2['color'] == '绿色' and b3['color'] == '黄色'):
-            detections.append({
-                'pattern_id': 'pattern_3',
-                'pattern_name': '筑底信号',
-                'pattern_type': '黄→绿→黄',
-                'signal': '逢低做多',
-                'signal_type': 'long',
-                'time_range': f"{b1['time']} - {b3['time']}",
-                'bars': [b1, b2, b3]
-            })
+            # 查找对应时间的总涨跌幅
+            middle_time = b2['time']  # 使用中间柱子的时间
+            total_change = None
+            
+            for record in records:
+                beijing_time = record.get('beijing_time', '')
+                if beijing_time.startswith(f"2026-") and middle_time in beijing_time:
+                    total_change = record.get('total_change', 0)
+                    break
+            
+            # 只有当总涨跌幅 < -50 时才触发
+            if total_change is not None and total_change < -50:
+                detections.append({
+                    'pattern_id': 'pattern_3',
+                    'pattern_name': '筑底信号',
+                    'pattern_type': '黄→绿→黄',
+                    'signal': '逢低做多',
+                    'signal_type': 'long',
+                    'time_range': f"{b1['time']} - {b3['time']}",
+                    'total_change': round(total_change, 2),
+                    'bars': [b1, b2, b3]
+                })
     
     return detections
 
@@ -400,8 +422,8 @@ def analyze_single_day(date_str):
         detection['block_reason'] = reason if not allowed else None
         all_detections.append(detection)
     
-    # 模式3
-    pattern3_detections = check_pattern_3(bars)
+    # 模式3（需要传入records来检查总涨跌幅）
+    pattern3_detections = check_pattern_3(bars, records)
     for detection in pattern3_detections:
         allowed, reason = is_signal_allowed(detection['signal_type'], daily_prediction)
         detection['allowed'] = allowed

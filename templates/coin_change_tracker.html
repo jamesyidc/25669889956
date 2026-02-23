@@ -7911,8 +7911,8 @@ pm2 status                                                # 查看所有进程�
             console.log('🚀 页面初始化开始...');
             const startTime = performance.now();
             
-            // 设置10秒强制隐藏超时
-            LoadingManager.setForceHideTimeout();
+            // 不设置强制隐藏超时，让用户看到真实的加载过程
+            // LoadingManager.setForceHideTimeout();
             
             try {
                 LoadingManager.updateProgress(5, '正在初始化音频系统...');

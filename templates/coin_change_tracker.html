@@ -9646,6 +9646,13 @@ pm2 status                                                # 查看所有进程�
             try {
                 console.log('📊 加载交易日志...', date);
                 
+                // 如果date为空，使用今天的日期
+                if (!date) {
+                    const today = new Date();
+                    date = today.toISOString().split('T')[0];  // YYYY-MM-DD
+                    console.log('📅 date为空，使用今天:', date);
+                }
+                
                 // 将日期从 YYYY-MM-DD 转为 YYYYMMDD
                 const dateStr = date.replace(/-/g, '');
                 

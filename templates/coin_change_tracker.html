@@ -4315,6 +4315,37 @@ pm2 status                                                # 查看所有进程�
                         console.error('❌ 市场情绪数据加载失败:', e);
                     }
                     
+                    // 🔥 加载日内模式检测数据
+                    let intradayPatternsData = [];
+                    try {
+                        const currentDateStr = date ? formatDate(date) : new Date().toISOString().split('T')[0];
+                        let patternsUrl = `/api/intraday-patterns/detections/${currentDateStr}?_t=${Date.now()}`;
+                        
+                        console.log('🔍 加载日内模式检测数据:', patternsUrl);
+                        
+                        const patternsResponse = await fetch(patternsUrl, {
+                            cache: 'no-store',
+                            headers: {
+                                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                                'Pragma': 'no-cache',
+                                'Expires': '0'
+                            }
+                        });
+                        const patternsResult = await patternsResponse.json();
+                        
+                        if (patternsResult.success && patternsResult.detections && patternsResult.detections.length > 0) {
+                            intradayPatternsData = patternsResult.detections;
+                            console.log('✅ 日内模式检测数据加载成功，检测数:', intradayPatternsData.length);
+                            intradayPatternsData.forEach((pattern, idx) => {
+                                console.log(`📌 模式${idx+1}: ${pattern.pattern_name} @ ${pattern.time_range}, 信号: ${pattern.signal}`);
+                            });
+                        } else {
+                            console.log('⚠️ 日内模式检测数据为空或加载失败');
+                        }
+                    } catch (e) {
+                        console.error('❌ 日内模式检测数据加载失败:', e);
+                    }
+                    
                     // 找出最高价和最低价
                     const maxChange = Math.max(...changes);
                     const minChange = Math.min(...changes);
@@ -5292,6 +5323,193 @@ pm2 status                                                # 查看所有进程�
                             },
                             zlevel: 10,  // 确保在最上层显示
                             silent: false  // 允许交互
+                        },
+                        // 🔥 日内模式检测系列（显眼标记）
+                        {
+                            name: '日内模式检测',
+                            type: 'scatter',
+                            yAxisIndex: 0,  // 使用左轴（涨跌幅）
+                            data: (function() {
+                                console.log('🔍 开始生成日内模式scatter系列数据...');
+                                console.log('📊 intradayPatternsData:', {
+                                    exists: !!intradayPatternsData,
+                                    isArray: Array.isArray(intradayPatternsData),
+                                    length: intradayPatternsData ? intradayPatternsData.length : 0
+                                });
+                                
+                                const patternPoints = [];
+                                
+                                if (intradayPatternsData && intradayPatternsData.length > 0) {
+                                    console.log('✅ intradayPatternsData有数据，开始处理...');
+                                    
+                                    intradayPatternsData.forEach((pattern, idx) => {
+                                        // 解析时间范围（例如："06:30-06:50"）
+                                        const timeRange = pattern.time_range || '';
+                                        const timeParts = timeRange.split('-');
+                                        if (timeParts.length !== 2) {
+                                            console.warn(`⚠️ 模式 ${idx} 时间范围格式错误: ${timeRange}`);
+                                            return;
+                                        }
+                                        
+                                        // 使用时间范围的中间时间点
+                                        const startTime = timeParts[0].trim();
+                                        const endTime = timeParts[1].trim();
+                                        
+                                        // 查找起始和结束时间的索引
+                                        let startIndex = -1;
+                                        let endIndex = -1;
+                                        
+                                        for (let i = 0; i < times.length; i++) {
+                                            const chartTime = times[i].substring(0, 5);  // HH:MM
+                                            if (chartTime === startTime) startIndex = i;
+                                            if (chartTime === endTime) endIndex = i;
+                                        }
+                                        
+                                        if (startIndex >= 0 && endIndex >= 0) {
+                                            // 使用中间点的索引和涨跌幅
+                                            const middleIndex = Math.floor((startIndex + endIndex) / 2);
+                                            
+                                            if (changes[middleIndex] !== undefined) {
+                                                // 根据信号类型确定颜色和图标
+                                                const signalText = pattern.signal || '';
+                                                let patternType = 'unknown';
+                                                
+                                                if (signalText.includes('做空') || signalText.includes('新低')) {
+                                                    patternType = 'short';  // 做空信号
+                                                } else if (signalText.includes('做多') || signalText.includes('低吸') || signalText.includes('抄底')) {
+                                                    patternType = 'long';   // 做多信号
+                                                } else if (signalText.includes('观望') || signalText.includes('等待')) {
+                                                    patternType = 'wait';   // 观望信号
+                                                }
+                                                
+                                                patternPoints.push({
+                                                    value: [middleIndex, changes[middleIndex]],
+                                                    patternType: patternType,
+                                                    patternName: pattern.pattern_name,
+                                                    signal: signalText,
+                                                    timeRange: timeRange,
+                                                    bars: pattern.bars || []
+                                                });
+                                                
+                                                console.log(`✅ 添加模式点 ${idx}: ${pattern.pattern_name} @ ${timeRange}, 信号=${signalText}, 索引=${middleIndex}, 涨跌幅=${changes[middleIndex].toFixed(2)}%`);
+                                            }
+                                        } else {
+                                            console.warn(`⚠️ 模式 ${idx} 无法匹配时间范围: ${timeRange}, startIndex=${startIndex}, endIndex=${endIndex}`);
+                                        }
+                                    });
+                                    
+                                    console.log('✅ 日内模式scatter系列数据生成完成，总点数:', patternPoints.length);
+                                } else {
+                                    console.warn('⚠️ intradayPatternsData为空或不存在');
+                                }
+                                
+                                return patternPoints;
+                            })(),
+                            symbolSize: 35,  // 大尺寸，显眼
+                            symbol: function(data) {
+                                // 根据模式类型设置形状
+                                const type = data.patternType;
+                                if (type === 'short') return 'triangle';  // 倒三角 - 做空
+                                if (type === 'long') return 'arrow';      // 箭头 - 做多
+                                if (type === 'wait') return 'diamond';    // 钻石 - 观望
+                                return 'roundRect';
+                            },
+                            symbolRotate: function(data) {
+                                const type = data.patternType;
+                                return type === 'short' ? 180 : 0;  // 做空信号倒置
+                            },
+                            itemStyle: {
+                                color: function(params) {
+                                    const type = params.data.patternType;
+                                    if (type === 'short') return '#EF4444';   // 亮红色 - 做空
+                                    if (type === 'long') return '#10B981';    // 亮绿色 - 做多
+                                    if (type === 'wait') return '#F59E0B';    // 橙色 - 观望
+                                    return '#6B7280';
+                                },
+                                borderColor: '#FFFFFF',
+                                borderWidth: 3,
+                                shadowBlur: 10,
+                                shadowColor: function(params) {
+                                    const type = params.data.patternType;
+                                    if (type === 'short') return 'rgba(239, 68, 68, 0.6)';
+                                    if (type === 'long') return 'rgba(16, 185, 129, 0.6)';
+                                    if (type === 'wait') return 'rgba(245, 158, 11, 0.6)';
+                                    return 'rgba(0, 0, 0, 0.3)';
+                                },
+                                shadowOffsetX: 0,
+                                shadowOffsetY: 3
+                            },
+                            label: {
+                                show: true,
+                                position: function(params) {
+                                    const type = params.data.patternType;
+                                    return type === 'short' ? 'top' : 'bottom';
+                                },
+                                formatter: function(params) {
+                                    const data = params.data;
+                                    const type = data.patternType;
+                                    
+                                    // 简化的标签
+                                    if (type === 'short') return '🔻 做空';
+                                    if (type === 'long') return '🚀 做多';
+                                    if (type === 'wait') return '⏸️ 观望';
+                                    return data.patternName;
+                                },
+                                fontSize: 14,
+                                fontWeight: 'bold',
+                                color: '#FFFFFF',
+                                backgroundColor: function(params) {
+                                    const type = params.data.patternType;
+                                    if (type === 'short') return '#DC2626';   // 深红色背景
+                                    if (type === 'long') return '#059669';    // 深绿色背景
+                                    if (type === 'wait') return '#D97706';    // 深橙色背景
+                                    return '#4B5563';
+                                },
+                                padding: [6, 12],
+                                borderRadius: 6,
+                                shadowBlur: 8,
+                                shadowColor: 'rgba(0, 0, 0, 0.3)',
+                                shadowOffsetY: 2
+                            },
+                            tooltip: {
+                                formatter: function(params) {
+                                    const data = params.data;
+                                    const barsHtml = data.bars.map(bar => 
+                                        `<div style="display: inline-block; margin: 2px 4px; padding: 2px 6px; background: ${
+                                            bar.color === '红色' ? '#FEE2E2' : 
+                                            bar.color === '绿色' ? '#D1FAE5' : 
+                                            bar.color === '黄色' ? '#FEF3C7' : '#F3F4F6'
+                                        }; border-radius: 3px; font-size: 11px;">
+                                            ${bar.time} <strong style="color: ${
+                                                bar.color === '红色' ? '#DC2626' : 
+                                                bar.color === '绿色' ? '#059669' : 
+                                                bar.color === '黄色' ? '#D97706' : '#6B7280'
+                                            };">${bar.ratio}%</strong>
+                                        </div>`
+                                    ).join('');
+                                    
+                                    return `<div style="padding: 10px; min-width: 250px; max-width: 400px;">
+                                        <div style="font-weight: bold; font-size: 15px; margin-bottom: 8px; color: #111827;">
+                                            <i class="fas fa-chart-line" style="margin-right: 6px; color: #3B82F6;"></i>${data.patternName}
+                                        </div>
+                                        <div style="margin: 6px 0; padding: 6px 8px; background: #F3F4F6; border-radius: 4px; font-size: 12px;">
+                                            <strong>时间范围:</strong> ${data.timeRange}
+                                        </div>
+                                        <div style="margin: 6px 0; padding: 6px 8px; background: #FEF3C7; border-radius: 4px; font-size: 12px;">
+                                            <strong>操作建议:</strong> <span style="color: #D97706; font-weight: 600;">${data.signal}</span>
+                                        </div>
+                                        <div style="margin: 6px 0; padding: 6px 8px; background: #E0E7FF; border-radius: 4px; font-size: 12px;">
+                                            <strong>涨跌幅:</strong> ${data.value[1].toFixed(2)}%
+                                        </div>
+                                        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #E5E7EB;">
+                                            <div style="font-size: 11px; color: #6B7280; margin-bottom: 4px;"><strong>10分钟柱子:</strong></div>
+                                            ${barsHtml}
+                                        </div>
+                                    </div>`;
+                                }
+                            },
+                            zlevel: 15,  // 在市场情绪信号之上显示
+                            silent: false
                         }]
                     }, true, true); // notMerge=true, lazyUpdate=true
                     

@@ -14,8 +14,8 @@
   "SOL": {
     "highest_price": 87.58,
     "highest_time": "2026-02-17 10:57:19",
-    "lowest_price": 77.26,
-    "lowest_time": "2026-02-23 12:07:09"
+    "lowest_price": 77.19,
+    "lowest_time": "2026-02-23 12:41:28"
   },
   "BNB": {
     "highest_price": 631.2,
@@ -62,14 +62,14 @@
   "BCH": {
     "highest_price": 583.6,
     "highest_time": "2026-02-22 15:31:52",
-    "lowest_price": 538.8,
-    "lowest_time": "2026-02-23 12:17:22"
+    "lowest_price": 538.6,
+    "lowest_time": "2026-02-23 12:38:02"
   },
   "LINK": {
     "highest_price": 8.985,
     "highest_time": "2026-02-17 10:47:05",
-    "lowest_price": 8.195,
-    "lowest_time": "2026-02-23 10:24:29"
+    "lowest_price": 8.178,
+    "lowest_time": "2026-02-23 12:44:53"
   },
   "UNI": {
     "highest_price": 3.667,
@@ -152,8 +152,8 @@
   "TAO": {
     "highest_price": 202.4,
     "highest_time": "2026-02-17 06:41:09",
-    "lowest_price": 165.4,
-    "lowest_time": "2026-02-23 09:26:14"
+    "lowest_price": 165.2,
+    "lowest_time": "2026-02-23 14:02:09"
   },
   "SUI": {
     "highest_price": 1.0024,

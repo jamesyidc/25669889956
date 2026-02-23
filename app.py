@@ -22977,6 +22977,87 @@ def get_daily_prediction():
         })
 
 
+@app.route('/api/intraday-patterns/detections/<date>', methods=['GET'])
+def get_intraday_pattern_detections(date):
+    """获取指定日期的日内模式检测记录
+    
+    Args:
+        date: 日期字符串 (YYYY-MM-DD)
+        
+    Returns:
+        {
+            'success': bool,
+            'date': str,
+            'detections': list,
+            'daily_prediction': str
+        }
+    """
+    try:
+        from datetime import datetime
+        
+        # 验证日期格式
+        try:
+            datetime.strptime(date, '%Y-%m-%d')
+        except ValueError:
+            return jsonify({
+                'success': False,
+                'error': '日期格式错误，应为 YYYY-MM-DD'
+            }), 400
+        
+        # 读取检测记录JSONL文件
+        detections_file = Path(f'data/intraday_patterns/detections_{date}.jsonl')
+        
+        if not detections_file.exists():
+            return jsonify({
+                'success': True,
+                'date': date,
+                'detections': [],
+                'message': '暂无检测记录'
+            })
+        
+        # 读取所有检测记录
+        detections = []
+        with open(detections_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    try:
+                        record = json.loads(line)
+                        detections.append(record)
+                    except json.JSONDecodeError:
+                        continue
+        
+        # 获取当日预判
+        daily_prediction = None
+        prediction_file = Path(f'data/daily_predictions/prediction_{date}.json')
+        if prediction_file.exists():
+            try:
+                with open(prediction_file, 'r', encoding='utf-8') as f:
+                    pred_data = json.load(f)
+                    daily_prediction = pred_data.get('signal', '')
+            except:
+                pass
+        
+        response = make_response(jsonify({
+            'success': True,
+            'date': date,
+            'detections': detections,
+            'daily_prediction': daily_prediction
+        }))
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
+        
+    except Exception as e:
+        import traceback
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }), 500
+
+
 # ==================== 数据采集健康监控 ====================
 @app.route('/data-health-monitor')
 def data_health_monitor_page():

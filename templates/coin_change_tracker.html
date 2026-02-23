@@ -2418,41 +2418,29 @@ pm2 status                                                # 查看所有进程�
             </div>
         </div>
         
-        <!-- 上涨占比统计卡片 (平均/最大/最小) -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <!-- 平均上涨占比 -->
-            <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-blue-500">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-gray-600 font-medium">平均</span>
-                    <i class="fas fa-chart-line text-blue-600"></i>
+        <!-- 全时间段模式监控 (2:00-23:59) -->
+        <div class="bg-white rounded-lg shadow-lg mb-6 overflow-hidden border-t-4 border-indigo-500">
+            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 p-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-bold text-white flex items-center">
+                        <i class="fas fa-clock text-white mr-2"></i>
+                        全时间段模式监控 (2:00-23:59)
+                    </h2>
+                    <button onclick="refreshIntradayPatterns()" class="px-4 py-2 bg-white text-indigo-600 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium">
+                        <i class="fas fa-sync-alt mr-1"></i>刷新
+                    </button>
                 </div>
-                <div id="upRatioAvgTop" class="text-3xl font-bold text-blue-600">--</div>
-                <div class="text-sm text-gray-500 mt-2">
-                    10分钟上涨占比平均值
-                </div>
-            </div>
-
-            <!-- 最大上涨占比 -->
-            <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-green-500">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-gray-600 font-medium">最大</span>
-                    <i class="fas fa-arrow-circle-up text-green-600"></i>
-                </div>
-                <div id="upRatioMaxTop" class="text-3xl font-bold text-green-600">--</div>
-                <div class="text-sm text-gray-500 mt-2">
-                    10分钟上涨占比最大值
+                <div class="text-white text-sm mt-2 opacity-90">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    每10分钟检查一次，自动检测4种交易模式，大周期控制小周期信号
                 </div>
             </div>
-
-            <!-- 最小上涨占比 -->
-            <div class="bg-white rounded-lg shadow-lg p-6 border-l-4 border-red-500">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-gray-600 font-medium">最小</span>
-                    <i class="fas fa-arrow-circle-down text-red-600"></i>
-                </div>
-                <div id="upRatioMinTop" class="text-3xl font-bold text-red-600">--</div>
-                <div class="text-sm text-gray-500 mt-2">
-                    10分钟上涨占比最小值
+            
+            <div id="intradayPatternsContent" class="p-6">
+                <!-- 加载提示 -->
+                <div class="text-center py-8 text-gray-500">
+                    <i class="fas fa-spinner fa-spin text-3xl mb-2"></i>
+                    <div>正在加载今日检测记录...</div>
                 </div>
             </div>
         </div>
@@ -7417,6 +7405,13 @@ pm2 status                                                # 查看所有进程�
                 console.error('❌ 当日行情预判加载失败:', error);
             });
             
+            // 加载全时间段模式检测记录
+            loadIntradayPatterns().then(() => {
+                console.log('✅ 全时间段模式检测记录加载完成');
+            }).catch(error => {
+                console.error('❌ 全时间段模式检测记录加载失败:', error);
+            });
+            
             // 初始化市场情绪历史日期选择器
             const sentimentDatePicker = document.getElementById('sentimentDatePicker');
             if (sentimentDatePicker) {
@@ -8815,6 +8810,149 @@ pm2 status                                                # 查看所有进程�
                 }
             });
         };
+        
+        // 加载全时间段模式检测记录
+        async function loadIntradayPatterns() {
+            const container = document.getElementById('intradayPatternsContent');
+            
+            try {
+                // 获取今天的日期
+                const today = new Date();
+                const dateStr = today.toISOString().split('T')[0];
+                
+                // 获取检测记录
+                const response = await fetch(`/api/intraday-patterns/detections/${dateStr}`, {
+                    cache: 'no-cache'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load detections');
+                }
+                
+                const data = await response.json();
+                
+                if (!data.success || !data.detections || data.detections.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-8 text-gray-500">
+                            <i class="fas fa-inbox text-4xl mb-3 text-gray-300"></i>
+                            <div class="text-lg font-medium">今日暂无检测记录</div>
+                            <div class="text-sm mt-2">监控器每10分钟自动检查一次</div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // 渲染检测记录
+                const html = data.detections.map(detection => {
+                    return renderPatternCard(detection);
+                }).join('');
+                
+                container.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        ${html}
+                    </div>
+                    <div class="mt-4 text-sm text-gray-500 text-center">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        共检测到 ${data.detections.length} 个模式 | 大周期预判: ${data.daily_prediction || '未知'}
+                    </div>
+                `;
+            } catch (error) {
+                console.error('加载日内模式失败:', error);
+                container.innerHTML = `
+                    <div class="text-center py-8 text-red-500">
+                        <i class="fas fa-exclamation-triangle text-4xl mb-3"></i>
+                        <div class="text-lg font-medium">加载失败</div>
+                        <div class="text-sm mt-2">${error.message}</div>
+                        <button onclick="refreshIntradayPatterns()" class="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                            <i class="fas fa-sync-alt mr-1"></i>重新加载
+                        </button>
+                    </div>
+                `;
+            }
+        }
+        
+        // 渲染单个模式卡片
+        function renderPatternCard(detection) {
+            const patternIcons = {
+                'pattern_1': '📉',
+                'pattern_2': '🟢',
+                'pattern_3': '🟡',
+                'pattern_4': '🟢'
+            };
+            
+            const patternColors = {
+                'pattern_1': 'red',
+                'pattern_2': 'green',
+                'pattern_3': 'yellow',
+                'pattern_4': 'green'
+            };
+            
+            const signalColors = {
+                'short': 'red',
+                'long': 'green'
+            };
+            
+            const icon = patternIcons[detection.pattern] || '📊';
+            const borderColor = patternColors[detection.pattern] || 'blue';
+            const signalColor = signalColors[detection.signal_type] || 'gray';
+            
+            return `
+                <div class="bg-white rounded-lg border-l-4 border-${borderColor}-500 shadow-md hover:shadow-lg transition-shadow p-5">
+                    <div class="flex items-start justify-between mb-3">
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-2xl">${icon}</span>
+                                <h3 class="text-lg font-bold text-gray-800">${detection.pattern_name}</h3>
+                            </div>
+                            <div class="text-sm text-gray-500">
+                                <i class="far fa-clock mr-1"></i>${detection.time_range}
+                            </div>
+                        </div>
+                        <span class="px-3 py-1 bg-${signalColor}-100 text-${signalColor}-800 rounded-full text-xs font-medium">
+                            ${detection.signal}
+                        </span>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-lg p-3 mb-3">
+                        <div class="text-xs text-gray-600 mb-2">模式类型</div>
+                        <div class="text-sm font-medium text-gray-800">${detection.pattern_type || 'N/A'}</div>
+                    </div>
+                    
+                    ${detection.bars ? `
+                        <div class="bg-gray-50 rounded-lg p-3 mb-3">
+                            <div class="text-xs text-gray-600 mb-2">柱子详情</div>
+                            <div class="text-xs font-mono space-y-1">
+                                ${detection.bars.map(bar => `<div>${bar}</div>`).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    ${detection.blank_ratio ? `
+                        <div class="text-xs text-gray-600 mb-2">
+                            <i class="fas fa-chart-bar mr-1"></i>
+                            空白占比: <span class="font-medium">${detection.blank_ratio}</span>
+                        </div>
+                    ` : ''}
+                    
+                    <div class="text-xs text-gray-400 mt-3 pt-3 border-t">
+                        <i class="fas fa-clock mr-1"></i>
+                        检测时间: ${detection.time}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 刷新日内模式
+        async function refreshIntradayPatterns() {
+            const container = document.getElementById('intradayPatternsContent');
+            container.innerHTML = `
+                <div class="text-center py-8 text-gray-500">
+                    <i class="fas fa-spinner fa-spin text-3xl mb-2"></i>
+                    <div>正在刷新...</div>
+                </div>
+            `;
+            await loadIntradayPatterns();
+        }
         
         // 文档面板切换函数
         function toggleDocPanel() {

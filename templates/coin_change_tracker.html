@@ -2436,6 +2436,157 @@ pm2 status                                                # 查看所有进程�
                 </div>
             </div>
             
+            <!-- v2.1 模式说明（可折叠） -->
+            <div class="px-4 pt-2 pb-3 bg-gray-50 border-t border-gray-200">
+                <button onclick="toggleIntradayPatternInfo()" class="w-full px-4 py-2 bg-white rounded-lg shadow hover:shadow-md transition-all border border-indigo-200 flex items-center justify-between">
+                    <span class="text-sm font-semibold text-indigo-800">
+                        <i class="fas fa-info-circle mr-2"></i>📘 v2.1 模式触发条件详解
+                    </span>
+                    <i id="intradayPatternInfoIcon" class="fas fa-chevron-down text-indigo-600 transition-transform"></i>
+                </button>
+                
+                <div id="intradayPatternInfoPanel" class="hidden mt-3 bg-white rounded-lg shadow-lg p-4 border border-indigo-100">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                        <!-- 情况1 -->
+                        <div class="bg-red-50 p-3 rounded-lg border-l-4 border-red-500">
+                            <div class="font-bold text-red-700 mb-2 flex items-center">
+                                <span class="text-lg mr-2">🔻</span>
+                                情况1: 诱多等待新低 (做空)
+                            </div>
+                            <div class="space-y-1.5 text-gray-700">
+                                <div><strong>模式:</strong></div>
+                                <ul class="list-disc list-inside ml-2 space-y-0.5">
+                                    <li>3根: 红→黄→绿 或 绿→黄→红</li>
+                                    <li>4根: 红→黄→黄→绿 <span class="text-red-600">(新增)</span></li>
+                                </ul>
+                                <div class="mt-2"><strong>触发条件 (动态阈值):</strong></div>
+                                <ul class="list-disc list-inside ml-2 space-y-0.5">
+                                    <li>预测"等待新低" → 触发后上涨占比 <strong>&gt; 65%</strong></li>
+                                    <li>预测"做空/观望" → 触发后上涨占比 <strong>&gt; 50%</strong></li>
+                                </ul>
+                                <div class="mt-2 text-xs text-red-600 bg-red-100 p-1.5 rounded">
+                                    💡 根据大周期预测动态调整阈值，避免过早做空
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 情况2 -->
+                        <div class="bg-green-50 p-3 rounded-lg border-l-4 border-green-500">
+                            <div class="font-bold text-green-700 mb-2 flex items-center">
+                                <span class="text-lg mr-2">🚀</span>
+                                情况2: 诱空试仓抄底 (做多)
+                            </div>
+                            <div class="space-y-1.5 text-gray-700">
+                                <div><strong>模式:</strong></div>
+                                <ul class="list-disc list-inside ml-2">
+                                    <li>红柱 + 连续3个空白柱</li>
+                                </ul>
+                                <div class="mt-2"><strong>触发条件:</strong></div>
+                                <ul class="list-disc list-inside ml-2 space-y-0.5">
+                                    <li>空白柱占比 ≤ 25% (全天)</li>
+                                    <li><span class="text-green-600 font-semibold">在空白柱期间触发</span> <span class="text-green-600">(新增)</span></li>
+                                </ul>
+                                <div class="mt-2 text-xs text-green-600 bg-green-100 p-1.5 rounded">
+                                    💡 在市场极度弱势(空白柱)时开多试仓
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 情况3 -->
+                        <div class="bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-500">
+                            <div class="font-bold text-yellow-700 mb-2 flex items-center">
+                                <span class="text-lg mr-2">📈</span>
+                                情况3: 筑底信号 (做多)
+                            </div>
+                            <div class="space-y-1.5 text-gray-700">
+                                <div><strong>模式:</strong></div>
+                                <ul class="list-disc list-inside ml-2">
+                                    <li>黄→绿→黄</li>
+                                </ul>
+                                <div class="mt-2"><strong>触发条件 (双重验证):</strong></div>
+                                <ul class="list-disc list-inside ml-2 space-y-0.5">
+                                    <li>触发后上涨占比 <strong>&lt; 10%</strong> <span class="text-yellow-600">(新增)</span></li>
+                                    <li>涨跌幅总和 <strong>&lt; -50%</strong></li>
+                                </ul>
+                                <div class="mt-2 text-xs text-yellow-700 bg-yellow-100 p-1.5 rounded">
+                                    💡 必须同时满足局部条件(上涨占比)和全局条件(总跌幅)
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 情况4 -->
+                        <div class="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-500">
+                            <div class="font-bold text-blue-700 mb-2 flex items-center">
+                                <span class="text-lg mr-2">⚡</span>
+                                情况4: 诱空信号 (做多)
+                            </div>
+                            <div class="space-y-1.5 text-gray-700">
+                                <div><strong>模式:</strong></div>
+                                <ul class="list-disc list-inside ml-2 space-y-0.5">
+                                    <li>4根: 绿→红→红→绿</li>
+                                    <li>3根: 绿→红→绿</li>
+                                </ul>
+                                <div class="mt-2"><strong>触发条件:</strong></div>
+                                <ul class="list-disc list-inside ml-2 space-y-0.5">
+                                    <li>中间红柱上涨占比 <strong>&lt; 10%</strong> <span class="text-blue-600">(新增)</span></li>
+                                    <li>4根模式: 两根中间柱都必须 &lt; 10%</li>
+                                </ul>
+                                <div class="mt-2 text-xs text-blue-600 bg-blue-100 p-1.5 rounded">
+                                    💡 确保是深V反转，而非普通震荡反弹
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 核心原则 -->
+                    <div class="mt-4 bg-gradient-to-r from-indigo-50 to-purple-50 p-3 rounded-lg border border-indigo-200">
+                        <div class="font-bold text-indigo-800 mb-2">
+                            <i class="fas fa-shield-alt mr-1"></i>核心原则: 小周期服从大周期
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-gray-700">
+                            <div class="bg-white p-2 rounded">
+                                <strong class="text-red-600">大周期看空:</strong> 禁止所有做多信号
+                                <div class="text-xs text-gray-500 mt-1">(等待新低/做空/观望)</div>
+                            </div>
+                            <div class="bg-white p-2 rounded">
+                                <strong class="text-green-600">大周期看多:</strong> 禁止所有做空信号
+                                <div class="text-xs text-gray-500 mt-1">(低吸/诱空试盘抄底)</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 颜色定义 -->
+                    <div class="mt-3 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                        <div class="font-semibold text-gray-700 mb-2 text-xs">颜色定义:</div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                            <div class="flex items-center">
+                                <span class="w-3 h-3 bg-green-500 rounded mr-1.5"></span>
+                                <span>绿色: &gt;55%</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="w-3 h-3 bg-yellow-400 rounded mr-1.5"></span>
+                                <span>黄色: 45-55%</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="w-3 h-3 bg-red-500 rounded mr-1.5"></span>
+                                <span>红色: &lt;45%</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="w-3 h-3 bg-gray-300 rounded mr-1.5"></span>
+                                <span>空白: 0%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 版本信息 -->
+                    <div class="mt-3 text-xs text-gray-500 text-center border-t border-gray-200 pt-2">
+                        <i class="fas fa-code-branch mr-1"></i>
+                        版本: v2.1 | 更新时间: 2026-02-23 | 
+                        <a href="/docs/日内模式监控v2.1增强版说明.md" target="_blank" class="text-indigo-600 hover:underline">完整文档</a>
+                    </div>
+                </div>
+            </div>
+            
             <div id="intradayPatternsContent" class="p-4">
                 <!-- 加载提示 -->
                 <div class="text-center py-4 text-gray-500">
@@ -7407,6 +7558,22 @@ pm2 status                                                # 查看所有进程�
         let currentDetailPage = 0;
         const detailPageSize = 20;
         let allDetailedData = [];
+        
+        // 切换日内模式说明面板
+        function toggleIntradayPatternInfo() {
+            const panel = document.getElementById('intradayPatternInfoPanel');
+            const icon = document.getElementById('intradayPatternInfoIcon');
+            
+            if (panel.classList.contains('hidden')) {
+                panel.classList.remove('hidden');
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+            } else {
+                panel.classList.add('hidden');
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+            }
+        }
         
         // 切换详细数据显示
         function toggleDetailedData() {

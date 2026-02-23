@@ -288,6 +288,36 @@ module.exports = {
       max_memory_restart: '500M',
       error_file: '/home/user/webapp/logs/rsi-takeprofit-error.log',
       out_file: '/home/user/webapp/logs/rsi-takeprofit-out.log'
+    },
+    
+    // Bottom Signal Long Monitor - 见底信号做多监控
+    {
+      name: 'bottom-signal-long-monitor',
+      script: 'source_code/bottom_signal_long_monitor.py',
+      interpreter: 'python3',
+      cwd: '/home/user/webapp',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '500M',
+      error_file: '/home/user/webapp/logs/bottom-signal-long-error.log',
+      out_file: '/home/user/webapp/logs/bottom-signal-long-out.log'
+    },
+    
+    // Coin Change Prediction Monitor - 币种涨跌预判监控
+    {
+      name: 'coin-change-predictor',
+      script: 'monitors/coin_change_prediction_monitor.py',
+      interpreter: 'python3',
+      cwd: '/home/user/webapp',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '200M',
+      env: {
+        PYTHONPATH: '/home/user/webapp'
+      },
+      error_file: '/home/user/webapp/logs/coin-change-predictor-error.log',
+      out_file: '/home/user/webapp/logs/coin-change-predictor-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z'
     }
   ]
 };

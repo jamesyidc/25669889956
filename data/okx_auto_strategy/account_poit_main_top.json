@@ -1,5 +1,5 @@
 {
-  "enabled": true,
+  "enabled": false,
   "triggerPrice": 65700.0,
   "strategyType": "top_performers",
   "positionSize": 1.5,

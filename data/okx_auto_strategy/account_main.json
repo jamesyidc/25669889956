@@ -1,10 +1,10 @@
 {
-  "enabled": true,
+  "enabled": false,
   "triggerPrice": 66000,
   "strategyType": "bottom_performers",
   "lastExecutedTime": null,
   "executedCount": 0,
-  "lastUpdated": "2026-02-22 03:29:15",
+  "lastUpdated": "2026-02-23 02:13:41",
   "positionSize": 1.5,
   "maxOrderSize": 5,
   "apiKey": "b0c18f2d-e014-4ae8-9c3c-cb02161de4db",

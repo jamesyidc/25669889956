@@ -1,5 +1,5 @@
 {
-  "enabled": true,
+  "enabled": false,
   "triggerPrice": 66000,
   "lastExecutedTime": null,
   "executedCount": 0,

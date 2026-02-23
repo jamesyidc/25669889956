@@ -153,35 +153,82 @@ def build_bars_from_history(records):
     
     return bars
 
-def check_pattern_1(bars):
-    """检测模式1: 诱多等待新低 (红→黄→绿 或 绿→黄→红)"""
+def check_pattern_1(bars, daily_prediction=None):
+    """检测模式1: 诱多等待新低
+    
+    连续3根：红→黄→绿 或 绿→黄→红
+    连续4根：红→黄→黄→绿
+    
+    动态阈值（根据预测信号）：
+    - "等待新低" → 触发后10分钟上涨占比平均 > 65%
+    - "做空"或"观望" → 触发后10分钟上涨占比平均 > 50%
+    """
     detections = []
+    
+    # 确定阈值
+    signal = daily_prediction.get('signal', '') if daily_prediction else ''
+    threshold = 65 if '等待新低' in signal else 50
+    
+    # 先检查4根柱子模式：红→黄→黄→绿
+    if len(bars) >= 4:
+        for i in range(len(bars) - 3):
+            b1, b2, b3, b4 = bars[i], bars[i+1], bars[i+2], bars[i+3]
+            
+            if (b1['color'] == '红色' and b2['color'] == '黄色' and 
+                b3['color'] == '黄色' and b4['color'] == '绿色'):
+                # 检查触发后的上涨占比（最后一根柱子）
+                trigger_ratio = b4['up_ratio']
+                
+                if trigger_ratio > threshold:
+                    detections.append({
+                        'pattern_id': 'pattern_1',
+                        'pattern_name': '诱多等待新低',
+                        'pattern_type': '红→黄→黄→绿',
+                        'signal': '逢高做空',
+                        'signal_type': 'short',
+                        'time_range': f"{b1['time']} - {b4['time']}",
+                        'bars': [b1, b2, b3, b4],
+                        'threshold': threshold,
+                        'trigger_ratio': trigger_ratio
+                    })
+    
+    # 检查3根柱子模式
     for i in range(len(bars) - 2):
         b1, b2, b3 = bars[i], bars[i+1], bars[i+2]
         
         # 红→黄→绿
         if (b1['color'] == '红色' and b2['color'] == '黄色' and b3['color'] == '绿色'):
-            detections.append({
-                'pattern_id': 'pattern_1',
-                'pattern_name': '诱多等待新低',
-                'pattern_type': '红→黄→绿',
-                'signal': '逢高做空',
-                'signal_type': 'short',
-                'time_range': f"{b1['time']} - {b3['time']}",
-                'bars': [b1, b2, b3]
-            })
+            trigger_ratio = b3['up_ratio']
+            
+            if trigger_ratio > threshold:
+                detections.append({
+                    'pattern_id': 'pattern_1',
+                    'pattern_name': '诱多等待新低',
+                    'pattern_type': '红→黄→绿',
+                    'signal': '逢高做空',
+                    'signal_type': 'short',
+                    'time_range': f"{b1['time']} - {b3['time']}",
+                    'bars': [b1, b2, b3],
+                    'threshold': threshold,
+                    'trigger_ratio': trigger_ratio
+                })
         
         # 绿→黄→红
         elif (b1['color'] == '绿色' and b2['color'] == '黄色' and b3['color'] == '红色'):
-            detections.append({
-                'pattern_id': 'pattern_1',
-                'pattern_name': '诱多等待新低',
-                'pattern_type': '绿→黄→红',
-                'signal': '逢高做空',
-                'signal_type': 'short',
-                'time_range': f"{b1['time']} - {b3['time']}",
-                'bars': [b1, b2, b3]
-            })
+            trigger_ratio = b3['up_ratio']
+            
+            if trigger_ratio > threshold:
+                detections.append({
+                    'pattern_id': 'pattern_1',
+                    'pattern_name': '诱多等待新低',
+                    'pattern_type': '绿→黄→红',
+                    'signal': '逢高做空',
+                    'signal_type': 'short',
+                    'time_range': f"{b1['time']} - {b3['time']}",
+                    'bars': [b1, b2, b3],
+                    'threshold': threshold,
+                    'trigger_ratio': trigger_ratio
+                })
     
     return detections
 
@@ -215,9 +262,10 @@ def check_pattern_2(bars):
 def check_pattern_3(bars, records):
     """检测模式3: 筑底信号 (黄→绿→黄)
     
-    条件：
+    触发条件（双重验证）：
     1. 颜色模式：黄→绿→黄
-    2. 总涨跌幅 < -50
+    2. 触发后10分钟上涨占比 < 10%
+    3. 总涨跌幅 < -50%
     
     Args:
         bars: 10分钟柱子数据
@@ -228,6 +276,13 @@ def check_pattern_3(bars, records):
         b1, b2, b3 = bars[i], bars[i+1], bars[i+2]
         
         if (b1['color'] == '黄色' and b2['color'] == '绿色' and b3['color'] == '黄色'):
+            # 检查触发后的上涨占比（最后一根柱子）
+            trigger_ratio = b3['up_ratio']
+            
+            # 条件1: 触发后上涨占比 < 10%
+            if trigger_ratio >= 10:
+                continue
+            
             # 查找对应时间的总涨跌幅
             middle_time = b2['time']  # 使用中间柱子的时间
             total_change = None
@@ -238,7 +293,7 @@ def check_pattern_3(bars, records):
                     total_change = record.get('total_change', 0)
                     break
             
-            # 只有当总涨跌幅 < -50 时才触发
+            # 条件2: 总涨跌幅 < -50%
             if total_change is not None and total_change < -50:
                 detections.append({
                     'pattern_id': 'pattern_3',
@@ -247,6 +302,7 @@ def check_pattern_3(bars, records):
                     'signal': '逢低做多',
                     'signal_type': 'long',
                     'time_range': f"{b1['time']} - {b3['time']}",
+                    'trigger_ratio': trigger_ratio,
                     'total_change': round(total_change, 2),
                     'bars': [b1, b2, b3]
                 })
@@ -254,39 +310,55 @@ def check_pattern_3(bars, records):
     return detections
 
 def check_pattern_4(bars):
-    """检测模式4: 诱空信号 (绿→红→红→绿 或 绿→红→绿)"""
+    """检测模式4: 诱空信号
+    
+    连续4根：绿→红→红→绿
+    或连续3根：绿→红→绿
+    触发条件：中间柱上涨占比 < 10%
+    """
     detections = []
     
-    # 检测4根模式
+    # 检测4根模式: 绿→红→红→绿
     for i in range(len(bars) - 3):
         b1, b2, b3, b4 = bars[i], bars[i+1], bars[i+2], bars[i+3]
         
         if (b1['color'] == '绿色' and b2['color'] == '红色' and 
             b3['color'] == '红色' and b4['color'] == '绿色'):
-            detections.append({
-                'pattern_id': 'pattern_4',
-                'pattern_name': '诱空信号',
-                'pattern_type': '绿→红→红→绿',
-                'signal': '逢低做多',
-                'signal_type': 'long',
-                'time_range': f"{b1['time']} - {b4['time']}",
-                'bars': [b1, b2, b3, b4]
-            })
+            # 检查中间两根红柱的上涨占比
+            middle_ratio_1 = b2['up_ratio']
+            middle_ratio_2 = b3['up_ratio']
+            
+            if middle_ratio_1 < 10 and middle_ratio_2 < 10:
+                detections.append({
+                    'pattern_id': 'pattern_4',
+                    'pattern_name': '诱空信号',
+                    'pattern_type': '绿→红→红→绿',
+                    'signal': '逢低做多',
+                    'signal_type': 'long',
+                    'time_range': f"{b1['time']} - {b4['time']}",
+                    'bars': [b1, b2, b3, b4],
+                    'middle_ratios': [middle_ratio_1, middle_ratio_2]
+                })
     
-    # 检测3根模式
+    # 检测3根模式: 绿→红→绿
     for i in range(len(bars) - 2):
         b1, b2, b3 = bars[i], bars[i+1], bars[i+2]
         
         if (b1['color'] == '绿色' and b2['color'] == '红色' and b3['color'] == '绿色'):
-            detections.append({
-                'pattern_id': 'pattern_4',
-                'pattern_name': '诱空信号',
-                'pattern_type': '绿→红→绿',
-                'signal': '逢低做多',
-                'signal_type': 'long',
-                'time_range': f"{b1['time']} - {b3['time']}",
-                'bars': [b1, b2, b3]
-            })
+            # 检查中间红柱的上涨占比
+            middle_ratio = b2['up_ratio']
+            
+            if middle_ratio < 10:
+                detections.append({
+                    'pattern_id': 'pattern_4',
+                    'pattern_name': '诱空信号',
+                    'pattern_type': '绿→红→绿',
+                    'signal': '逢低做多',
+                    'signal_type': 'long',
+                    'time_range': f"{b1['time']} - {b3['time']}",
+                    'bars': [b1, b2, b3],
+                    'middle_ratios': [middle_ratio]
+                })
     
     return detections
 
@@ -407,7 +479,7 @@ def analyze_single_day(date_str):
     all_detections = []
     
     # 模式1
-    pattern1_detections = check_pattern_1(bars)
+    pattern1_detections = check_pattern_1(bars, daily_prediction)
     for detection in pattern1_detections:
         allowed, reason = is_signal_allowed(detection['signal_type'], daily_prediction)
         detection['allowed'] = allowed

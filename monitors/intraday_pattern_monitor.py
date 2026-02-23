@@ -10,19 +10,28 @@
 
 模式1: 诱多等待新低
 - 连续3根：红→黄→绿 或 绿→黄→红
+- 连续4根：红→黄→黄→绿
+- 动态阈值：
+  * 预测"等待新低" → 触发后10分钟上涨占比平均 > 65%
+  * 预测"做空"或"观望" → 触发后10分钟上涨占比平均 > 50%
 - 操作：逢高做空 [做空信号]
 
 模式2: 诱空试仓抄底  
 - 红柱后连续3个空白柱子，空白占比≤25%
+- 触发时机：在空白柱期间触发
 - 操作：开多单试仓 [做多信号]
 
 模式3: 筑底信号
 - 连续3根：黄→绿→黄
+- 触发条件：
+  * 触发后10分钟上涨占比 < 10%
+  * 涨跌幅总和 < -50%
 - 操作：逢低做多 [做多信号]
 
 模式4: 诱空信号
 - 连续4根：绿→红→红→绿
 - 或连续3根：绿→红→绿
+- 触发条件：中间柱上涨占比 < 10%
 - 操作：逢低做多 [做多信号]
 
 颜色定义:
@@ -263,10 +272,15 @@ def fetch_today_data():
         return None
 
 
-def check_pattern_1(bars):
+def check_pattern_1(bars, daily_prediction=None):
     """检查模式1：诱多等待新低
     
     连续3根：红→黄→绿 或 绿→黄→红
+    连续4根：红→黄→黄→绿
+    
+    动态阈值（根据预测信号）：
+    - "等待新低" → 触发后10分钟上涨占比平均 > 65%
+    - "做空"或"观望" → 触发后10分钟上涨占比平均 > 50%
     
     Returns:
         dict or None: 如果检测到模式，返回详情
@@ -274,7 +288,39 @@ def check_pattern_1(bars):
     if len(bars) < 3:
         return None
     
-    # 检查最近的3根柱子
+    # 确定阈值
+    signal = daily_prediction.get('signal', '') if daily_prediction else ''
+    threshold = 65 if '等待新低' in signal else 50
+    
+    # 先检查4根柱子模式：红→黄→黄→绿
+    if len(bars) >= 4:
+        for i in range(len(bars) - 3):
+            colors = [bars[i]['color'], bars[i+1]['color'], bars[i+2]['color'], bars[i+3]['color']]
+            
+            if colors == ['red', 'yellow', 'yellow', 'green']:
+                # 检查触发后的上涨占比（最后一根柱子）
+                trigger_bar_ratio = bars[i+3]['up_ratio']
+                
+                if trigger_bar_ratio > threshold:
+                    return {
+                        'pattern': 'pattern_1',
+                        'pattern_name': '诱多等待新低',
+                        'pattern_type': '红→黄→黄→绿',
+                        'signal': '逢高做空',
+                        'signal_type': 'short',
+                        'time_range': f"{bars[i]['time']} - {bars[i+3]['time']}",
+                        'bars': [
+                            f"{bars[i]['time']} {bars[i]['up_ratio']:.1f}%",
+                            f"{bars[i+1]['time']} {bars[i+1]['up_ratio']:.1f}%",
+                            f"{bars[i+2]['time']} {bars[i+2]['up_ratio']:.1f}%",
+                            f"{bars[i+3]['time']} {bars[i+3]['up_ratio']:.1f}%"
+                        ],
+                        'detected_at': bars[i+3]['time'],
+                        'threshold': threshold,
+                        'trigger_ratio': trigger_bar_ratio
+                    }
+    
+    # 检查3根柱子模式
     for i in range(len(bars) - 2):
         colors = [bars[i]['color'], bars[i+1]['color'], bars[i+2]['color']]
         
@@ -285,33 +331,46 @@ def check_pattern_1(bars):
         if is_red_yellow_green or is_green_yellow_red:
             pattern_type = "红→黄→绿" if is_red_yellow_green else "绿→黄→红"
             
-            return {
-                'pattern': 'pattern_1',
-                'pattern_name': '诱多等待新低',
-                'pattern_type': pattern_type,
-                'signal': '逢高做空',
-                'signal_type': 'short',
-                'time_range': f"{bars[i]['time']} - {bars[i+2]['time']}",
-                'bars': [
-                    f"{bars[i]['time']} {bars[i]['up_ratio']:.1f}%",
-                    f"{bars[i+1]['time']} {bars[i+1]['up_ratio']:.1f}%",
-                    f"{bars[i+2]['time']} {bars[i+2]['up_ratio']:.1f}%"
-                ],
-                'detected_at': bars[i+2]['time']
-            }
+            # 检查触发后的上涨占比（最后一根柱子）
+            trigger_bar_ratio = bars[i+2]['up_ratio']
+            
+            if trigger_bar_ratio > threshold:
+                return {
+                    'pattern': 'pattern_1',
+                    'pattern_name': '诱多等待新低',
+                    'pattern_type': pattern_type,
+                    'signal': '逢高做空',
+                    'signal_type': 'short',
+                    'time_range': f"{bars[i]['time']} - {bars[i+2]['time']}",
+                    'bars': [
+                        f"{bars[i]['time']} {bars[i]['up_ratio']:.1f}%",
+                        f"{bars[i+1]['time']} {bars[i+1]['up_ratio']:.1f}%",
+                        f"{bars[i+2]['time']} {bars[i+2]['up_ratio']:.1f}%"
+                    ],
+                    'detected_at': bars[i+2]['time'],
+                    'threshold': threshold,
+                    'trigger_ratio': trigger_bar_ratio
+                }
     
     return None
 
 
-def check_pattern_3(bars):
+def check_pattern_3(bars, total_change=None):
     """检查模式3：筑底信号
     
     连续3根：黄→绿→黄
+    触发条件：
+    1. 触发后10分钟上涨占比 < 10%
+    2. 涨跌幅总和 < -50%
     
     Returns:
         dict or None: 如果检测到模式，返回详情
     """
     if len(bars) < 3:
+        return None
+    
+    # 检查涨跌幅总和条件
+    if total_change is not None and total_change >= -50:
         return None
     
     # 检查连续3根柱子
@@ -320,20 +379,26 @@ def check_pattern_3(bars):
         
         # 检查是否匹配模式：黄→绿→黄
         if colors == ['yellow', 'green', 'yellow']:
-            return {
-                'pattern': 'pattern_3',
-                'pattern_name': '筑底信号',
-                'pattern_type': '黄→绿→黄',
-                'signal': '逢低做多',
-                'signal_type': 'long',
-                'time_range': f"{bars[i]['time']} - {bars[i+2]['time']}",
-                'bars': [
-                    f"{bars[i]['time']} {bars[i]['up_ratio']:.1f}%",
-                    f"{bars[i+1]['time']} {bars[i+1]['up_ratio']:.1f}%",
-                    f"{bars[i+2]['time']} {bars[i+2]['up_ratio']:.1f}%"
-                ],
-                'detected_at': bars[i+2]['time']
-            }
+            # 检查触发后的上涨占比（最后一根柱子）
+            trigger_bar_ratio = bars[i+2]['up_ratio']
+            
+            if trigger_bar_ratio < 10:
+                return {
+                    'pattern': 'pattern_3',
+                    'pattern_name': '筑底信号',
+                    'pattern_type': '黄→绿→黄',
+                    'signal': '逢低做多',
+                    'signal_type': 'long',
+                    'time_range': f"{bars[i]['time']} - {bars[i+2]['time']}",
+                    'bars': [
+                        f"{bars[i]['time']} {bars[i]['up_ratio']:.1f}%",
+                        f"{bars[i+1]['time']} {bars[i+1]['up_ratio']:.1f}%",
+                        f"{bars[i+2]['time']} {bars[i+2]['up_ratio']:.1f}%"
+                    ],
+                    'detected_at': bars[i+2]['time'],
+                    'trigger_ratio': trigger_bar_ratio,
+                    'total_change': total_change
+                }
     
     return None
 
@@ -343,6 +408,7 @@ def check_pattern_4(bars):
     
     连续4根：绿→红→红→绿
     或连续3根：绿→红→绿
+    触发条件：中间柱上涨占比 < 10%
     
     Returns:
         dict or None: 如果检测到模式，返回详情
@@ -355,41 +421,52 @@ def check_pattern_4(bars):
         colors = [bars[i]['color'], bars[i+1]['color'], bars[i+2]['color'], bars[i+3]['color']]
         
         if colors == ['green', 'red', 'red', 'green']:
-            return {
-                'pattern': 'pattern_4',
-                'pattern_name': '诱空信号',
-                'pattern_type': '绿→红→红→绿 (4根)',
-                'signal': '逢低做多',
-                'signal_type': 'long',
-                'time_range': f"{bars[i]['time']} - {bars[i+3]['time']}",
-                'bars': [
-                    f"{bars[i]['time']} {bars[i]['up_ratio']:.1f}%",
-                    f"{bars[i+1]['time']} {bars[i+1]['up_ratio']:.1f}%",
-                    f"{bars[i+2]['time']} {bars[i+2]['up_ratio']:.1f}%",
-                    f"{bars[i+3]['time']} {bars[i+3]['up_ratio']:.1f}%"
-                ],
-                'detected_at': bars[i+3]['time']
-            }
+            # 检查中间两根红柱的上涨占比
+            middle_ratio_1 = bars[i+1]['up_ratio']
+            middle_ratio_2 = bars[i+2]['up_ratio']
+            
+            if middle_ratio_1 < 10 and middle_ratio_2 < 10:
+                return {
+                    'pattern': 'pattern_4',
+                    'pattern_name': '诱空信号',
+                    'pattern_type': '绿→红→红→绿 (4根)',
+                    'signal': '逢低做多',
+                    'signal_type': 'long',
+                    'time_range': f"{bars[i]['time']} - {bars[i+3]['time']}",
+                    'bars': [
+                        f"{bars[i]['time']} {bars[i]['up_ratio']:.1f}%",
+                        f"{bars[i+1]['time']} {bars[i+1]['up_ratio']:.1f}%",
+                        f"{bars[i+2]['time']} {bars[i+2]['up_ratio']:.1f}%",
+                        f"{bars[i+3]['time']} {bars[i+3]['up_ratio']:.1f}%"
+                    ],
+                    'detected_at': bars[i+3]['time'],
+                    'middle_ratios': [middle_ratio_1, middle_ratio_2]
+                }
     
     # 再检查连续3根：绿→红→绿
     for i in range(len(bars) - 2):
         colors = [bars[i]['color'], bars[i+1]['color'], bars[i+2]['color']]
         
         if colors == ['green', 'red', 'green']:
-            return {
-                'pattern': 'pattern_4',
-                'pattern_name': '诱空信号',
-                'pattern_type': '绿→红→绿 (3根)',
-                'signal': '逢低做多',
-                'signal_type': 'long',
-                'time_range': f"{bars[i]['time']} - {bars[i+2]['time']}",
-                'bars': [
-                    f"{bars[i]['time']} {bars[i]['up_ratio']:.1f}%",
-                    f"{bars[i+1]['time']} {bars[i+1]['up_ratio']:.1f}%",
-                    f"{bars[i+2]['time']} {bars[i+2]['up_ratio']:.1f}%"
-                ],
-                'detected_at': bars[i+2]['time']
-            }
+            # 检查中间红柱的上涨占比
+            middle_ratio = bars[i+1]['up_ratio']
+            
+            if middle_ratio < 10:
+                return {
+                    'pattern': 'pattern_4',
+                    'pattern_name': '诱空信号',
+                    'pattern_type': '绿→红→绿 (3根)',
+                    'signal': '逢低做多',
+                    'signal_type': 'long',
+                    'time_range': f"{bars[i]['time']} - {bars[i+2]['time']}",
+                    'bars': [
+                        f"{bars[i]['time']} {bars[i]['up_ratio']:.1f}%",
+                        f"{bars[i+1]['time']} {bars[i+1]['up_ratio']:.1f}%",
+                        f"{bars[i+2]['time']} {bars[i+2]['up_ratio']:.1f}%"
+                    ],
+                    'detected_at': bars[i+2]['time'],
+                    'middle_ratios': [middle_ratio]
+                }
     
     return None
 
@@ -630,11 +707,27 @@ def monitor_loop():
             # 获取今日预判（大周期）
             daily_prediction = get_daily_prediction()
             
+            # 计算当前涨跌幅总和（用于模式3）
+            total_change = None
+            if bars:
+                try:
+                    # 从API获取最新的total_change
+                    beijing_time = get_beijing_time()
+                    today_str = beijing_time.strftime('%Y-%m-%d')
+                    url = f'{API_BASE}/api/coin-change-tracker/history?date={today_str}&limit=1'
+                    response = requests.get(url, timeout=10)
+                    result = response.json()
+                    if result.get('success') and result.get('data'):
+                        total_change = result['data'][0].get('total_change', 0)
+                        log(f"📊 当前涨跌幅总和: {total_change:.2f}%")
+                except Exception as e:
+                    log(f"⚠️ 获取涨跌幅总和失败: {e}")
+            
             # 检查所有模式
             patterns = [
-                ('pattern_1', check_pattern_1(bars)),
+                ('pattern_1', check_pattern_1(bars, daily_prediction)),
                 ('pattern_2', check_pattern_2(bars)),
-                ('pattern_3', check_pattern_3(bars)),
+                ('pattern_3', check_pattern_3(bars, total_change)),
                 ('pattern_4', check_pattern_4(bars))
             ]
             

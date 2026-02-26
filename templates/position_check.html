@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>持仓检查 - OKX交易系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .status-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .status-card h2 {
+            font-size: 18px;
+            color: #2d3748;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-indicator.active {
+            background: #48bb78;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.closed {
+            background: #cbd5e0;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .profit-positive {
+            color: #48bb78;
+            font-weight: 600;
+        }
+
+        .profit-negative {
+            color: #f56565;
+            font-weight: 600;
+        }
+
+        .position-type {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .position-long {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .position-short {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .account-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .account-btn {
+            padding: 10px 20px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            background: white;
+            color: #667eea;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .account-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .account-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .refresh-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            background: #48bb78;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .refresh-btn:hover {
+            background: #38a169;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 持仓检查 - 实时持仓监控</h1>
+            <p style="color: #718096; margin-top: 10px;">检查所有账户的实际持仓情况，区分历史统计和当前持仓</p>
+        </div>
+
+        <div class="account-selector">
+            <button class="account-btn active" data-account="account_main">主账户 (Main)</button>
+            <button class="account-btn" data-account="account_fangfang12">芳芳账户 (Fangfang12)</button>
+            <button class="account-btn" data-account="account_anchor">锚定账户 (Anchor)</button>
+            <button class="account-btn" data-account="account_poit_main">Poit主账户</button>
+            <button class="refresh-btn" onclick="refreshPositions()">🔄 刷新</button>
+        </div>
+
+        <div class="status-card">
+            <h2>
+                <span class="status-indicator" id="statusIndicator"></span>
+                当前持仓 (<span id="accountName">主账户</span>)
+            </h2>
+            <div id="positionsContainer">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p style="margin-top: 20px; color: #718096;">正在加载持仓数据...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-card">
+            <h2>📊 今日交易统计</h2>
+            <div id="statsContainer">
+                <div class="loading">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentAccount = 'account_main';
+
+        // 账户切换
+        document.querySelectorAll('.account-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.account-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentAccount = this.dataset.account;
+                document.getElementById('accountName').textContent = this.textContent;
+                loadPositions();
+            });
+        });
+
+        // 加载持仓数据
+        async function loadPositions() {
+            const container = document.getElementById('positionsContainer');
+            const indicator = document.getElementById('statusIndicator');
+            
+            container.innerHTML = '<div class="loading"><div class="spinner"></div><p style="margin-top: 20px; color: #718096;">正在加载...</p></div>';
+            
+            try {
+                // 获取当前持仓
+                const response = await fetch(`/api/trading/positions/opens?trade_mode=real`);
+                const data = await response.json();
+                
+                if (data.success && data.positions && data.positions.length > 0) {
+                    indicator.className = 'status-indicator active';
+                    
+                    let html = '<table><thead><tr>';
+                    html += '<th>交易对</th><th>方向</th><th>持仓量</th><th>开仓价</th>';
+                    html += '<th>当前价</th><th>盈亏率</th><th>未实现盈亏</th><th>杠杆</th>';
+                    html += '</tr></thead><tbody>';
+                    
+                    data.positions.forEach(pos => {
+                        const profitClass = pos.profit_rate >= 0 ? 'profit-positive' : 'profit-negative';
+                        const posType = pos.pos_side === 'long' ? 'position-long' : 'position-short';
+                        const posText = pos.pos_side === 'long' ? '多单' : '空单';
+                        
+                        html += '<tr>';
+                        html += `<td><strong>${pos.inst_id}</strong></td>`;
+                        html += `<td><span class="position-type ${posType}">${posText}</span></td>`;
+                        html += `<td>${pos.open_size || pos.pos}</td>`;
+                        html += `<td>$${parseFloat(pos.open_price || pos.avgPx).toFixed(4)}</td>`;
+                        html += `<td>$${parseFloat(pos.mark_price || pos.markPx).toFixed(4)}</td>`;
+                        html += `<td class="${profitClass}">${(pos.profit_rate * 100).toFixed(2)}%</td>`;
+                        html += `<td class="${profitClass}">$${parseFloat(pos.upl || 0).toFixed(2)}</td>`;
+                        html += `<td>${pos.lever}x</td>`;
+                        html += '</tr>';
+                    });
+                    
+                    html += '</tbody></table>';
+                    container.innerHTML = html;
+                } else {
+                    indicator.className = 'status-indicator closed';
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <h3 style="margin-bottom: 8px;">✅ 没有持仓</h3>
+                            <p>当前账户没有任何持仓，所有仓位已平仓</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                indicator.className = 'status-indicator closed';
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <p style="color: #f56565;">❌ 加载失败: ${error.message}</p>
+                    </div>
+                `;
+            }
+            
+            // 加载今日统计
+            loadStats();
+        }
+
+        // 加载统计数据
+        async function loadStats() {
+            const container = document.getElementById('statsContainer');
+            
+            try {
+                const response = await fetch('/api/okx-trading/trade-history?days=1');
+                const data = await response.json();
+                
+                if (data.success && data.trades) {
+                    const todayTrades = data.trades.filter(t => {
+                        const tradeDate = new Date(t.timestamp);
+                        const today = new Date();
+                        return tradeDate.toDateString() === today.toDateString();
+                    });
+                    
+                    const totalPnL = todayTrades.reduce((sum, t) => sum + (parseFloat(t.pnl) || 0), 0);
+                    const totalTrades = todayTrades.length;
+                    const profitTrades = todayTrades.filter(t => parseFloat(t.pnl) > 0).length;
+                    const lossTrades = todayTrades.filter(t => parseFloat(t.pnl) < 0).length;
+                    
+                    const profitClass = totalPnL >= 0 ? 'profit-positive' : 'profit-negative';
+                    
+                    container.innerHTML = `
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 32px; font-weight: 700; color: #667eea;">${totalTrades}</div>
+                                <div style="color: #718096; margin-top: 5px;">总交易笔数</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 32px; font-weight: 700;" class="${profitClass}">$${totalPnL.toFixed(2)}</div>
+                                <div style="color: #718096; margin-top: 5px;">总盈亏</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 32px; font-weight: 700; color: #48bb78;">${profitTrades}</div>
+                                <div style="color: #718096; margin-top: 5px;">盈利笔数</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 32px; font-weight: 700; color: #f56565;">${lossTrades}</div>
+                                <div style="color: #718096; margin-top: 5px;">亏损笔数</div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = '<p style="text-align: center; color: #718096;">暂无今日交易统计</p>';
+                }
+            } catch (error) {
+                container.innerHTML = `<p style="text-align: center; color: #f56565;">统计加载失败: ${error.message}</p>`;
+            }
+        }
+
+        // 刷新按钮
+        function refreshPositions() {
+            loadPositions();
+        }
+
+        // 初始加载
+        loadPositions();
+
+        // 自动刷新 (每30秒)
+        setInterval(loadPositions, 30000);
+    </script>
+</body>
+</html>
